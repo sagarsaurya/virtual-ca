@@ -66,7 +66,8 @@ def detect_bank(text: str) -> str:
     return 'GENERIC'
 
 
-def parse_pdf_statement(filepath: str) -> List[Dict]:
+def parse_pdf_statement(filepath: str):
+    """Returns (txns, closing_balance_or_None)"""
     if not PDF_OK:
         raise RuntimeError("pdfplumber not installed. Run: pip install pdfplumber")
 
@@ -82,7 +83,9 @@ def parse_pdf_statement(filepath: str) -> List[Dict]:
 
     # Try table-based parsing first
     txns = []
-    if bank == 'ICICI':   txns = _parse_icici(rows, full_text)
+    closing_balance = None
+    if bank == 'ICICI':
+        txns, closing_balance = _parse_icici(rows, full_text)
     elif bank == 'HDFC':  txns = _parse_hdfc(rows, full_text)
     elif bank == 'SBI':   txns = _parse_sbi(rows, full_text)
     elif bank == 'AXIS':  txns = _parse_axis(rows, full_text)
@@ -93,7 +96,7 @@ def parse_pdf_statement(filepath: str) -> List[Dict]:
     if not txns:
         txns = _parse_text_fallback(full_text, bank)
 
-    return txns
+    return txns, closing_balance
 
 
 def _parse_text_fallback(text: str, bank: str) -> List[Dict]:
@@ -185,6 +188,7 @@ def _parse_icici(rows, text):
 
     prev_balance = None
     prev_line    = ''
+    last_balance = None   # will be closing balance
 
     for i, line in enumerate(lines):
         line = line.strip()
@@ -224,12 +228,13 @@ def _parse_icici(rows, text):
         narration = narration.strip()[:100]
 
         prev_balance = balance
+        last_balance = balance  # track last seen balance
         prev_line    = line
 
         if amount == 0: continue
         txns.append({'date': dt, 'narration': narration or date_str,
                      'amount': amount, 'dr_cr': dr_cr, 'source': 'bank'})
-    return txns
+    return txns, last_balance
 
 
 # ── HDFC ──────────────────────────────────────────────────────────────────────
@@ -491,7 +496,7 @@ def _df_to_txns(df, source):
 # TALLY BANK LEDGER PARSER
 # ══════════════════════════════════════════════════════════════════════════════
 
-def parse_tally_ledger(filepath: str) -> List[Dict]:
+def parse_tally_ledger(filepath: str):
     ext = filepath.lower()
 
     # Read raw to find header row
@@ -518,6 +523,8 @@ def parse_tally_ledger(filepath: str) -> List[Dict]:
     # Col 7 = Debit amount, Col 8 = Credit amount (typical Tally export)
     cols = list(df.columns)
     txns = []
+    tally_closing_balance = None
+    tally_closing_dr_cr   = None
 
     for _, row in df.iterrows():
         # Date
@@ -531,8 +538,31 @@ def parse_tally_ledger(filepath: str) -> List[Dict]:
 
         # Particulars / narration — column 2 (index 2)
         narration = str(row.iloc[2]).strip() if len(row) > 2 and pd.notna(row.iloc[2]) else ''
-        if not narration or narration in ('nan', 'Opening Balance', 'Closing Balance'):
+        if not narration or narration == 'nan':
             continue
+
+        # Capture Closing Balance row before skipping
+        if narration in ('Closing Balance', 'Opening Balance'):
+            if narration == 'Closing Balance':
+                # Extract amount from debit/credit columns
+                cb_debit = cb_credit = 0.0
+                for ci, col in enumerate(cols):
+                    col_u = str(col).upper()
+                    val   = row.iloc[ci]
+                    if pd.isna(val): continue
+                    amt = clean_amount(val)
+                    if 'DEBIT' in col_u and amt:  cb_debit  = amt
+                    if 'CREDIT' in col_u and amt: cb_credit = amt
+                if cb_debit == 0 and cb_credit == 0 and len(row) > 8:
+                    cb_debit  = clean_amount(row.iloc[7])
+                    cb_credit = clean_amount(row.iloc[8])
+                if cb_debit:
+                    tally_closing_balance = cb_debit
+                    tally_closing_dr_cr   = 'Dr'
+                elif cb_credit:
+                    tally_closing_balance = cb_credit
+                    tally_closing_dr_cr   = 'Cr'
+            continue  # skip Opening/Closing Balance rows from txns
 
         # Dr/Cr indicator in col 1
         drcr_raw = str(row.iloc[1]).strip().upper() if len(row) > 1 and pd.notna(row.iloc[1]) else ''
@@ -566,14 +596,16 @@ def parse_tally_ledger(filepath: str) -> List[Dict]:
 
         txns.append({'date': dt, 'narration': narration, 'amount': amount,
                      'dr_cr': dr_cr, 'source': 'tally'})
-    return txns
+    return txns, tally_closing_balance, tally_closing_dr_cr
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # MATCHING ENGINE
 # ══════════════════════════════════════════════════════════════════════════════
 
-def reconcile(bank_txns: List[Dict], tally_txns: List[Dict]) -> Dict:
+def reconcile(bank_txns: List[Dict], tally_txns: List[Dict],
+              closing_balance_bank=None, closing_balance_tally=None,
+              closing_dr_cr_tally=None) -> Dict:
     matched    = []
     bank_only  = []
     tally_only = []
@@ -651,6 +683,12 @@ def reconcile(bank_txns: List[Dict], tally_txns: List[Dict]) -> Dict:
         'issue':     f"Duplicate entry in {d.get('in','')} — same date & amount appears twice",
     } for d in duplicates]
 
+    # Closing balance comparison
+    cb_bank   = round(closing_balance_bank,   2) if closing_balance_bank   is not None else None
+    cb_tally  = round(closing_balance_tally,  2) if closing_balance_tally  is not None else None
+    cb_diff   = round(abs(cb_bank - cb_tally), 2) if (cb_bank is not None and cb_tally is not None) else None
+    cb_match  = (cb_diff is not None and cb_diff < 1.0)   # within Re.1 = match
+
     return {
         'matched':    matched,
         'bank_only':  bank_only,
@@ -664,6 +702,11 @@ def reconcile(bank_txns: List[Dict], tally_txns: List[Dict]) -> Dict:
             'tally_only':    len(tally_only),
             'duplicates':    len(dupes_out),
             'match_pct':     round(len(matched) / max(len(bank_txns), 1) * 100, 1),
+            'closing_balance_bank':  cb_bank,
+            'closing_balance_tally': cb_tally,
+            'closing_dr_cr_tally':   closing_dr_cr_tally,
+            'closing_balance_diff':  cb_diff,
+            'closing_balance_match': cb_match,
         }
     }
 
@@ -675,8 +718,9 @@ def reconcile(bank_txns: List[Dict], tally_txns: List[Dict]) -> Dict:
 def run_bankrec(bank_path: str, tally_path: str, bank_filename: str = '') -> Dict:
     # Parse bank statement
     ext = bank_filename.lower() if bank_filename else bank_path.lower()
+    closing_balance_bank = None
     if ext.endswith('.pdf'):
-        bank_txns = parse_pdf_statement(bank_path)
+        bank_txns, closing_balance_bank = parse_pdf_statement(bank_path)
         if not bank_txns:
             raise ValueError("Could not extract transactions from PDF. Make sure it's a digital (not scanned) bank statement.")
     else:
@@ -686,8 +730,8 @@ def run_bankrec(bank_path: str, tally_path: str, bank_filename: str = '') -> Dic
         raise ValueError("No transactions found in bank statement. Please check the file format.")
 
     # Parse tally ledger
-    tally_txns = parse_tally_ledger(tally_path)
+    tally_txns, closing_balance_tally, closing_dr_cr_tally = parse_tally_ledger(tally_path)
     if not tally_txns:
         raise ValueError("No transactions found in Tally ledger. Please check the file format.")
 
-    return reconcile(bank_txns, tally_txns)
+    return reconcile(bank_txns, tally_txns, closing_balance_bank, closing_balance_tally, closing_dr_cr_tally)

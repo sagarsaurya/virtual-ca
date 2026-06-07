@@ -1664,6 +1664,8 @@
 
       <!-- Reconciliation Summary -->
       <div id="bancRecSummary" class="hidden">
+        <!-- Closing balance banner -->
+        <div id="br-closing-balance-banner" class="hidden mb-4"></div>
         <div class="grid grid-cols-4 gap-5 mb-6">
           <div class="stat-card card-shadow text-center border-t-4 border-green-400">
             <div class="text-3xl font-bold text-green-600" id="br-matched">—</div>
@@ -2902,6 +2904,39 @@ function renderBankRec(data) {
           </tr>`).join('')}
         </tbody>
       </table></div>`;
+
+  // Closing balance banner
+  const cbBanner = document.getElementById('br-closing-balance-banner');
+  if (cbBanner) {
+    if (s.closing_balance_bank != null && s.closing_balance_tally != null) {
+      const matched = s.closing_balance_match;
+      const bankAmt   = '₹' + Number(s.closing_balance_bank).toLocaleString('en-IN', {minimumFractionDigits:2});
+      const tallyAmt  = '₹' + Number(s.closing_balance_tally).toLocaleString('en-IN', {minimumFractionDigits:2}) + ' ' + (s.closing_dr_cr_tally || '');
+      const diffAmt   = '₹' + Number(s.closing_balance_diff).toLocaleString('en-IN', {minimumFractionDigits:2});
+      if (matched) {
+        cbBanner.className = 'mb-4 p-4 rounded-xl border border-green-400 bg-green-50 flex items-start gap-3';
+        cbBanner.innerHTML = `
+          <div class="text-green-500 text-2xl mt-0.5"><i class="fas fa-check-circle"></i></div>
+          <div>
+            <div class="font-bold text-green-700 text-base">Closing Balance Matches ✅</div>
+            <div class="text-sm text-green-600 mt-1">Bank: <strong>${bankAmt}</strong> &nbsp;|&nbsp; Tally: <strong>${tallyAmt}</strong></div>
+            <div class="text-xs text-green-500 mt-1">No missing entries detected based on closing balance comparison.</div>
+          </div>`;
+      } else {
+        cbBanner.className = 'mb-4 p-4 rounded-xl border border-red-400 bg-red-50 flex items-start gap-3';
+        cbBanner.innerHTML = `
+          <div class="text-red-500 text-2xl mt-0.5"><i class="fas fa-exclamation-triangle"></i></div>
+          <div>
+            <div class="font-bold text-red-700 text-base">Closing Balance Mismatch ⚠️</div>
+            <div class="text-sm text-red-600 mt-1">Bank: <strong>${bankAmt}</strong> &nbsp;|&nbsp; Tally: <strong>${tallyAmt}</strong></div>
+            <div class="text-sm text-red-600 mt-1">Difference: <strong>${diffAmt}</strong> — Some entries may be missing or incorrect in Tally.</div>
+          </div>`;
+      }
+      cbBanner.classList.remove('hidden');
+    } else {
+      cbBanner.classList.add('hidden');
+    }
+  }
 
   document.getElementById('bancRecSummary').classList.remove('hidden');
   document.getElementById('bancRecEmpty').classList.add('hidden');
