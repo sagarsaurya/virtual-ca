@@ -79,12 +79,85 @@ def parse_pdf_statement(filepath: str) -> List[Dict]:
             for table in tables:
                 rows.extend(table)
 
-    if bank == 'ICICI':   return _parse_icici(rows, full_text)
-    if bank == 'HDFC':    return _parse_hdfc(rows, full_text)
-    if bank == 'SBI':     return _parse_sbi(rows, full_text)
-    if bank == 'AXIS':    return _parse_axis(rows, full_text)
-    if bank == 'KOTAK':   return _parse_kotak(rows, full_text)
-    return _parse_generic(rows, full_text, bank)
+    # Try table-based parsing first
+    txns = []
+    if bank == 'ICICI':   txns = _parse_icici(rows, full_text)
+    elif bank == 'HDFC':  txns = _parse_hdfc(rows, full_text)
+    elif bank == 'SBI':   txns = _parse_sbi(rows, full_text)
+    elif bank == 'AXIS':  txns = _parse_axis(rows, full_text)
+    elif bank == 'KOTAK': txns = _parse_kotak(rows, full_text)
+    else:                 txns = _parse_generic(rows, full_text, bank)
+
+    # If table parsing failed, fall back to text-based parsing
+    if not txns:
+        txns = _parse_text_fallback(full_text, bank)
+
+    return txns
+
+
+def _parse_text_fallback(text: str, bank: str) -> List[Dict]:
+    """
+    Regex-based fallback for PDFs where pdfplumber can't extract tables.
+    Works by finding date patterns followed by amounts on the same line.
+    Handles ICICI, HDFC, SBI and generic Indian bank statement text layouts.
+    """
+    txns = []
+
+    # Date pattern: dd/mm/yyyy or dd-mm-yyyy or dd Mon yyyy or dd-Mon-yyyy
+    DATE_PAT = r'(\d{2}[\/\-]\d{2}[\/\-]\d{4}|\d{2}[\/\-]\d{2}[\/\-]\d{2}|\d{2}[\s\-][A-Za-z]{3}[\s\-]\d{4}|\d{2}[\s\-][A-Za-z]{3}[\s\-]\d{2})'
+    # Amount: numbers with optional commas, optional decimal
+    AMT_PAT  = r'([\d,]+\.?\d{0,2})'
+
+    lines = text.split('\n')
+
+    for line in lines:
+        line = line.strip()
+        if len(line) < 10: continue
+
+        # Try to find a date at start of line
+        m = re.match(r'^' + DATE_PAT + r'(.{0,80}?)\s+' + AMT_PAT + r'\s+' + AMT_PAT + r'(?:\s+' + AMT_PAT + r')?', line)
+        if m:
+            dt = parse_date(m.group(1))
+            if not dt: continue
+            narration = m.group(2).strip()
+            # Last two amounts before balance = debit/credit
+            amounts = [clean_amount(m.group(i)) for i in [3,4,5] if m.group(i)]
+            amounts = [a for a in amounts if a > 0]
+            if len(amounts) >= 2:
+                # debit, credit, balance OR credit, debit, balance
+                debit  = amounts[0]
+                credit = amounts[1]
+                amount = debit if debit else credit
+                dr_cr  = 'Dr' if debit else 'Cr'
+            elif len(amounts) == 1:
+                amount = amounts[0]
+                dr_cr  = _guess_dr_cr(narration)
+            else:
+                continue
+            if amount == 0: continue
+            txns.append({'date': dt, 'narration': narration, 'amount': amount, 'dr_cr': dr_cr, 'source': 'bank'})
+            continue
+
+        # Single-amount line (some banks show one amount column with Dr/Cr indicator)
+        m2 = re.match(r'^' + DATE_PAT + r'(.{5,60}?)\s+' + AMT_PAT + r'\s*(Dr|CR|Cr|DR)?\s*$', line, re.IGNORECASE)
+        if m2:
+            dt = parse_date(m2.group(1))
+            if not dt: continue
+            narration = m2.group(2).strip()
+            amount    = clean_amount(m2.group(3))
+            dr_cr_raw = (m2.group(4) or '').upper()
+            dr_cr = 'Dr' if 'DR' in dr_cr_raw else ('Cr' if 'CR' in dr_cr_raw else _guess_dr_cr(narration))
+            if amount == 0: continue
+            txns.append({'date': dt, 'narration': narration, 'amount': amount, 'dr_cr': dr_cr, 'source': 'bank'})
+
+    return txns
+
+
+def _guess_dr_cr(narration: str) -> str:
+    n = narration.upper()
+    if any(x in n for x in ['PAYMENT','DEBIT','DR','TRANSFER OUT','WITHDRAWAL','NEFT OUT','IMPS OUT','UPI OUT','EMI','CHARGES']): return 'Dr'
+    if any(x in n for x in ['RECEIPT','CREDIT','CR','TRANSFER IN','DEPOSIT','NEFT IN','IMPS IN','UPI IN','SALARY','INTEREST']): return 'Cr'
+    return 'Dr'
 
 
 # ── ICICI ─────────────────────────────────────────────────────────────────────
