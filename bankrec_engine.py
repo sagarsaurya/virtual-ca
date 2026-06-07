@@ -611,27 +611,29 @@ def reconcile(bank_txns: List[Dict], tally_txns: List[Dict],
     tally_only = []
     duplicates = []
 
-    # Detect duplicates within each list
-    # Only flag as duplicate if date + amount + narration prefix are all same
+    # Detect duplicates ONLY in bank statement.
+    # Tally is NOT checked for duplicates — Tally uses voucher numbers to track
+    # entries, so two receipts from same party on same day for same amount are
+    # perfectly valid (e.g. two separate payments from Aakash on 1-May).
+    # Checking Tally for duplicates causes false positives and drops real entries.
     def narr_key(n):
-        # Use first 15 chars of narration (ignores ref numbers)
         return str(n or '')[:15].upper().strip()
 
-    def find_dupes(txns, label):
+    def find_bank_dupes(txns):
         seen = {}
         dupes = []
         for t in txns:
             key = (t['date'], round(t['amount'], 2), narr_key(t['narration']))
             if key in seen:
-                dupes.append({**t, 'duplicate_of': seen[key]['narration'], 'in': label})
+                dupes.append({**t, 'duplicate_of': seen[key]['narration'], 'in': 'Bank'})
             else:
                 seen[key] = t
         dupe_keys = {(d['date'], round(d['amount'],2), narr_key(d['narration'])) for d in dupes}
         return dupes, [t for t in txns if (t['date'], round(t['amount'],2), narr_key(t['narration'])) not in dupe_keys]
 
-    bank_dupes,  bank_clean  = find_dupes(bank_txns,  'Bank')
-    tally_dupes, tally_clean = find_dupes(tally_txns, 'Tally')
-    duplicates = bank_dupes + tally_dupes
+    bank_dupes, bank_clean = find_bank_dupes(bank_txns)
+    tally_clean = tally_txns          # use all Tally entries as-is
+    duplicates  = bank_dupes          # only bank-side duplicates reported
 
     # Match bank vs tally (date ±1 day, amount within Rs.1)
     tally_used = [False] * len(tally_clean)
