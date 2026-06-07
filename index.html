@@ -1666,39 +1666,49 @@
       <div id="bancRecSummary" class="hidden">
         <!-- Closing balance banner -->
         <div id="br-closing-balance-banner" class="hidden mb-4"></div>
-        <div class="grid grid-cols-4 gap-5 mb-6">
+        <div class="grid grid-cols-5 gap-4 mb-6">
           <div class="stat-card card-shadow text-center border-t-4 border-green-400">
             <div class="text-3xl font-bold text-green-600" id="br-matched">—</div>
             <div class="text-sm text-gray-500 mt-1">Matched</div>
             <div class="text-xs text-green-400 mt-1" id="br-match-pct">—</div>
           </div>
+          <div class="stat-card card-shadow text-center border-t-4 border-purple-500 cursor-pointer" onclick="switchBRTab('wrongdate')">
+            <div class="text-3xl font-bold text-purple-600" id="br-wrongdate">—</div>
+            <div class="text-sm text-gray-500 mt-1">Wrong Date</div>
+            <div class="text-xs text-purple-400 mt-1">Fix date in Tally</div>
+          </div>
           <div class="stat-card card-shadow text-center border-t-4 border-red-400">
             <div class="text-3xl font-bold text-red-600" id="br-bank-only">—</div>
-            <div class="text-sm text-gray-500 mt-1">Bank Only</div>
-            <div class="text-xs text-red-400 mt-1">In bank, not in Tally</div>
+            <div class="text-sm text-gray-500 mt-1">Missing in Tally</div>
+            <div class="text-xs text-red-400 mt-1">Entry not in Tally</div>
           </div>
           <div class="stat-card card-shadow text-center border-t-4 border-yellow-400">
             <div class="text-3xl font-bold text-yellow-600" id="br-tally-only">—</div>
-            <div class="text-sm text-gray-500 mt-1">Tally Only</div>
-            <div class="text-xs text-yellow-400 mt-1">In Tally, not in bank</div>
+            <div class="text-sm text-gray-500 mt-1">Extra in Tally</div>
+            <div class="text-xs text-yellow-400 mt-1">Not in bank</div>
           </div>
           <div class="stat-card card-shadow text-center border-t-4 border-orange-400">
             <div class="text-3xl font-bold text-orange-600" id="br-duplicates">—</div>
             <div class="text-sm text-gray-500 mt-1">Duplicates</div>
-            <div class="text-xs text-orange-400 mt-1">Same amount, same date</div>
+            <div class="text-xs text-orange-400 mt-1">Same amount + date</div>
           </div>
         </div>
 
         <!-- Tabs -->
-        <div class="flex gap-2 mb-5" id="br-tabs">
-          <button id="brtab-unmatched" onclick="switchBRTab('unmatched')" class="px-4 py-2 rounded-xl text-sm font-medium bg-red-500 text-white transition">🔴 Bank Only (<span id="br-tab-bank-count">0</span>)</button>
-          <button id="brtab-tally" onclick="switchBRTab('tally')" class="px-4 py-2 rounded-xl text-sm font-medium bg-white text-gray-500 hover:bg-gray-50 transition">🟡 Tally Only (<span id="br-tab-tally-count">0</span>)</button>
+        <div class="flex flex-wrap gap-2 mb-5" id="br-tabs">
+          <button id="brtab-wrongdate" onclick="switchBRTab('wrongdate')" class="px-4 py-2 rounded-xl text-sm font-medium bg-white text-gray-500 hover:bg-gray-50 transition">📅 Wrong Date in Tally (<span id="br-tab-wrongdate-count">0</span>)</button>
+          <button id="brtab-unmatched" onclick="switchBRTab('unmatched')" class="px-4 py-2 rounded-xl text-sm font-medium bg-white text-gray-500 hover:bg-gray-50 transition">🔴 Missing in Tally (<span id="br-tab-bank-count">0</span>)</button>
+          <button id="brtab-tally" onclick="switchBRTab('tally')" class="px-4 py-2 rounded-xl text-sm font-medium bg-white text-gray-500 hover:bg-gray-50 transition">🟡 Extra in Tally (<span id="br-tab-tally-count">0</span>)</button>
           <button id="brtab-duplicate" onclick="switchBRTab('duplicate')" class="px-4 py-2 rounded-xl text-sm font-medium bg-white text-gray-500 hover:bg-gray-50 transition">🟠 Duplicates (<span id="br-tab-dup-count">0</span>)</button>
           <button id="brtab-matched" onclick="switchBRTab('matched')" class="px-4 py-2 rounded-xl text-sm font-medium bg-white text-gray-500 hover:bg-gray-50 transition">✅ Matched (<span id="br-tab-match-count">0</span>)</button>
         </div>
 
+        <!-- Wrong Date Tab (shown first) -->
+        <div id="brtab-content-wrongdate" class="space-y-3">
+          <div id="br-wrongdate-list"><div class="text-sm text-gray-400 p-4 text-center">Run reconciliation to see results</div></div>
+        </div>
         <!-- Unmatched Tab -->
-        <div id="brtab-content-unmatched" class="space-y-3">
+        <div id="brtab-content-unmatched" class="space-y-3 hidden">
           <div id="br-bank-only-list"><div class="text-sm text-gray-400 p-4 text-center">Run reconciliation to see results</div></div>
         </div>
         <div id="brtab-content-tally" class="space-y-3 hidden">
@@ -2863,20 +2873,52 @@ function renderBankRec(data) {
   document.getElementById('br-bank-only').textContent  = s.bank_only;
   document.getElementById('br-tally-only').textContent = s.tally_only;
   document.getElementById('br-duplicates').textContent = s.duplicates;
-  document.getElementById('br-tab-bank-count').textContent  = s.bank_only;
-  document.getElementById('br-tab-tally-count').textContent = s.tally_only;
-  document.getElementById('br-tab-dup-count').textContent   = s.duplicates;
-  document.getElementById('br-tab-match-count').textContent = s.matched;
+  document.getElementById('br-wrongdate').textContent  = s.wrong_date || 0;
+  document.getElementById('br-tab-bank-count').textContent      = s.bank_only;
+  document.getElementById('br-tab-tally-count').textContent     = s.tally_only;
+  document.getElementById('br-tab-dup-count').textContent       = s.duplicates;
+  document.getElementById('br-tab-match-count').textContent     = s.matched;
+  document.getElementById('br-tab-wrongdate-count').textContent = s.wrong_date || 0;
 
-  // Bank only
+  // Wrong date in Tally
+  const wdList = data.wrong_date || [];
+  document.getElementById('br-wrongdate-list').innerHTML = !wdList.length
+    ? '<div class="p-6 text-center text-green-600 font-semibold"><i class="fas fa-check-circle mr-2"></i>No wrong-date entries found</div>'
+    : wdList.map(t => `
+      <div class="border border-purple-300 bg-purple-50 rounded-xl p-4">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-xs font-bold bg-purple-600 text-white px-2 py-0.5 rounded-full">WRONG DATE IN TALLY</span>
+              <span class="text-sm font-semibold text-purple-700">${t.dr_cr} ₹${Number(t.amount).toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+            </div>
+            <div class="text-sm text-gray-700 mb-1"><span class="font-medium">Bank narration:</span> ${t.narration}</div>
+            <div class="text-sm text-gray-500 mb-2"><span class="font-medium">Tally narration:</span> ${t.tally_narration}</div>
+            <div class="flex gap-4 text-sm">
+              <div class="bg-white border border-gray-200 rounded-lg px-3 py-1.5">
+                <div class="text-xs text-gray-400">Bank Date (correct)</div>
+                <div class="font-bold text-gray-800">${t.bank_date}</div>
+              </div>
+              <div class="text-gray-400 self-center text-lg">→</div>
+              <div class="bg-red-50 border border-red-300 rounded-lg px-3 py-1.5">
+                <div class="text-xs text-red-400">Tally Date (wrong)</div>
+                <div class="font-bold text-red-700">${t.tally_date}</div>
+              </div>
+            </div>
+            <div class="mt-2 text-xs text-purple-600 font-medium">⚠️ Fix: Change date in Tally from ${t.tally_date} to ${t.bank_date}</div>
+          </div>
+        </div>
+      </div>`).join('');
+
+  // Bank only (truly missing — not date errors)
   document.getElementById('br-bank-only-list').innerHTML = !data.bank_only.length
-    ? '<div class="p-6 text-center text-green-600 font-semibold"><i class="fas fa-check-circle mr-2"></i>No unmatched bank entries</div>'
-    : data.bank_only.map(t => brCard(t, 'red', 'BANK ONLY', 'In bank statement but missing in Tally')).join('');
+    ? '<div class="p-6 text-center text-green-600 font-semibold"><i class="fas fa-check-circle mr-2"></i>No missing entries in Tally</div>'
+    : data.bank_only.map(t => brCard(t, 'red', 'MISSING IN TALLY', 'This bank entry has no matching entry in Tally at all')).join('');
 
-  // Tally only
+  // Tally only (truly extra — not date errors)
   document.getElementById('br-tally-only-list').innerHTML = !data.tally_only.length
-    ? '<div class="p-6 text-center text-green-600 font-semibold"><i class="fas fa-check-circle mr-2"></i>No Tally-only entries</div>'
-    : data.tally_only.map(t => brCard(t, 'yellow', 'TALLY ONLY', 'In Tally but missing in bank statement')).join('');
+    ? '<div class="p-6 text-center text-green-600 font-semibold"><i class="fas fa-check-circle mr-2"></i>No extra entries in Tally</div>'
+    : data.tally_only.map(t => brCard(t, 'yellow', 'EXTRA IN TALLY', 'This Tally entry has no matching entry in bank statement')).join('');
 
   // Duplicates
   document.getElementById('br-duplicates-list').innerHTML = !data.duplicates.length
@@ -2940,7 +2982,9 @@ function renderBankRec(data) {
 
   document.getElementById('bancRecSummary').classList.remove('hidden');
   document.getElementById('bancRecEmpty').classList.add('hidden');
-  switchBRTab('unmatched');
+  // Default to wrong-date tab if there are any, else matched
+  const defaultTab = (s.wrong_date > 0) ? 'wrongdate' : (s.bank_only > 0 ? 'unmatched' : 'matched');
+  switchBRTab(defaultTab);
 }
 
 function brCard(t, color, label, issue) {
@@ -2978,13 +3022,13 @@ function simulateBankUpload(type) {
   }
 }
 function switchBRTab(tab) {
-  ['unmatched','tally','duplicate','matched'].forEach(t => {
+  ['wrongdate','unmatched','tally','duplicate','matched'].forEach(t => {
     document.getElementById('brtab-content-'+t)?.classList.add('hidden');
     const btn = document.getElementById('brtab-'+t);
     if(btn) btn.className = 'px-4 py-2 rounded-xl text-sm font-medium bg-white text-gray-500 hover:bg-gray-50 transition';
   });
   document.getElementById('brtab-content-'+tab)?.classList.remove('hidden');
-  const colors = { unmatched:'bg-red-500 text-white', tally:'bg-yellow-500 text-white', duplicate:'bg-orange-500 text-white', matched:'bg-green-500 text-white' };
+  const colors = { wrongdate:'bg-purple-600 text-white', unmatched:'bg-red-500 text-white', tally:'bg-yellow-500 text-white', duplicate:'bg-orange-500 text-white', matched:'bg-green-500 text-white' };
   const active = document.getElementById('brtab-'+tab);
   if(active) active.className = 'px-4 py-2 rounded-xl text-sm font-medium transition ' + colors[tab];
 }

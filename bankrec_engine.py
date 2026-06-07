@@ -683,6 +683,37 @@ def reconcile(bank_txns: List[Dict], tally_txns: List[Dict],
         'issue':     f"Duplicate entry in {d.get('in','')} — same date & amount appears twice",
     } for d in duplicates]
 
+    # ── Wrong date detection ──────────────────────────────────────────────────
+    # Bank is ground truth. For each bank_only entry, check if same amount exists
+    # in tally_only — if yes, the entry exists in Tally but with a wrong date.
+    wrong_date = []
+    tally_only_used = [False] * len(tally_only)
+    remaining_bank_only = []
+
+    for bo in bank_only:
+        found_wrong = False
+        for k, to in enumerate(tally_only):
+            if tally_only_used[k]: continue
+            amt_match = abs(bo['amount'] - to['amount']) < 1.0
+            if amt_match:
+                wrong_date.append({
+                    'bank_date':      bo['date'],
+                    'tally_date':     to['date'],
+                    'narration':      bo['narration'],
+                    'tally_narration':to['narration'],
+                    'amount':         bo['amount'],
+                    'dr_cr':          bo['dr_cr'],
+                    'issue':          f"Entry exists in Tally but with WRONG DATE — Bank: {bo['date']} | Tally: {to['date']} → Fix date in Tally",
+                })
+                tally_only_used[k] = True
+                found_wrong = True
+                break
+        if not found_wrong:
+            remaining_bank_only.append(bo)
+
+    # Remaining tally_only (not matched by amount to any bank_only)
+    remaining_tally_only = [to for k, to in enumerate(tally_only) if not tally_only_used[k]]
+
     # Closing balance comparison
     cb_bank   = round(closing_balance_bank,   2) if closing_balance_bank   is not None else None
     cb_tally  = round(closing_balance_tally,  2) if closing_balance_tally  is not None else None
@@ -690,17 +721,19 @@ def reconcile(bank_txns: List[Dict], tally_txns: List[Dict],
     cb_match  = (cb_diff is not None and cb_diff < 1.0)   # within Re.1 = match
 
     return {
-        'matched':    matched,
-        'bank_only':  bank_only,
-        'tally_only': tally_only,
-        'duplicates': dupes_out,
+        'matched':      matched,
+        'bank_only':    remaining_bank_only,
+        'tally_only':   remaining_tally_only,
+        'duplicates':   dupes_out,
+        'wrong_date':   wrong_date,
         'summary': {
             'total_bank':    len(bank_txns),
             'total_tally':   len(tally_txns),
             'matched':       len(matched),
-            'bank_only':     len(bank_only),
-            'tally_only':    len(tally_only),
+            'bank_only':     len(remaining_bank_only),
+            'tally_only':    len(remaining_tally_only),
             'duplicates':    len(dupes_out),
+            'wrong_date':    len(wrong_date),
             'match_pct':     round(len(matched) / max(len(bank_txns), 1) * 100, 1),
             'closing_balance_bank':  cb_bank,
             'closing_balance_tally': cb_tally,
