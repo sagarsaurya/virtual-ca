@@ -334,15 +334,20 @@
           </div>
 
           <!-- Drop zone -->
-          <div class="upload-zone rounded-2xl p-12 text-center cursor-pointer mb-5" onclick="simulateUpload()">
+          <label class="upload-zone rounded-2xl p-12 text-center cursor-pointer mb-5 block" for="uploadFileInput">
             <div class="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-4">
               <i class="fas fa-file-excel text-green-500 text-3xl"></i>
             </div>
-            <p class="text-gray-800 font-semibold text-base mb-1">Drop your Excel file here</p>
-            <p class="text-gray-400 text-sm mb-5">or click to browse from your computer</p>
-            <span class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition cursor-pointer">Choose File</span>
-            <p class="text-xs text-gray-400 mt-4">Supports: .xlsx, .xls, .csv &nbsp;·&nbsp; Max 10MB</p>
-          </div>
+            <p class="text-gray-800 font-semibold text-base mb-1">Drop your Trial Balance here</p>
+            <p class="text-gray-400 text-sm mb-2" id="uploadFileName">or click to browse from your computer</p>
+            <input type="file" id="uploadFileInput" accept=".xlsx,.xls" class="hidden"
+              onchange="document.getElementById('uploadFileName').textContent = this.files[0]?.name || 'or click to browse'; document.getElementById('uploadRunBtn').classList.remove('hidden');">
+            <span class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition">Choose File</span>
+            <p class="text-xs text-gray-400 mt-4">Trial Balance .xlsx from Tally &nbsp;·&nbsp; Max 10MB</p>
+          </label>
+          <button id="uploadRunBtn" onclick="simulateUpload()" class="hidden w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-2xl text-sm font-bold transition mb-5">
+            <i class="fas fa-play mr-2"></i>Run Audit on this file
+          </button>
 
           <!-- How to export from Tally — collapsible -->
           <div class="border border-gray-100 rounded-xl overflow-hidden mb-5">
@@ -1235,8 +1240,11 @@
       </div>
 
       <div class="bg-white rounded-2xl card-shadow p-6">
-        <h3 class="font-semibold text-gray-800 mb-5">March 2026 — Compliance Calendar</h3>
-        <div class="space-y-4">
+        <h3 class="font-semibold text-gray-800 mb-5">Upcoming Due Dates — Real Time</h3>
+        <div id="compliance-dynamic-list" class="space-y-4">
+          <div class="text-center py-8 text-sm text-gray-400">Loading...</div>
+        </div>
+        <div class="hidden space-y-4" id="compliance-static-old">
 
           <div class="compliance-card overdue rounded-xl p-4 flex items-center gap-4">
             <div class="w-14 h-14 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
@@ -1313,98 +1321,28 @@
             </select>
           </div>
         </div>
-        <table class="w-full text-sm">
-          <thead><tr class="text-left text-gray-400 border-b border-gray-100 text-xs uppercase">
-            <th class="pb-3 font-medium">File Name</th><th class="pb-3 font-medium">Uploaded By</th>
-            <th class="pb-3 font-medium">Date</th><th class="pb-3 font-medium">Period</th>
-            <th class="pb-3 font-medium">Result</th><th class="pb-3 font-medium">Action</th>
-          </tr></thead>
-          <tbody class="divide-y divide-gray-50">
-            <tr class="hover:bg-gray-50 cursor-pointer" onclick="showPage('results')">
-              <td class="py-3.5"><div class="flex items-center gap-2"><i class="fas fa-file-excel text-green-500"></i><span class="font-medium text-gray-800">AJKL Traial balance.xlsx</span></div></td>
-              <td class="py-3.5 text-gray-500">Sagar Pathak</td>
-              <td class="py-3.5 text-gray-500">14 Mar 2026</td>
-              <td class="py-3.5 text-gray-500">FY 2025-26</td>
-              <td class="py-3.5"><div class="flex gap-1"><span class="tag-critical text-xs px-2 py-0.5 rounded-full">7 Critical</span><span class="tag-review text-xs px-2 py-0.5 rounded-full">12 Review</span></div></td>
-              <td class="py-3.5"><button class="text-blue-600 text-xs hover:underline">View Report</button></td>
-            </tr>
-            <tr class="hover:bg-gray-50 cursor-pointer">
-              <td class="py-3.5"><div class="flex items-center gap-2"><i class="fas fa-file-excel text-green-500"></i><span class="font-medium text-gray-800">AJKL Trial Balance March.xlsx</span></div></td>
-              <td class="py-3.5 text-gray-500">Rahul Sharma</td>
-              <td class="py-3.5 text-gray-500">11 Mar 2026</td>
-              <td class="py-3.5 text-gray-500">FY 2024-25</td>
-              <td class="py-3.5"><span class="tag-ok text-xs px-2 py-0.5 rounded-full">✅ All OK</span></td>
-              <td class="py-3.5"><button class="text-blue-600 text-xs hover:underline">View Report</button></td>
-            </tr>
-            <tr class="hover:bg-gray-50 cursor-pointer">
-              <td class="py-3.5"><div class="flex items-center gap-2"><i class="fas fa-file-excel text-green-500"></i><span class="font-medium text-gray-800">TB_Feb2026.xlsx</span></div></td>
-              <td class="py-3.5 text-gray-500">Sagar Pathak</td>
-              <td class="py-3.5 text-gray-500">07 Mar 2026</td>
-              <td class="py-3.5 text-gray-500">FY 2025-26</td>
-              <td class="py-3.5"><span class="tag-review text-xs px-2 py-0.5 rounded-full">5 Review</span></td>
-              <td class="py-3.5"><button class="text-blue-600 text-xs hover:underline">View Report</button></td>
-            </tr>
-          </tbody>
-        </table>
+        <div id="history-body">
+          <div class="flex flex-col items-center py-12 text-center">
+            <i class="fas fa-folder-open text-gray-200 text-4xl mb-3"></i>
+            <div class="text-sm text-gray-400">No audit history yet</div>
+            <button onclick="showPage('fullaudit')" class="mt-4 bg-orange-500 text-white text-xs px-4 py-2 rounded-xl font-semibold">Run First Audit</button>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- ===== ADMIN PAGE ===== -->
     <div id="page-admin" class="page p-8">
       <div class="grid grid-cols-3 gap-6 mb-6">
-        <div class="stat-card card-shadow"><div class="text-sm text-gray-500 mb-1">Total Users</div><div class="text-3xl font-bold text-gray-800">4</div></div>
-        <div class="stat-card card-shadow"><div class="text-sm text-gray-500 mb-1">Total Uploads</div><div class="text-3xl font-bold text-gray-800">24</div></div>
-        <div class="stat-card card-shadow"><div class="text-sm text-gray-500 mb-1">Errors Fixed</div><div class="text-3xl font-bold text-green-600">47</div></div>
+        <div class="stat-card card-shadow"><div class="text-sm text-gray-500 mb-1">Total Audits Run</div><div class="text-3xl font-bold text-gray-800" id="admin-total">—</div></div>
+        <div class="stat-card card-shadow"><div class="text-sm text-gray-500 mb-1">Last Score</div><div class="text-3xl font-bold text-gray-800" id="admin-score">—</div></div>
+        <div class="stat-card card-shadow"><div class="text-sm text-gray-500 mb-1">Critical Issues (last)</div><div class="text-3xl font-bold text-red-600" id="admin-critical">—</div></div>
       </div>
 
-      <div class="grid grid-cols-2 gap-6">
-        <div class="bg-white rounded-2xl card-shadow p-6">
-          <div class="flex items-center justify-between mb-5">
-            <h3 class="font-semibold text-gray-800">Users</h3>
-            <button class="bg-blue-600 text-white px-3 py-2 rounded-xl text-xs hover:bg-blue-700 transition">
-              <i class="fas fa-plus mr-1"></i>Add User
-            </button>
-          </div>
-          <div class="space-y-3">
-            <div class="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
-              <div class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm">S</div>
-              <div class="flex-1"><div class="text-sm font-medium text-gray-800">Sagar Pathak</div><div class="text-xs text-gray-400">admin@company.com</div></div>
-              <span class="bg-blue-100 text-blue-600 text-xs px-2 py-0.5 rounded-full">Admin</span>
-            </div>
-            <div class="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50">
-              <div class="w-9 h-9 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold text-sm">R</div>
-              <div class="flex-1"><div class="text-sm font-medium text-gray-800">Rahul Sharma</div><div class="text-xs text-gray-400">rahul@company.com</div></div>
-              <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">User</span>
-              <button class="text-red-400 hover:text-red-500 text-xs ml-2"><i class="fas fa-trash"></i></button>
-            </div>
-            <div class="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50">
-              <div class="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center text-white font-bold text-sm">P</div>
-              <div class="flex-1"><div class="text-sm font-medium text-gray-800">Priya Mehta</div><div class="text-xs text-gray-400">priya@company.com</div></div>
-              <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">User</span>
-              <button class="text-red-400 hover:text-red-500 text-xs ml-2"><i class="fas fa-trash"></i></button>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-white rounded-2xl card-shadow p-6">
-          <h3 class="font-semibold text-gray-800 mb-5">All Uploads — Overview</h3>
-          <div class="space-y-3">
-            <div class="flex items-center gap-3 p-3 rounded-xl border border-gray-100">
-              <i class="fas fa-file-excel text-green-500"></i>
-              <div class="flex-1"><div class="text-sm font-medium text-gray-700">AJKL Traial balance.xlsx</div><div class="text-xs text-gray-400">Sagar Pathak • 14 Mar 2026</div></div>
-              <span class="tag-critical text-xs px-2 py-0.5 rounded-full">7 Critical</span>
-            </div>
-            <div class="flex items-center gap-3 p-3 rounded-xl border border-gray-100">
-              <i class="fas fa-file-excel text-green-500"></i>
-              <div class="flex-1"><div class="text-sm font-medium text-gray-700">AJKL Trial Balance March.xlsx</div><div class="text-xs text-gray-400">Rahul Sharma • 11 Mar 2026</div></div>
-              <span class="tag-ok text-xs px-2 py-0.5 rounded-full">✅ All OK</span>
-            </div>
-            <div class="flex items-center gap-3 p-3 rounded-xl border border-gray-100">
-              <i class="fas fa-file-excel text-green-500"></i>
-              <div class="flex-1"><div class="text-sm font-medium text-gray-700">TB_Feb2026.xlsx</div><div class="text-xs text-gray-400">Sagar Pathak • 07 Mar 2026</div></div>
-              <span class="tag-review text-xs px-2 py-0.5 rounded-full">5 Review</span>
-            </div>
-          </div>
+      <div class="bg-white rounded-2xl card-shadow p-6">
+        <h3 class="font-semibold text-gray-800 mb-4">Audit History</h3>
+        <div id="admin-history-list">
+          <div class="text-sm text-gray-400 py-6 text-center">No audits run yet</div>
         </div>
       </div>
     </div>
@@ -2303,15 +2241,186 @@ function showPage(page) {
   };
   const subs = {
     dashboard:'Welcome back, Sagar', upload:'Upload Tally Trial Balance Excel',
-    results:'AJKL Trial Balance — FY 2025-26', history:'All your past uploads',
+    results:'Analysis Results', history:'All your past audits',
     askca:'AI reads your uploaded data to answer specific questions', journal:'Get correct journal entries instantly',
-    compliance:'TDS, PT, Salary due dates', admin:'Manage users and monitor activity',
+    compliance:'TDS, PT, GST, Advance Tax — real due dates', admin:'Audit history and stats',
     bankrec:'Match bank statement vs Tally — find unmatched & duplicate entries',
     tdsanalysis:'Section-wise TDS payable, deposited, pending & return mismatches',
     fullaudit:'Complete CA-level audit — ledgers, TDS, GST, loans, cash violations & compliance'
   };
   document.getElementById('pageTitle').textContent = titles[page]||'';
   document.getElementById('pageSubtitle').textContent = subs[page]||'';
+
+  // Load real data when switching pages
+  if (page === 'dashboard')   loadDashboard();
+  if (page === 'history')     loadHistory();
+  if (page === 'compliance')  loadCompliance();
+  if (page === 'admin')       loadAdminPage();
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const r = await fetch(API_BASE + '/api/dashboard');
+    if (!r.ok) return;
+    const d = await r.json();
+
+    document.getElementById('dash-total').textContent   = d.total_audits || 0;
+    document.getElementById('dash-critical').textContent = d.last_critical != null ? d.last_critical : '—';
+    document.getElementById('dash-warnings').textContent = d.last_warnings != null ? d.last_warnings : '—';
+    const score = d.last_score;
+    document.getElementById('dash-score').textContent     = score != null ? score + '%' : '—';
+    document.getElementById('dash-score-bar').style.width = (score || 0) + '%';
+
+    // Recent list
+    const list = document.getElementById('dash-recent-list');
+    if (!d.recent || d.recent.length === 0) {
+      list.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-center">
+        <div class="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center mb-3">
+          <i class="fas fa-folder-open text-gray-300 text-2xl"></i>
+        </div>
+        <div class="text-sm font-medium text-gray-400">No audits yet</div>
+        <div class="text-xs text-gray-300 mt-1">Run Full Audit to see results here</div>
+        <button onclick="showPage('fullaudit')" class="mt-4 bg-orange-500 text-white text-xs px-4 py-2 rounded-xl font-semibold hover:bg-orange-600 transition">Run Full Audit</button>
+      </div>`;
+      return;
+    }
+    list.innerHTML = '<div class="space-y-3">' + d.recent.map(a => {
+      const dt  = a.audited_at ? new Date(a.audited_at).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}) : '';
+      const tag = a.critical > 0
+        ? `<span class="tag-critical text-xs px-2.5 py-1 rounded-full font-medium">${a.critical} Critical</span>`
+        : `<span class="tag-ok text-xs px-2.5 py-1 rounded-full font-medium">All Clear</span>`;
+      return `<div class="flex items-center gap-4 p-4 rounded-xl border border-gray-100 hover:border-orange-200 hover:bg-orange-50/30 cursor-pointer transition" onclick="showPage('fullaudit')">
+        <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0">
+          <i class="fas fa-file-excel text-orange-500"></i>
+        </div>
+        <div class="flex-1">
+          <div class="font-medium text-gray-800 text-sm">${a.filename || 'Trial Balance'}</div>
+          <div class="text-xs text-gray-400 mt-0.5">${dt} ${a.period ? '• ' + a.period : ''}</div>
+        </div>
+        <div class="flex items-center gap-2">${tag}</div>
+        <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
+      </div>`;
+    }).join('') + '</div>';
+  } catch(e) { /* backend not running */ }
+}
+
+// ── HISTORY ───────────────────────────────────────────────────────────────────
+async function loadHistory() {
+  const el = document.getElementById('history-body');
+  if (!el) return;
+  try {
+    const r = await fetch(API_BASE + '/api/audit/history');
+    if (!r.ok) return;
+    const hist = await r.json();
+    if (!hist.length) {
+      el.innerHTML = `<div class="flex flex-col items-center py-12 text-center">
+        <i class="fas fa-folder-open text-gray-200 text-4xl mb-3"></i>
+        <div class="text-sm text-gray-400">No audit history yet</div>
+        <button onclick="showPage('fullaudit')" class="mt-4 bg-orange-500 text-white text-xs px-4 py-2 rounded-xl font-semibold">Run First Audit</button>
+      </div>`;
+      return;
+    }
+    el.innerHTML = `<table class="w-full text-sm">
+      <thead><tr class="text-left text-gray-400 border-b border-gray-100 text-xs uppercase">
+        <th class="pb-3 font-medium">File</th>
+        <th class="pb-3 font-medium">Date</th>
+        <th class="pb-3 font-medium">Period</th>
+        <th class="pb-3 font-medium">Score</th>
+        <th class="pb-3 font-medium">Issues</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-50">
+        ${hist.map(a => {
+          const dt = new Date(a.audited_at).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
+          const scoreColor = a.score >= 80 ? 'text-green-600' : a.score >= 60 ? 'text-yellow-600' : 'text-red-600';
+          return `<tr class="hover:bg-gray-50">
+            <td class="py-3.5"><div class="flex items-center gap-2"><i class="fas fa-file-excel text-green-500"></i><span class="font-medium text-gray-800">${a.filename}</span></div></td>
+            <td class="py-3.5 text-gray-500">${dt}</td>
+            <td class="py-3.5 text-gray-500">${a.period || '—'}</td>
+            <td class="py-3.5 font-bold ${scoreColor}">${a.score}/100</td>
+            <td class="py-3.5"><div class="flex gap-1">
+              ${a.critical ? `<span class="tag-critical text-xs px-2 py-0.5 rounded-full">${a.critical} Critical</span>` : ''}
+              ${a.warnings ? `<span class="tag-review text-xs px-2 py-0.5 rounded-full">${a.warnings} Review</span>` : ''}
+              ${!a.critical && !a.warnings ? `<span class="tag-ok text-xs px-2 py-0.5 rounded-full">All Clear</span>` : ''}
+            </div></td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
+  } catch(e) {}
+}
+
+// ── COMPLIANCE CALENDAR ───────────────────────────────────────────────────────
+async function loadCompliance() {
+  const el = document.getElementById('compliance-dynamic-list');
+  if (!el) return;
+  try {
+    const r = await fetch(API_BASE + '/api/compliance');
+    if (!r.ok) return;
+    const items = await r.json();
+    const colorMap = {overdue:'compliance-card overdue', upcoming:'compliance-card upcoming', ok:'compliance-card done'};
+    const iconMap  = {overdue:'fas fa-exclamation-circle text-red-500', upcoming:'fas fa-clock text-yellow-500', ok:'fas fa-check-circle text-green-500'};
+    const textMap  = {overdue:'text-red-700', upcoming:'text-yellow-700', ok:'text-green-700'};
+    const subMap   = {overdue:'text-red-600', upcoming:'text-yellow-600', ok:'text-green-600'};
+    el.innerHTML = items.map(item => {
+      const dueDate = new Date(item.due);
+      const day = dueDate.getDate();
+      const mon = dueDate.toLocaleString('en-IN', {month:'short'}).toUpperCase();
+      const daysLabel = item.days < 0 ? `Overdue by ${Math.abs(item.days)} days` :
+                        item.days === 0 ? 'Due today!' :
+                        `${item.days} days remaining`;
+      return `<div class="${colorMap[item.status]} rounded-xl p-4 flex items-center gap-4 mb-3">
+        <div class="w-14 h-14 rounded-xl flex-shrink-0 flex items-center justify-center
+          ${item.status==='overdue'?'bg-red-100':item.status==='upcoming'?'bg-yellow-100':'bg-green-100'}">
+          <div class="text-center">
+            <div class="font-bold text-lg leading-none ${item.status==='overdue'?'text-red-600':item.status==='upcoming'?'text-yellow-600':'text-green-600'}">${day}</div>
+            <div class="text-xs ${item.status==='overdue'?'text-red-400':item.status==='upcoming'?'text-yellow-400':'text-green-400'}">${mon}</div>
+          </div>
+        </div>
+        <div class="flex-1">
+          <div class="flex items-center gap-2 mb-1">
+            <i class="${iconMap[item.status]} text-sm"></i>
+            <span class="font-semibold ${textMap[item.status]} text-sm">${item.title}</span>
+          </div>
+          <div class="text-xs ${subMap[item.status]}">${item.note}</div>
+          <div class="text-xs ${item.days<0?'text-red-500 font-semibold pulse':item.status==='upcoming'?'text-yellow-500':'text-green-500'} mt-1">${daysLabel}</div>
+        </div>
+        ${item.status !== 'ok' ? `<span class="text-xs font-bold ${item.status==='overdue'?'text-red-600':'text-yellow-600'}">${item.status==='overdue'?'OVERDUE':'UPCOMING'}</span>` : '<i class="fas fa-check text-green-400 text-lg"></i>'}
+      </div>`;
+    }).join('');
+  } catch(e) {}
+}
+
+// ── ADMIN PAGE ────────────────────────────────────────────────────────────────
+async function loadAdminPage() {
+  try {
+    const [db, hist] = await Promise.all([
+      fetch(API_BASE + '/api/dashboard').then(r => r.ok ? r.json() : {}),
+      fetch(API_BASE + '/api/audit/history').then(r => r.ok ? r.json() : []),
+    ]);
+    const ts = document.getElementById('admin-total');
+    const ss = document.getElementById('admin-score');
+    const cs = document.getElementById('admin-critical');
+    if (ts) ts.textContent = db.total_audits || 0;
+    if (ss) ss.textContent = db.last_score != null ? db.last_score + '/100' : '—';
+    if (cs) cs.textContent = db.last_critical != null ? db.last_critical : '—';
+
+    const al = document.getElementById('admin-history-list');
+    if (al) {
+      if (!hist.length) {
+        al.innerHTML = '<div class="text-sm text-gray-400 py-6 text-center">No audits run yet</div>';
+      } else {
+        al.innerHTML = hist.slice(0,10).map(a => {
+          const dt = new Date(a.audited_at).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'});
+          return `<div class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 mb-2">
+            <i class="fas fa-file-excel text-green-500"></i>
+            <div class="flex-1"><div class="text-sm font-medium text-gray-700">${a.filename}</div><div class="text-xs text-gray-400">${dt} ${a.period?'• '+a.period:''}</div></div>
+            <span class="${a.critical>0?'tag-critical':'tag-ok'} text-xs px-2 py-0.5 rounded-full">${a.critical>0?a.critical+' Critical':'All OK'}</span>
+          </div>`;
+        }).join('');
+      }
+    }
+  } catch(e) {}
 }
 function switchTab(tab) {
   ['critical','review','ok','all'].forEach(t => {
@@ -2326,59 +2435,85 @@ function switchTab(tab) {
     active.className='px-5 py-2.5 rounded-xl text-sm font-medium transition '+colors[tab];
   }
 }
-function simulateUpload() {
+async function simulateUpload() {
+  const fileInput = document.getElementById('uploadFileInput');
+  if (!fileInput || !fileInput.files[0]) {
+    alert('Please choose a Trial Balance file first.');
+    return;
+  }
+  const file = fileInput.files[0];
+
   // Switch to processing screen
   document.getElementById('uploadStep1').classList.add('hidden');
   document.getElementById('uploadStep2').classList.remove('hidden');
 
-  let prog = 0;
-  const bar = document.getElementById('progressBar');
-  const text = document.getElementById('progressText');
-  const title = document.getElementById('processingTitle');
+  const bar      = document.getElementById('progressBar');
+  const text     = document.getElementById('progressText');
+  const title    = document.getElementById('processingTitle');
   const subtitle = document.getElementById('processingSubtitle');
   const s1 = document.getElementById('step1');
   const s2 = document.getElementById('step2');
   const s3 = document.getElementById('step3');
 
-  // Step 1 active immediately
   s1.classList.remove('opacity-30');
   s1.querySelector('div').className = 'w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center mx-auto mb-2';
   s1.querySelector('i').className = 'fas fa-upload text-blue-500';
 
-  const interval = setInterval(() => {
-    prog += 2;
-    bar.style.width = prog + '%';
-    text.textContent = prog + '%';
-
-    if (prog === 35) {
-      title.textContent = 'Found 243 ledgers — checking 20 rules...';
-      subtitle.textContent = 'Running analysis engine';
+  // Animate to 60% while waiting for API
+  let prog = 0;
+  const fakeInterval = setInterval(() => {
+    if (prog < 60) { prog++; bar.style.width = prog + '%'; text.textContent = prog + '%'; }
+    if (prog === 30) {
+      title.textContent = 'Reading ledgers...';
+      subtitle.textContent = 'Checking 20 audit rules';
       s2.classList.remove('opacity-30');
       s2.querySelector('div').className = 'w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center mx-auto mb-2';
       s2.querySelector('i').className = 'fas fa-search text-blue-500';
     }
-    if (prog === 70) {
-      title.textContent = 'Almost done — auto-detecting columns...';
-      subtitle.textContent = 'Mapping your file structure';
-    }
-    if (prog >= 100) {
-      clearInterval(interval);
-      s3.classList.remove('opacity-30');
-      s3.querySelector('div').className = 'w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center mx-auto mb-2';
-      s3.querySelector('i').className = 'fas fa-check text-green-500';
-      title.textContent = 'Analysis complete!';
-      subtitle.textContent = 'Found 7 errors — review auto-detected columns below';
-      document.getElementById('processingIcon').style.animation = 'none';
-      document.getElementById('processingIcon').className = 'fas fa-check-circle text-green-500 text-2xl';
+  }, 40);
 
-      // After a beat, show the column confirmation step
-      setTimeout(() => {
-        document.getElementById('uploadStep2').classList.add('hidden');
-        document.getElementById('uploadStep3').classList.remove('hidden');
-        document.getElementById('uploadStep3').scrollIntoView({ behavior: 'smooth' });
-      }, 800);
-    }
-  }, 35);
+  try {
+    const fd = new FormData();
+    fd.append('trial_balance', file);
+
+    const resp = await fetch(API_BASE + '/api/audit', { method: 'POST', body: fd });
+    clearInterval(fakeInterval);
+
+    if (!resp.ok) { throw new Error(await resp.text()); }
+    const data = await resp.json();
+
+    // Race to 100%
+    prog = 60;
+    const finishInterval = setInterval(() => {
+      prog += 2; bar.style.width = prog + '%'; text.textContent = prog + '%';
+      if (prog >= 100) {
+        clearInterval(finishInterval);
+        s3.classList.remove('opacity-30');
+        s3.querySelector('div').className = 'w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center mx-auto mb-2';
+        s3.querySelector('i').className = 'fas fa-check text-green-500';
+        title.textContent = 'Audit complete!';
+        const issues = (data.summary?.critical || 0) + (data.summary?.warnings || 0);
+        subtitle.textContent = `Score ${data.summary?.score}/100 — ${issues} issues found`;
+        document.getElementById('processingIcon').style.animation = 'none';
+        document.getElementById('processingIcon').className = 'fas fa-check-circle text-green-500 text-2xl';
+        auditData = data;
+        setTimeout(() => {
+          document.getElementById('uploadStep2').classList.add('hidden');
+          // Go to Full Audit results
+          showPage('fullaudit');
+          renderAuditResults(data);
+          document.getElementById('auditStep1').classList.add('hidden');
+          document.getElementById('auditStep3').classList.remove('hidden');
+        }, 800);
+      }
+    }, 20);
+
+  } catch(e) {
+    clearInterval(fakeInterval);
+    document.getElementById('uploadStep2').classList.add('hidden');
+    document.getElementById('uploadStep1').classList.remove('hidden');
+    alert('Audit failed: ' + e.message);
+  }
 }
 
 function toggleTallyGuide() {
@@ -2444,6 +2579,12 @@ const API_BASE = (window.location.hostname === 'localhost' || window.location.ho
   ? 'http://localhost:5050'
   : '';
 let auditData = null;
+
+// Load dashboard data on startup
+window.addEventListener('load', () => {
+  loadDashboard();
+  loadCompliance();
+});
 
 function startFullAudit() {
   const tbFile = document.getElementById('auditTBFile')?.files[0];
