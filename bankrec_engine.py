@@ -493,21 +493,80 @@ def _df_to_txns(df, source):
 
 def parse_tally_ledger(filepath: str) -> List[Dict]:
     ext = filepath.lower()
-    if ext.endswith('.csv'):
-        df = pd.read_csv(filepath, header=None)
-    else:
-        df = pd.read_excel(filepath, header=None)
 
-    # Find header row
+    # Read raw to find header row
+    if ext.endswith('.csv'):
+        raw = pd.read_csv(filepath, header=None)
+    else:
+        raw = pd.read_excel(filepath, header=None)
+
+    # Find header row (contains 'Date' and 'Debit' or 'Credit')
     hrow = 0
-    for i, row in df.iterrows():
+    for i, row in raw.iterrows():
         vals = ' '.join(str(v).upper() for v in row if pd.notna(v))
-        if re.search(r'\bDATE\b', vals):
+        if re.search(r'\bDATE\b', vals) and re.search(r'(DEBIT|CREDIT)', vals):
             hrow = i; break
 
-    df = pd.read_excel(filepath, header=hrow) if not ext.endswith('.csv') else pd.read_csv(filepath, header=hrow)
-    df.columns = [str(c).strip().upper() for c in df.columns]
-    return _df_to_txns(df, 'tally')
+    # Re-read with correct header
+    if ext.endswith('.csv'):
+        df = pd.read_csv(filepath, header=hrow)
+    else:
+        df = pd.read_excel(filepath, header=hrow)
+
+    # Tally ledger specific format:
+    # Col 0 = Date, Col 1 = Dr/Cr indicator, Col 2 = Particulars,
+    # Col 7 = Debit amount, Col 8 = Credit amount (typical Tally export)
+    cols = list(df.columns)
+    txns = []
+
+    for _, row in df.iterrows():
+        # Date
+        date_val = row.iloc[0]
+        if pd.isna(date_val): continue
+        if hasattr(date_val, 'date'):
+            dt = date_val.date()
+        else:
+            dt = parse_date(str(date_val))
+        if not dt: continue
+
+        # Particulars / narration — column 2 (index 2)
+        narration = str(row.iloc[2]).strip() if len(row) > 2 and pd.notna(row.iloc[2]) else ''
+        if not narration or narration in ('nan', 'Opening Balance', 'Closing Balance'):
+            continue
+
+        # Dr/Cr indicator in col 1
+        drcr_raw = str(row.iloc[1]).strip().upper() if len(row) > 1 and pd.notna(row.iloc[1]) else ''
+
+        # Amounts — find debit and credit columns dynamically
+        debit = credit = 0.0
+        for ci, col in enumerate(cols):
+            col_u = str(col).upper()
+            val   = row.iloc[ci]
+            if pd.isna(val): continue
+            amt = clean_amount(val)
+            if 'DEBIT' in col_u and amt: debit  = amt
+            if 'CREDIT' in col_u and amt: credit = amt
+
+        # Fallback: use Dr/Cr indicator + whichever amount is non-zero
+        if debit == 0 and credit == 0:
+            # Try raw positional (col 7 = debit, col 8 = credit for Tally export)
+            if len(row) > 7: debit  = clean_amount(row.iloc[7])
+            if len(row) > 8: credit = clean_amount(row.iloc[8])
+
+        amount = debit if debit else credit
+        if amount == 0: continue
+
+        # Determine Dr/Cr
+        if drcr_raw in ('DR', 'DR.'):
+            dr_cr = 'Dr'
+        elif drcr_raw in ('CR', 'CR.'):
+            dr_cr = 'Cr'
+        else:
+            dr_cr = 'Dr' if debit else 'Cr'
+
+        txns.append({'date': dt, 'narration': narration, 'amount': amount,
+                     'dr_cr': dr_cr, 'source': 'tally'})
+    return txns
 
 
 # ══════════════════════════════════════════════════════════════════════════════
