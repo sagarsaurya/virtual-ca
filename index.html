@@ -1,0 +1,2384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>VirtualCA — Your AI Accountant</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<style>
+  * { font-family: 'Inter', sans-serif; }
+  .gradient-bg { background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%); }
+  .card-shadow { box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+  .sidebar { width: 260px; min-height: 100vh; background: #0f172a; }
+  .main-content { flex: 1; background: #f1f5f9; min-height: 100vh; }
+  .nav-item { transition: all 0.2s; border-radius: 10px; }
+  .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.12); }
+  .nav-item.active { border-left: 3px solid #3b82f6; }
+  .page { display: none; }
+  .page.active { display: block; }
+  .tag-critical { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+  .tag-review   { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+  .tag-ok       { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+  .chat-bubble-ai   { background: #f1f5f9; border-radius: 0 16px 16px 16px; }
+  .chat-bubble-user { background: #2563eb; color: white; border-radius: 16px 0 16px 16px; }
+  .compliance-card { border-left: 4px solid; }
+  .overdue  { border-color: #dc2626; background: #fef2f2; }
+  .upcoming { border-color: #f59e0b; background: #fffbeb; }
+  .done     { border-color: #16a34a; background: #f0fdf4; }
+  .pulse { animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .upload-zone { border: 2px dashed #cbd5e1; transition: all 0.3s; }
+  .upload-zone:hover { border-color: #2563eb; background: #eff6ff; }
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: #f1f5f9; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+  .stat-card { background: white; border-radius: 16px; padding: 24px; }
+  .login-page { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #1d4ed8 100%); }
+  .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+  .progress-bar { height: 6px; background: #e2e8f0; border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #2563eb, #7c3aed); }
+  .typing span { width: 8px; height: 8px; background: #94a3b8; border-radius: 50%; display: inline-block; animation: typing 1.4s infinite; }
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typing { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-8px)} }
+  @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  .entry-card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; }
+  .debit-tag  { background: #eff6ff; color: #1d4ed8; padding: 2px 10px; border-radius: 99px; font-size: 12px; }
+  .credit-tag { background: #fdf4ff; color: #7e22ce; padding: 2px 10px; border-radius: 99px; font-size: 12px; }
+  /* Drill-down modal */
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .modal-box { background:white; border-radius:20px; width:100%; max-width:760px; max-height:88vh; overflow-y:auto; box-shadow:0 24px 80px rgba(0,0,0,0.2); }
+  .modal-hidden { display:none; }
+  /* Journal entry suggestion */
+  .je-row { display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:10px; background:#f8fafc; margin-bottom:6px; }
+  .je-row:last-child { margin-bottom:0; }
+  /* Export panel */
+  .export-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:16px 20px; border-radius:14px; border:1.5px solid #e2e8f0; background:white; cursor:pointer; transition:all 0.2s; min-width:130px; }
+  .export-btn:hover { border-color:#2563eb; background:#eff6ff; }
+  /* Explanation panel */
+  .explain-panel { background:#fafafa; border:1px solid #e2e8f0; border-radius:12px; padding:14px 16px; margin-bottom:12px; }
+  /* Accordion toggle */
+  .drill-section { border-top:1px solid #f1f5f9; padding-top:12px; margin-top:12px; }
+</style>
+</head>
+<body class="bg-gray-100">
+
+<!-- ======================== LOGIN PAGE ======================== -->
+<div id="loginPage" class="login-page min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-md">
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-600 mb-4">
+        <i class="fas fa-calculator text-white text-2xl"></i>
+      </div>
+      <h1 class="text-3xl font-bold text-white">VirtualCA</h1>
+      <p class="text-blue-300 mt-1">Your AI-Powered Accountant</p>
+    </div>
+    <div class="glass rounded-2xl p-8">
+      <h2 class="text-xl font-semibold text-white mb-6">Sign in to your account</h2>
+      <div class="space-y-4">
+        <div>
+          <label class="text-blue-200 text-sm mb-1 block">Email Address</label>
+          <input type="email" placeholder="you@company.com" value="admin@company.com"
+            class="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-blue-300 focus:outline-none focus:border-blue-400"/>
+        </div>
+        <div>
+          <label class="text-blue-200 text-sm mb-1 block">Password</label>
+          <div class="relative">
+            <input type="password" placeholder="••••••••" value="••••••••"
+              class="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-blue-300 focus:outline-none focus:border-blue-400"/>
+            <i class="fas fa-eye-slash text-blue-300 absolute right-4 top-3.5 cursor-pointer"></i>
+          </div>
+        </div>
+        <div class="flex items-center justify-between">
+          <label class="flex items-center gap-2 text-blue-200 text-sm cursor-pointer">
+            <input type="checkbox" checked class="rounded"/> Remember me
+          </label>
+          <a href="#" class="text-blue-400 text-sm hover:text-blue-300">Forgot password?</a>
+        </div>
+        <button onclick="showApp()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-all duration-200 mt-2">
+          Sign In
+        </button>
+      </div>
+      <p class="text-center text-blue-300 text-sm mt-6">
+        Demo: admin@company.com / any password
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== MAIN APP ======================== -->
+<div id="mainApp" class="hidden flex">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar fixed top-0 left-0 h-full flex flex-col z-50 overflow-y-auto">
+    <!-- Logo -->
+    <div class="p-6 border-b border-white/10">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
+          <i class="fas fa-calculator text-white"></i>
+        </div>
+        <div>
+          <div class="text-white font-bold text-lg">VirtualCA</div>
+          <div class="text-blue-400 text-xs">AI Accountant</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- User -->
+    <div class="p-4 mx-4 mt-4 rounded-xl bg-white/5">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm">S</div>
+        <div>
+          <div class="text-white text-sm font-medium">Sagar Pathak</div>
+          <div class="text-xs text-green-400 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-400 inline-block"></span> Admin</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nav -->
+    <nav class="flex-1 p-4 space-y-1 mt-2">
+      <div class="text-xs text-slate-500 uppercase tracking-wider px-3 mb-2">Main</div>
+      <a onclick="showPage('dashboard')" class="nav-item active flex items-center gap-3 px-3 py-2.5 cursor-pointer">
+        <i class="fas fa-chart-pie text-blue-400 w-5"></i>
+        <span class="text-slate-200 text-sm font-medium">Dashboard</span>
+      </a>
+      <a onclick="showPage('upload')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer">
+        <i class="fas fa-file-upload text-slate-400 w-5"></i>
+        <span class="text-slate-400 text-sm">Upload & Analyze</span>
+      </a>
+      <a onclick="showPage('history')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer">
+        <i class="fas fa-history text-slate-400 w-5"></i>
+        <span class="text-slate-400 text-sm">History</span>
+      </a>
+
+      <a onclick="showPage('bankrec')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer">
+        <i class="fas fa-exchange-alt text-slate-400 w-5"></i>
+        <span class="text-slate-400 text-sm">Bank Reconciliation</span>
+      </a>
+
+      <div class="text-xs text-slate-500 uppercase tracking-wider px-3 mb-2 mt-5">Tools</div>
+      <a onclick="showPage('askca')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer">
+        <i class="fas fa-robot text-slate-400 w-5"></i>
+        <span class="text-slate-400 text-sm">Ask Your CA</span>
+        <span class="ml-auto bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">AI</span>
+      </a>
+      <a onclick="showPage('journal')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer">
+        <i class="fas fa-book text-slate-400 w-5"></i>
+        <span class="text-slate-400 text-sm">Journal Entry Guide</span>
+      </a>
+      <a onclick="showPage('compliance')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer">
+        <i class="fas fa-calendar-check text-slate-400 w-5"></i>
+        <span class="text-slate-400 text-sm">Compliance Calendar</span>
+        <span class="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">2</span>
+      </a>
+
+      <a onclick="showPage('tdsanalysis')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer">
+        <i class="fas fa-percentage text-slate-400 w-5"></i>
+        <span class="text-slate-400 text-sm">TDS Analysis</span>
+      </a>
+
+      <div class="text-xs text-slate-500 uppercase tracking-wider px-3 mb-2 mt-5">Admin</div>
+      <a onclick="showPage('admin')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer">
+        <i class="fas fa-users-cog text-slate-400 w-5"></i>
+        <span class="text-slate-400 text-sm">Admin Panel</span>
+      </a>
+    </nav>
+
+    <!-- Logout -->
+    <div class="p-4 border-t border-white/10">
+      <button onclick="logout()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition">
+        <i class="fas fa-sign-out-alt text-slate-400 w-5"></i>
+        <span class="text-slate-400 text-sm">Logout</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- CONTENT AREA -->
+  <div class="main-content ml-[260px]">
+
+    <!-- TOP BAR -->
+    <div class="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between sticky top-0 z-40">
+      <div>
+        <h2 id="pageTitle" class="text-lg font-semibold text-gray-800">Dashboard</h2>
+        <p id="pageSubtitle" class="text-xs text-gray-500">Welcome back, Sagar</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <button class="relative p-2 rounded-xl hover:bg-gray-100">
+          <i class="fas fa-bell text-gray-500"></i>
+          <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+        </button>
+        <div class="text-sm text-gray-500">FY 2025–26</div>
+        <button onclick="showPage('upload')" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-blue-700 transition">
+          <i class="fas fa-plus mr-2"></i>New Analysis
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== DASHBOARD PAGE ===== -->
+    <div id="page-dashboard" class="page active p-8">
+      <!-- Stats -->
+      <div class="grid grid-cols-4 gap-6 mb-8">
+        <div class="stat-card card-shadow">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-sm text-gray-500">Total Analyses</span>
+            <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+              <i class="fas fa-file-chart-line text-blue-600"></i>
+            </div>
+          </div>
+          <div class="text-3xl font-bold text-gray-800">24</div>
+          <div class="text-xs text-green-500 mt-1"><i class="fas fa-arrow-up"></i> 8 this month</div>
+        </div>
+        <div class="stat-card card-shadow">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-sm text-gray-500">Critical Errors</span>
+            <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
+              <i class="fas fa-exclamation-circle text-red-500"></i>
+            </div>
+          </div>
+          <div class="text-3xl font-bold text-red-600">7</div>
+          <div class="text-xs text-red-400 mt-1">In last upload</div>
+        </div>
+        <div class="stat-card card-shadow">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-sm text-gray-500">Needs Review</span>
+            <div class="w-10 h-10 rounded-xl bg-yellow-50 flex items-center justify-center">
+              <i class="fas fa-search text-yellow-500"></i>
+            </div>
+          </div>
+          <div class="text-3xl font-bold text-yellow-600">12</div>
+          <div class="text-xs text-yellow-400 mt-1">In last upload</div>
+        </div>
+        <div class="stat-card card-shadow">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-sm text-gray-500">Compliance Health</span>
+            <div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
+              <i class="fas fa-shield-check text-green-500"></i>
+            </div>
+          </div>
+          <div class="text-3xl font-bold text-gray-800">72%</div>
+          <div class="progress-bar mt-2"><div class="progress-fill" style="width:72%"></div></div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-6">
+        <!-- Recent Uploads -->
+        <div class="col-span-2 bg-white rounded-2xl card-shadow p-6">
+          <div class="flex items-center justify-between mb-5">
+            <h3 class="font-semibold text-gray-800">Recent Analyses</h3>
+            <button onclick="showPage('history')" class="text-blue-600 text-sm hover:underline">View all</button>
+          </div>
+          <div class="space-y-3">
+            <div onclick="showPage('results')" class="flex items-center gap-4 p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 cursor-pointer transition">
+              <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-file-excel text-red-500"></i>
+              </div>
+              <div class="flex-1">
+                <div class="font-medium text-gray-800 text-sm">AJKL Trial Balance</div>
+                <div class="text-xs text-gray-400 mt-0.5">Uploaded today • FY 2025-26</div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="tag-critical text-xs px-2.5 py-1 rounded-full font-medium">7 Critical</span>
+                <span class="tag-review text-xs px-2.5 py-1 rounded-full font-medium">12 Review</span>
+              </div>
+              <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
+            </div>
+            <div class="flex items-center gap-4 p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 cursor-pointer transition">
+              <div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-file-excel text-green-500"></i>
+              </div>
+              <div class="flex-1">
+                <div class="font-medium text-gray-800 text-sm">AJKL Trial Balance</div>
+                <div class="text-xs text-gray-400 mt-0.5">3 days ago • FY 2024-25</div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="tag-ok text-xs px-2.5 py-1 rounded-full font-medium">All Clear</span>
+              </div>
+              <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
+            </div>
+            <div class="flex items-center gap-4 p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 cursor-pointer transition">
+              <div class="w-10 h-10 rounded-xl bg-yellow-50 flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-file-excel text-yellow-500"></i>
+              </div>
+              <div class="flex-1">
+                <div class="font-medium text-gray-800 text-sm">AJKL Trial Balance</div>
+                <div class="text-xs text-gray-400 mt-0.5">1 week ago • FY 2024-25</div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="tag-review text-xs px-2.5 py-1 rounded-full font-medium">5 Review</span>
+              </div>
+              <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compliance Alert -->
+        <div class="bg-white rounded-2xl card-shadow p-6">
+          <div class="flex items-center justify-between mb-5">
+            <h3 class="font-semibold text-gray-800">Compliance Alerts</h3>
+            <span class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">2 Due</span>
+          </div>
+          <div class="space-y-3">
+            <div class="compliance-card overdue rounded-xl p-3">
+              <div class="flex items-center gap-2 mb-1">
+                <i class="fas fa-exclamation-circle text-red-500 text-sm"></i>
+                <span class="text-sm font-semibold text-red-700">TDS Deposit</span>
+              </div>
+              <div class="text-xs text-red-600">Due: 7th March 2026</div>
+              <div class="text-xs text-red-500 mt-1 pulse">⚠ Overdue by 7 days</div>
+            </div>
+            <div class="compliance-card upcoming rounded-xl p-3">
+              <div class="flex items-center gap-2 mb-1">
+                <i class="fas fa-clock text-yellow-500 text-sm"></i>
+                <span class="text-sm font-semibold text-yellow-700">PT (Kolkata)</span>
+              </div>
+              <div class="text-xs text-yellow-600">Due: 21st March 2026</div>
+              <div class="text-xs text-yellow-500 mt-1">7 days remaining</div>
+            </div>
+            <div class="compliance-card done rounded-xl p-3">
+              <div class="flex items-center gap-2 mb-1">
+                <i class="fas fa-check-circle text-green-500 text-sm"></i>
+                <span class="text-sm font-semibold text-green-700">Salary — Feb</span>
+              </div>
+              <div class="text-xs text-green-600">Paid: 28th Feb 2026</div>
+              <div class="text-xs text-green-500 mt-1">✓ Completed</div>
+            </div>
+          </div>
+          <button onclick="showPage('compliance')" class="w-full mt-4 text-blue-600 text-sm border border-blue-200 rounded-xl py-2 hover:bg-blue-50 transition">
+            View Full Calendar
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Ask CA -->
+      <div class="mt-6 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+            <i class="fas fa-robot text-white text-xl"></i>
+          </div>
+          <div>
+            <div class="text-white font-semibold text-lg">Ask Your Virtual CA</div>
+            <div class="text-blue-200 text-sm">Get instant answers to any accounting or tax question</div>
+          </div>
+        </div>
+        <button onclick="showPage('askca')" class="bg-white text-blue-600 font-semibold px-6 py-3 rounded-xl hover:bg-blue-50 transition">
+          Ask Now <i class="fas fa-arrow-right ml-2"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== UPLOAD PAGE ===== -->
+    <div id="page-upload" class="page p-8">
+      <div class="max-w-2xl mx-auto">
+
+        <!-- STEP 1: Main upload zone (always visible first) -->
+        <div id="uploadStep1" class="bg-white rounded-2xl card-shadow p-8">
+
+          <!-- Header -->
+          <div class="mb-6">
+            <h3 class="text-xl font-bold text-gray-800 mb-1">Upload Trial Balance</h3>
+            <p class="text-gray-400 text-sm">Upload your Tally export — we'll audit all ledgers and flag errors in seconds.</p>
+          </div>
+
+          <!-- Drop zone -->
+          <div class="upload-zone rounded-2xl p-12 text-center cursor-pointer mb-5" onclick="simulateUpload()">
+            <div class="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-4">
+              <i class="fas fa-file-excel text-green-500 text-3xl"></i>
+            </div>
+            <p class="text-gray-800 font-semibold text-base mb-1">Drop your Excel file here</p>
+            <p class="text-gray-400 text-sm mb-5">or click to browse from your computer</p>
+            <span class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition cursor-pointer">Choose File</span>
+            <p class="text-xs text-gray-400 mt-4">Supports: .xlsx, .xls, .csv &nbsp;·&nbsp; Max 10MB</p>
+          </div>
+
+          <!-- How to export from Tally — collapsible -->
+          <div class="border border-gray-100 rounded-xl overflow-hidden mb-5">
+            <button onclick="toggleTallyGuide()" class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+              <span><i class="fas fa-info-circle text-blue-500 mr-2"></i>How to export from Tally?</span>
+              <i class="fas fa-chevron-down text-gray-400 text-xs" id="tallyGuideChevron"></i>
+            </button>
+            <div id="tallyGuideContent" class="hidden px-4 pb-4">
+              <div class="space-y-2 text-sm text-gray-600">
+                <div class="flex items-start gap-3">
+                  <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-600 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+                  <p>Open Tally → Press <kbd class="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono">F2</kbd> → Set your financial year date range</p>
+                </div>
+                <div class="flex items-start gap-3">
+                  <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-600 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+                  <p>Go to <strong>Display More Reports → Trial Balance</strong></p>
+                </div>
+                <div class="flex items-start gap-3">
+                  <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-600 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+                  <p>Press <kbd class="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono">Alt+E</kbd> → Select <strong>Excel</strong> → Save the file</p>
+                </div>
+                <div class="flex items-start gap-3">
+                  <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-600 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">4</span>
+                  <p>Upload that saved file here</p>
+                </div>
+              </div>
+              <a href="#" class="inline-flex items-center gap-1.5 mt-3 text-xs text-blue-600 font-medium hover:underline">
+                <i class="fas fa-download text-xs"></i> Download sample file to see the format
+              </a>
+            </div>
+          </div>
+
+          <!-- Other formats link -->
+          <div class="text-center">
+            <button onclick="toggleOtherFormats()" class="text-xs text-gray-400 hover:text-gray-600 transition">
+              <i class="fas fa-plus-circle mr-1"></i>Using Tally XML, Ledger Dump, or GST JSON instead?
+            </button>
+          </div>
+
+          <!-- Other formats panel (hidden by default) -->
+          <div id="otherFormatsPanel" class="hidden mt-4 border border-dashed border-gray-200 rounded-xl p-4">
+            <p class="text-xs text-gray-500 font-medium mb-3 uppercase tracking-wide">Other formats — for advanced users</p>
+            <div class="grid grid-cols-3 gap-3">
+              <button onclick="selectFileType('xml')" class="flex flex-col items-center gap-2 p-3 rounded-xl border border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition text-center">
+                <i class="fas fa-code text-orange-500 text-xl"></i>
+                <span class="text-xs font-semibold text-gray-700">Tally XML</span>
+                <span class="text-xs text-gray-400">Gateway → Export → Masters</span>
+              </button>
+              <button onclick="selectFileType('ledger')" class="flex flex-col items-center gap-2 p-3 rounded-xl border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition text-center">
+                <i class="fas fa-book text-purple-500 text-xl"></i>
+                <span class="text-xs font-semibold text-gray-700">Ledger Dump</span>
+                <span class="text-xs text-gray-400">Account Books → Ledger → Alt+E</span>
+              </button>
+              <button onclick="selectFileType('gst')" class="flex flex-col items-center gap-2 p-3 rounded-xl border border-gray-200 hover:border-teal-300 hover:bg-teal-50 transition text-center">
+                <i class="fas fa-percent text-teal-500 text-xl"></i>
+                <span class="text-xs font-semibold text-gray-700">GST JSON</span>
+                <span class="text-xs text-gray-400">gst.gov.in → GSTR-2A/2B → Download</span>
+              </button>
+            </div>
+            <p class="text-xs text-gray-400 mt-3 text-center">Bank Statement upload is in the <strong>Bank Reconciliation</strong> section →</p>
+          </div>
+        </div>
+
+        <!-- STEP 2: Processing screen (shown after upload click) -->
+        <div id="uploadStep2" class="hidden bg-white rounded-2xl card-shadow p-10 text-center">
+          <div class="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-5">
+            <i class="fas fa-cog text-blue-500 text-2xl" id="processingIcon" style="animation: spin 1.5s linear infinite;"></i>
+          </div>
+          <h4 class="text-lg font-bold text-gray-800 mb-1" id="processingTitle">Reading your file...</h4>
+          <p class="text-gray-400 text-sm mb-6" id="processingSubtitle">Please wait, this takes just a few seconds</p>
+
+          <div class="progress-bar mb-3 max-w-xs mx-auto">
+            <div class="progress-fill" id="progressBar" style="width:0%; transition: width 0.4s ease;"></div>
+          </div>
+          <p class="text-xs text-gray-400 mb-8" id="progressText">0%</p>
+
+          <div class="grid grid-cols-3 gap-4 max-w-sm mx-auto">
+            <div id="step1" class="text-center opacity-30 transition-all duration-500">
+              <div class="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center mx-auto mb-2">
+                <i class="fas fa-upload text-gray-400"></i>
+              </div>
+              <p class="text-xs text-gray-500">Uploading</p>
+            </div>
+            <div id="step2" class="text-center opacity-30 transition-all duration-500">
+              <div class="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center mx-auto mb-2">
+                <i class="fas fa-search text-gray-400"></i>
+              </div>
+              <p class="text-xs text-gray-500">Analyzing</p>
+            </div>
+            <div id="step3" class="text-center opacity-30 transition-all duration-500">
+              <div class="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center mx-auto mb-2">
+                <i class="fas fa-check text-gray-400"></i>
+              </div>
+              <p class="text-xs text-gray-500">Report Ready</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 3: Auto-detected columns confirmation (shown only if ambiguous) -->
+        <div id="uploadStep3" class="hidden mt-6">
+          <div class="bg-white rounded-2xl card-shadow p-6">
+            <div class="flex items-center gap-3 mb-2">
+              <div class="w-9 h-9 rounded-xl bg-green-50 flex items-center justify-center">
+                <i class="fas fa-magic text-green-500"></i>
+              </div>
+              <div>
+                <h4 class="font-semibold text-gray-800">We auto-detected your columns</h4>
+                <p class="text-xs text-gray-400">Looks correct? Confirm and we'll run the analysis.</p>
+              </div>
+              <span class="ml-auto bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full font-medium">4/4 detected</span>
+            </div>
+
+            <div class="bg-green-50 border border-green-100 rounded-xl p-3 mb-5 flex items-center gap-2">
+              <i class="fas fa-check-circle text-green-500 text-sm"></i>
+              <p class="text-xs text-green-700">All columns matched automatically. You don't need to change anything.</p>
+            </div>
+
+            <table class="w-full text-sm mb-5">
+              <thead><tr class="text-left text-gray-400 border-b border-gray-100 text-xs uppercase">
+                <th class="pb-2 font-medium">Required Field</th>
+                <th class="pb-2 font-medium">Detected Column</th>
+                <th class="pb-2 font-medium">Sample Value</th>
+              </tr></thead>
+              <tbody class="divide-y divide-gray-50 text-xs">
+                <tr>
+                  <td class="py-3 font-medium text-gray-700">Ledger Name</td>
+                  <td class="text-gray-600">Column A: Particulars</td>
+                  <td class="text-gray-400">TDS Receivable</td>
+                </tr>
+                <tr>
+                  <td class="py-3 font-medium text-gray-700">Ledger Group</td>
+                  <td class="text-gray-600">Column B: Group</td>
+                  <td class="text-gray-400">Duties &amp; Taxes</td>
+                </tr>
+                <tr>
+                  <td class="py-3 font-medium text-gray-700">Closing Balance</td>
+                  <td class="text-gray-600">Column E: Closing Bal</td>
+                  <td class="text-gray-400">₹10,000</td>
+                </tr>
+                <tr>
+                  <td class="py-3 font-medium text-gray-700">Dr / Cr</td>
+                  <td class="text-gray-600">Column F: Dr/Cr</td>
+                  <td class="text-gray-400">Dr</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="flex items-center justify-between">
+              <button onclick="document.getElementById('uploadStep3').classList.add('hidden'); document.getElementById('uploadStep1').classList.remove('hidden');"
+                class="text-sm text-gray-400 hover:text-gray-600 transition">
+                <i class="fas fa-arrow-left mr-1"></i> Upload different file
+              </button>
+              <button onclick="showPage('results')" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition">
+                <i class="fas fa-play mr-2"></i>Looks correct — Run Analysis
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== RESULTS PAGE ===== -->
+    <div id="page-results" class="page p-8">
+      <!-- Header -->
+      <div class="bg-white rounded-2xl card-shadow p-6 mb-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-xl font-bold text-gray-800">AJKL Trial Balance — Analysis Report</h3>
+            <p class="text-gray-500 text-sm mt-1">FY 2025–26 &nbsp;•&nbsp; Uploaded 14 March 2026 &nbsp;•&nbsp; 120 ledgers scanned</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <button class="flex items-center gap-2 border border-gray-200 text-gray-600 px-4 py-2 rounded-xl text-sm hover:bg-gray-50 transition">
+              <i class="fas fa-file-pdf text-red-500"></i> Download PDF
+            </button>
+            <button onclick="openExportModal()" class="flex items-center gap-2 border border-green-200 text-green-700 bg-green-50 px-4 py-2 rounded-xl text-sm hover:bg-green-100 transition font-medium">
+              <i class="fas fa-file-export text-green-600"></i> Export to Tally
+            </button>
+            <button onclick="showPage('upload')" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-blue-700 transition">
+              <i class="fas fa-plus mr-2"></i>New Upload
+            </button>
+          </div>
+        </div>
+
+        <!-- Summary bar -->
+        <div class="grid grid-cols-4 gap-4 mt-6">
+          <div class="bg-gray-50 rounded-xl p-4 text-center">
+            <div class="text-2xl font-bold text-gray-700">120</div>
+            <div class="text-xs text-gray-500 mt-1">Total Ledgers</div>
+          </div>
+          <div class="bg-red-50 rounded-xl p-4 text-center cursor-pointer" onclick="switchTab('critical')">
+            <div class="text-2xl font-bold text-red-600">7</div>
+            <div class="text-xs text-red-400 mt-1">Critical Errors</div>
+          </div>
+          <div class="bg-yellow-50 rounded-xl p-4 text-center cursor-pointer" onclick="switchTab('review')">
+            <div class="text-2xl font-bold text-yellow-600">12</div>
+            <div class="text-xs text-yellow-400 mt-1">Needs Review</div>
+          </div>
+          <div class="bg-green-50 rounded-xl p-4 text-center cursor-pointer" onclick="switchTab('ok')">
+            <div class="text-2xl font-bold text-green-600">101</div>
+            <div class="text-xs text-green-400 mt-1">All OK</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="flex gap-2 mb-4">
+        <button id="tab-critical" onclick="switchTab('critical')" class="px-5 py-2.5 rounded-xl text-sm font-medium bg-red-500 text-white transition">
+          🔴 Critical Errors (7)
+        </button>
+        <button id="tab-review" onclick="switchTab('review')" class="px-5 py-2.5 rounded-xl text-sm font-medium bg-white text-gray-500 hover:bg-gray-50 transition">
+          🟡 Needs Review (12)
+        </button>
+        <button id="tab-ok" onclick="switchTab('ok')" class="px-5 py-2.5 rounded-xl text-sm font-medium bg-white text-gray-500 hover:bg-gray-50 transition">
+          ✅ All OK (101)
+        </button>
+        <button id="tab-all" onclick="switchTab('all')" class="px-5 py-2.5 rounded-xl text-sm font-medium bg-white text-gray-500 hover:bg-gray-50 transition">
+          📋 Full Report
+        </button>
+      </div>
+
+      <!-- Severity Color Legend + Filters + Sort + Download -->
+      <div class="bg-white rounded-2xl card-shadow px-5 py-4 mb-5 flex flex-wrap items-center gap-4">
+        <!-- Legend -->
+        <div class="flex items-center gap-3 text-xs text-gray-500">
+          <span class="font-medium text-gray-600">Legend:</span>
+          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span>Critical — Wrong group/BS impact</span>
+          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-yellow-400 inline-block"></span>Review — Unusual balance</span>
+          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-green-500 inline-block"></span>OK — Correct</span>
+          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-gray-400 inline-block"></span>Ignored</span>
+        </div>
+        <div class="flex items-center gap-2 ml-auto">
+          <!-- FY Filter -->
+          <select class="border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-600 focus:outline-none">
+            <option selected>FY 2025-26</option>
+            <option>FY 2024-25</option>
+            <option>FY 2023-24</option>
+          </select>
+          <!-- Sort -->
+          <select class="border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-600 focus:outline-none">
+            <option>Sort: Severity</option>
+            <option>Sort: Ledger Name</option>
+            <option>Sort: Error Type</option>
+            <option>Sort: Amount</option>
+          </select>
+          <!-- Download -->
+          <div class="relative">
+            <button onclick="toggleDownloadMenu()" class="flex items-center gap-2 bg-gray-800 text-white px-4 py-2 rounded-xl text-xs font-medium hover:bg-gray-700 transition">
+              <i class="fas fa-download"></i> Download Report
+              <i class="fas fa-chevron-down text-xs"></i>
+            </button>
+            <div id="downloadMenu" class="hidden absolute right-0 top-10 bg-white rounded-xl card-shadow border border-gray-100 z-50 min-w-[160px]">
+              <button onclick="downloadReport('pdf')" class="w-full flex items-center gap-2 px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-50 rounded-t-xl">
+                <i class="fas fa-file-pdf text-red-500"></i> Download PDF
+              </button>
+              <button onclick="downloadReport('excel')" class="w-full flex items-center gap-2 px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-50">
+                <i class="fas fa-file-excel text-green-500"></i> Download Excel
+              </button>
+              <button onclick="downloadReport('csv')" class="w-full flex items-center gap-2 px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-50 rounded-b-xl">
+                <i class="fas fa-file-csv text-blue-500"></i> Download CSV
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fix Workflow Status Bar -->
+      <div class="bg-white rounded-2xl card-shadow px-5 py-4 mb-5">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-5">
+            <span class="text-sm font-semibold text-gray-700">Fix Workflow:</span>
+            <div class="flex items-center gap-3 text-xs">
+              <span class="flex items-center gap-1.5 bg-red-50 text-red-600 border border-red-200 px-3 py-1.5 rounded-full font-medium"><span class="w-2 h-2 rounded-full bg-red-500 inline-block"></span>Open: 7</span>
+              <span class="flex items-center gap-1.5 bg-blue-50 text-blue-600 border border-blue-200 px-3 py-1.5 rounded-full font-medium"><span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>In Progress: 2</span>
+              <span class="flex items-center gap-1.5 bg-green-50 text-green-600 border border-green-200 px-3 py-1.5 rounded-full font-medium"><span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>Resolved: 3</span>
+              <span class="flex items-center gap-1.5 bg-gray-50 text-gray-500 border border-gray-200 px-3 py-1.5 rounded-full font-medium"><span class="w-2 h-2 rounded-full bg-gray-400 inline-block"></span>Ignored: 1</span>
+            </div>
+          </div>
+          <div class="text-xs text-gray-400">Last updated: 14 Mar 2026, 4:32 PM by Sagar Pathak</div>
+        </div>
+      </div>
+
+      <!-- Critical Tab -->
+      <div id="tab-content-critical" class="space-y-4">
+        <!-- Error 1 -->
+        <div class="bg-white rounded-2xl card-shadow p-6 border-l-4 border-red-500">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-3">
+              <span class="tag-critical text-xs px-3 py-1 rounded-full font-semibold">🔴 CRITICAL</span>
+              <span class="text-gray-400 text-xs">Ledger #14</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-gray-400">Closing Dr: ₹10,000</span>
+              <button onclick="openDrillDown('tds_receivable')" class="flex items-center gap-1.5 text-xs text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition ml-2">
+                <i class="fas fa-search-plus"></i> Drill Down
+              </button>
+            </div>
+          </div>
+          <h4 class="text-base font-bold text-gray-800 mb-3">TDS Receivable</h4>
+
+          <!-- Error Explanation Panel -->
+          <div class="explain-panel mb-4">
+            <div class="flex items-center gap-2 mb-2">
+              <i class="fas fa-exclamation-triangle text-amber-500 text-sm"></i>
+              <span class="text-sm font-semibold text-gray-700">Why This Error Occurred</span>
+            </div>
+            <p class="text-xs text-gray-600 mb-2">TDS Receivable represents tax deducted by the customer on your behalf — money the government owes you. It is a <strong>current asset</strong>. Placing it under "Duties & Taxes" (a liability group) causes P&L and Balance Sheet distortion.</p>
+            <div class="flex items-center gap-2 mt-2 p-2 bg-amber-50 rounded-lg">
+              <i class="fas fa-gavel text-amber-600 text-xs"></i>
+              <span class="text-xs text-amber-700"><strong>Rule violated:</strong> AS-2 / Schedule III — Receivables must be classified under Current Assets, not Liabilities.</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-4 mb-4">
+            <div class="bg-gray-50 rounded-xl p-3">
+              <div class="text-xs text-gray-400 mb-1">Current Group</div>
+              <div class="text-sm font-semibold text-red-600"><i class="fas fa-times-circle mr-1"></i>Duties &amp; Taxes</div>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-3">
+              <div class="text-xs text-gray-400 mb-1">Problem</div>
+              <div class="text-sm text-gray-700">Asset placed in Liability group</div>
+            </div>
+            <div class="bg-green-50 rounded-xl p-3">
+              <div class="text-xs text-gray-400 mb-1">Should Be Under</div>
+              <div class="text-sm font-semibold text-green-600"><i class="fas fa-check-circle mr-1"></i>Current Assets</div>
+            </div>
+          </div>
+
+          <!-- Suggested Journal Entry -->
+          <div class="bg-purple-50 rounded-xl p-4 mb-4 border border-purple-100">
+            <p class="text-xs font-semibold text-purple-700 mb-3"><i class="fas fa-magic mr-2"></i>Auto-Correction — Suggested Journal Entry</p>
+            <div class="je-row">
+              <span class="debit-tag">Dr</span>
+              <span class="text-sm font-medium text-gray-700 flex-1">TDS Receivable (Current Assets)</span>
+              <span class="text-sm font-semibold text-gray-800">₹10,000</span>
+            </div>
+            <div class="je-row">
+              <span class="credit-tag">Cr</span>
+              <span class="text-sm font-medium text-gray-700 flex-1">TDS Receivable (Duties &amp; Taxes) — old</span>
+              <span class="text-sm font-semibold text-gray-800">₹10,000</span>
+            </div>
+            <p class="text-xs text-purple-500 mt-2 italic">Note: No journal entry needed — just re-group the ledger in Tally. The balance will move automatically.</p>
+          </div>
+
+          <div class="bg-blue-50 rounded-xl p-4">
+            <p class="text-xs font-semibold text-blue-700 mb-1"><i class="fas fa-wrench mr-2"></i>How to Fix in Tally</p>
+            <p class="text-xs text-blue-600">Gateway of Tally → Accounts Info → Ledgers → Alter → Select "TDS Receivable" → Change Group to <strong>Current Assets</strong> → Accept</p>
+          </div>
+
+          <!-- Fix Workflow Actions -->
+          <div class="mt-4 border-t border-gray-100 pt-4">
+            <div class="flex flex-wrap items-center gap-3">
+              <!-- Status -->
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-400 font-medium">Status:</span>
+                <select onchange="updateStatus(this,'tds_rec')" class="border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-700 focus:outline-none focus:border-blue-400">
+                  <option value="open" selected>🔴 Open</option>
+                  <option value="inprogress">🔵 In Progress</option>
+                  <option value="resolved">✅ Resolved</option>
+                  <option value="ignored">⚫ Ignored</option>
+                </select>
+              </div>
+              <!-- Assign -->
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-400 font-medium">Assign to:</span>
+                <select class="border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-700 focus:outline-none focus:border-blue-400">
+                  <option>— Unassigned —</option>
+                  <option>Rahul Sharma</option>
+                  <option>Priya Mehta</option>
+                  <option selected>Sagar Pathak</option>
+                </select>
+              </div>
+              <!-- Mark Resolved -->
+              <button onclick="markResolved(this,'tds_rec')" class="ml-auto flex items-center gap-1.5 bg-green-600 text-white px-4 py-1.5 rounded-lg text-xs font-medium hover:bg-green-700 transition">
+                <i class="fas fa-check"></i> Mark Resolved
+              </button>
+            </div>
+            <!-- Comment -->
+            <div class="mt-3 flex gap-2">
+              <input type="text" placeholder="Add a comment or note for your accountant..." class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 focus:outline-none focus:border-blue-300"/>
+              <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-medium hover:bg-blue-700 transition">
+                <i class="fas fa-paper-plane mr-1"></i>Comment
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Error 2 -->
+        <div class="bg-white rounded-2xl card-shadow p-6 border-l-4 border-red-500">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-3">
+              <span class="tag-critical text-xs px-3 py-1 rounded-full font-semibold">🔴 CRITICAL</span>
+              <span class="text-gray-400 text-xs">Ledger #27</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-gray-400">Closing Cr: ₹25,000</span>
+              <button onclick="openDrillDown('bank_interest')" class="flex items-center gap-1.5 text-xs text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition ml-2">
+                <i class="fas fa-search-plus"></i> Drill Down
+              </button>
+            </div>
+          </div>
+          <h4 class="text-base font-bold text-gray-800 mb-3">Bank Interest Received</h4>
+
+          <!-- Error Explanation Panel -->
+          <div class="explain-panel mb-4">
+            <div class="flex items-center gap-2 mb-2">
+              <i class="fas fa-exclamation-triangle text-amber-500 text-sm"></i>
+              <span class="text-sm font-semibold text-gray-700">Why This Error Occurred</span>
+            </div>
+            <p class="text-xs text-gray-600 mb-2">Bank Interest Received is income earned from your bank — it increases profit. Placing it under "Indirect Expenses" inflates your expenses and understates profit, leading to incorrect P&amp;L and wrong tax computation.</p>
+            <div class="flex items-center gap-2 mt-2 p-2 bg-amber-50 rounded-lg">
+              <i class="fas fa-gavel text-amber-600 text-xs"></i>
+              <span class="text-xs text-amber-700"><strong>Rule violated:</strong> Matching Principle — Income must be classified under Income groups, never Expense groups.</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-4 mb-4">
+            <div class="bg-gray-50 rounded-xl p-3">
+              <div class="text-xs text-gray-400 mb-1">Current Group</div>
+              <div class="text-sm font-semibold text-red-600"><i class="fas fa-times-circle mr-1"></i>Indirect Expenses</div>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-3">
+              <div class="text-xs text-gray-400 mb-1">Problem</div>
+              <div class="text-sm text-gray-700">Income placed in Expense group</div>
+            </div>
+            <div class="bg-green-50 rounded-xl p-3">
+              <div class="text-xs text-gray-400 mb-1">Should Be Under</div>
+              <div class="text-sm font-semibold text-green-600"><i class="fas fa-check-circle mr-1"></i>Indirect Incomes</div>
+            </div>
+          </div>
+
+          <!-- Suggested Journal Entry -->
+          <div class="bg-purple-50 rounded-xl p-4 mb-4 border border-purple-100">
+            <p class="text-xs font-semibold text-purple-700 mb-3"><i class="fas fa-magic mr-2"></i>Auto-Correction — Suggested Journal Entry</p>
+            <div class="je-row">
+              <span class="debit-tag">Dr</span>
+              <span class="text-sm font-medium text-gray-700 flex-1">Bank Interest Received (Indirect Expenses) — reversal</span>
+              <span class="text-sm font-semibold text-gray-800">₹25,000</span>
+            </div>
+            <div class="je-row">
+              <span class="credit-tag">Cr</span>
+              <span class="text-sm font-medium text-gray-700 flex-1">Bank Interest Received (Indirect Incomes)</span>
+              <span class="text-sm font-semibold text-gray-800">₹25,000</span>
+            </div>
+            <p class="text-xs text-purple-500 mt-2 italic">Note: Re-group the ledger in Tally. If vouchers are already posted, the P&amp;L will auto-correct after re-grouping.</p>
+          </div>
+
+          <div class="bg-blue-50 rounded-xl p-4">
+            <p class="text-xs font-semibold text-blue-700 mb-1"><i class="fas fa-wrench mr-2"></i>How to Fix in Tally</p>
+            <p class="text-xs text-blue-600">Gateway of Tally → Accounts Info → Ledgers → Alter → Select "Bank Interest Received" → Change Group to <strong>Indirect Incomes</strong> → Accept</p>
+          </div>
+
+          <!-- Fix Workflow Actions -->
+          <div class="mt-4 border-t border-gray-100 pt-4">
+            <div class="flex flex-wrap items-center gap-3">
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-400 font-medium">Status:</span>
+                <select onchange="updateStatus(this,'bank_int')" class="border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-700 focus:outline-none focus:border-blue-400">
+                  <option value="open">🔴 Open</option>
+                  <option value="inprogress" selected>🔵 In Progress</option>
+                  <option value="resolved">✅ Resolved</option>
+                  <option value="ignored">⚫ Ignored</option>
+                </select>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-400 font-medium">Assign to:</span>
+                <select class="border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-700 focus:outline-none focus:border-blue-400">
+                  <option>— Unassigned —</option>
+                  <option selected>Rahul Sharma</option>
+                  <option>Priya Mehta</option>
+                  <option>Sagar Pathak</option>
+                </select>
+              </div>
+              <button onclick="markResolved(this,'bank_int')" class="ml-auto flex items-center gap-1.5 bg-green-600 text-white px-4 py-1.5 rounded-lg text-xs font-medium hover:bg-green-700 transition">
+                <i class="fas fa-check"></i> Mark Resolved
+              </button>
+            </div>
+            <div class="mt-3 flex gap-2">
+              <input type="text" placeholder="Add a comment..." value="Checked — this is definitely income. Rahul to fix by 15 Mar." class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 focus:outline-none focus:border-blue-300"/>
+              <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-medium hover:bg-blue-700 transition">
+                <i class="fas fa-paper-plane mr-1"></i>Comment
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Error 3 -->
+        <div class="bg-white rounded-2xl card-shadow p-6 border-l-4 border-red-500">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-3">
+              <span class="tag-critical text-xs px-3 py-1 rounded-full font-semibold">🔴 CRITICAL</span>
+              <span class="text-gray-400 text-xs">Ledger #41</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-gray-400">Closing Dr: ₹15,000</span>
+              <button onclick="openDrillDown('opening_balance')" class="flex items-center gap-1.5 text-xs text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition ml-2">
+                <i class="fas fa-search-plus"></i> Drill Down
+              </button>
+            </div>
+          </div>
+          <h4 class="text-base font-bold text-gray-800 mb-3">Difference in Opening Balance</h4>
+
+          <!-- Error Explanation Panel -->
+          <div class="explain-panel mb-4">
+            <div class="flex items-center gap-2 mb-2">
+              <i class="fas fa-exclamation-triangle text-amber-500 text-sm"></i>
+              <span class="text-sm font-semibold text-gray-700">Why This Error Occurred</span>
+            </div>
+            <p class="text-xs text-gray-600 mb-2">A ₹15,000 debit difference in opening balances means Tally's books did not tally (Dr ≠ Cr) at the start of this financial year. This typically happens when opening balances are entered manually without balancing both sides.</p>
+            <div class="flex items-center gap-2 mt-2 p-2 bg-amber-50 rounded-lg">
+              <i class="fas fa-gavel text-amber-600 text-xs"></i>
+              <span class="text-xs text-amber-700"><strong>Rule violated:</strong> Double Entry System — Every debit must have an equal and opposite credit. Opening balances must sum to zero.</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-4 mb-4">
+            <div class="bg-gray-50 rounded-xl p-3">
+              <div class="text-xs text-gray-400 mb-1">Current Balance</div>
+              <div class="text-sm font-semibold text-red-600"><i class="fas fa-times-circle mr-1"></i>Dr ₹15,000</div>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-3">
+              <div class="text-xs text-gray-400 mb-1">Problem</div>
+              <div class="text-sm text-gray-700">Opening balances not matching</div>
+            </div>
+            <div class="bg-green-50 rounded-xl p-3">
+              <div class="text-xs text-gray-400 mb-1">Should Be</div>
+              <div class="text-sm font-semibold text-green-600"><i class="fas fa-check-circle mr-1"></i>Zero (₹0)</div>
+            </div>
+          </div>
+
+          <!-- Suggested Journal Entry -->
+          <div class="bg-purple-50 rounded-xl p-4 mb-4 border border-purple-100">
+            <p class="text-xs font-semibold text-purple-700 mb-3"><i class="fas fa-magic mr-2"></i>Auto-Correction — Suggested Journal Entry</p>
+            <div class="je-row">
+              <span class="debit-tag">Dr</span>
+              <span class="text-sm font-medium text-gray-700 flex-1">Suspense Account</span>
+              <span class="text-sm font-semibold text-gray-800">₹15,000</span>
+            </div>
+            <div class="je-row">
+              <span class="credit-tag">Cr</span>
+              <span class="text-sm font-medium text-gray-700 flex-1">Difference in Opening Balance</span>
+              <span class="text-sm font-semibold text-gray-800">₹15,000</span>
+            </div>
+            <p class="text-xs text-purple-500 mt-2 italic">Temporary fix: Park in Suspense Account while you investigate the source. Then identify the correct ledger and pass the rectification entry.</p>
+          </div>
+
+          <div class="bg-blue-50 rounded-xl p-4">
+            <p class="text-xs font-semibold text-blue-700 mb-1"><i class="fas fa-wrench mr-2"></i>How to Fix in Tally</p>
+            <p class="text-xs text-blue-600">Gateway of Tally → Accounts Info → Ledgers → Alter → Check all opening balances → Correct Debit/Credit sides → Ensure total Dr = total Cr</p>
+          </div>
+
+          <!-- Fix Workflow Actions -->
+          <div class="mt-4 border-t border-gray-100 pt-4">
+            <div class="flex flex-wrap items-center gap-3">
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-400 font-medium">Status:</span>
+                <select onchange="updateStatus(this,'ob_diff')" class="border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-700 focus:outline-none focus:border-blue-400">
+                  <option value="open" selected>🔴 Open</option>
+                  <option value="inprogress">🔵 In Progress</option>
+                  <option value="resolved">✅ Resolved</option>
+                  <option value="ignored">⚫ Ignored</option>
+                </select>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-400 font-medium">Assign to:</span>
+                <select class="border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-700 focus:outline-none focus:border-blue-400">
+                  <option>— Unassigned —</option>
+                  <option>Rahul Sharma</option>
+                  <option selected>Priya Mehta</option>
+                  <option>Sagar Pathak</option>
+                </select>
+              </div>
+              <button onclick="markResolved(this,'ob_diff')" class="ml-auto flex items-center gap-1.5 bg-green-600 text-white px-4 py-1.5 rounded-lg text-xs font-medium hover:bg-green-700 transition">
+                <i class="fas fa-check"></i> Mark Resolved
+              </button>
+            </div>
+            <div class="mt-3 flex gap-2">
+              <input type="text" placeholder="Add a comment..." class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 focus:outline-none focus:border-blue-300"/>
+              <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-medium hover:bg-blue-700 transition">
+                <i class="fas fa-paper-plane mr-1"></i>Comment
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Review Tab (hidden by default) -->
+      <div id="tab-content-review" class="space-y-4 hidden">
+        <div class="bg-white rounded-2xl card-shadow p-6 border-l-4 border-yellow-400">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-3">
+              <span class="tag-review text-xs px-3 py-1 rounded-full font-semibold">🟡 REVIEW</span>
+              <span class="text-gray-400 text-xs">Ledger #8</span>
+            </div>
+            <span class="text-sm text-gray-400">Closing Cr: ₹50,000</span>
+          </div>
+          <h4 class="text-base font-bold text-gray-800 mb-3">ABC Traders (Debtor)</h4>
+          <div class="grid grid-cols-3 gap-4 mb-4">
+            <div class="bg-gray-50 rounded-xl p-3">
+              <div class="text-xs text-gray-400 mb-1">Current Group</div>
+              <div class="text-sm font-semibold text-yellow-600">Sundry Debtors</div>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-3">
+              <div class="text-xs text-gray-400 mb-1">Problem</div>
+              <div class="text-sm text-gray-700">Debtor has Credit balance — unusual</div>
+            </div>
+            <div class="bg-yellow-50 rounded-xl p-3">
+              <div class="text-xs text-gray-400 mb-1">Possible Reason</div>
+              <div class="text-sm font-semibold text-yellow-600">Advance received or wrong entry</div>
+            </div>
+          </div>
+          <div class="bg-blue-50 rounded-xl p-4">
+            <p class="text-xs font-semibold text-blue-700 mb-1"><i class="fas fa-search mr-2"></i>What to Check</p>
+            <p class="text-xs text-blue-600">Display → Ledger → ABC Traders → Verify if advance was received. If yes, move to Current Liabilities. If wrong entry, correct the voucher.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- OK Tab -->
+      <div id="tab-content-ok" class="hidden">
+        <div class="bg-white rounded-2xl card-shadow p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
+              <i class="fas fa-check-circle text-green-500"></i>
+            </div>
+            <div>
+              <div class="font-semibold text-gray-800">101 Ledgers are Correct</div>
+              <div class="text-sm text-gray-500">These ledgers have correct group placement and expected balances</div>
+            </div>
+          </div>
+          <table class="w-full text-sm">
+            <thead><tr class="text-left text-gray-400 border-b border-gray-100 text-xs uppercase">
+              <th class="pb-2 font-medium">Ledger</th><th class="pb-2 font-medium">Group</th>
+              <th class="pb-2 font-medium">Closing Balance</th><th class="pb-2 font-medium">Status</th>
+            </tr></thead>
+            <tbody class="divide-y divide-gray-50">
+              <tr class="py-2"><td class="py-2.5 text-gray-700">HDFC Bank</td><td class="text-gray-500">Bank Accounts</td><td class="text-gray-700">Dr ₹2,45,000</td><td><span class="tag-ok text-xs px-2 py-0.5 rounded-full">✅ OK</span></td></tr>
+              <tr class="py-2"><td class="py-2.5 text-gray-700">Cash in Hand</td><td class="text-gray-500">Cash-in-Hand</td><td class="text-gray-700">Dr ₹12,500</td><td><span class="tag-ok text-xs px-2 py-0.5 rounded-full">✅ OK</span></td></tr>
+              <tr class="py-2"><td class="py-2.5 text-gray-700">Office Rent</td><td class="text-gray-500">Indirect Expenses</td><td class="text-gray-700">Dr ₹1,80,000</td><td><span class="tag-ok text-xs px-2 py-0.5 rounded-full">✅ OK</span></td></tr>
+              <tr class="py-2"><td class="py-2.5 text-gray-700">Service Income</td><td class="text-gray-500">Direct Incomes</td><td class="text-gray-700">Cr ₹8,50,000</td><td><span class="tag-ok text-xs px-2 py-0.5 rounded-full">✅ OK</span></td></tr>
+              <tr class="py-2"><td class="py-2.5 text-gray-700">Salary Account</td><td class="text-gray-500">Indirect Expenses</td><td class="text-gray-700">Dr ₹4,20,000</td><td><span class="tag-ok text-xs px-2 py-0.5 rounded-full">✅ OK</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Full Report Tab -->
+      <div id="tab-content-all" class="hidden">
+        <div class="bg-white rounded-2xl card-shadow p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold text-gray-800">Complete Ledger Report — All 120 Entries</h3>
+            <button class="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-xl text-sm hover:bg-red-600 transition">
+              <i class="fas fa-file-pdf"></i> Export PDF
+            </button>
+          </div>
+          <table class="w-full text-sm">
+            <thead><tr class="text-left text-gray-400 border-b border-gray-100 text-xs uppercase bg-gray-50 rounded">
+              <th class="p-3 font-medium">#</th><th class="p-3 font-medium">Ledger</th>
+              <th class="p-3 font-medium">Group</th><th class="p-3 font-medium">Balance</th>
+              <th class="p-3 font-medium">Status</th><th class="p-3 font-medium">Should Be Under</th>
+            </tr></thead>
+            <tbody class="divide-y divide-gray-50">
+              <tr class="hover:bg-gray-50"><td class="p-3 text-gray-400">14</td><td class="p-3 font-medium text-gray-800">TDS Receivable</td><td class="p-3 text-gray-500">Duties & Taxes</td><td class="p-3 text-gray-700">Dr ₹10,000</td><td class="p-3"><span class="tag-critical text-xs px-2 py-0.5 rounded-full">🔴 Critical</span></td><td class="p-3 text-green-600 font-medium">Current Assets</td></tr>
+              <tr class="hover:bg-gray-50"><td class="p-3 text-gray-400">27</td><td class="p-3 font-medium text-gray-800">Bank Interest</td><td class="p-3 text-gray-500">Indirect Expenses</td><td class="p-3 text-gray-700">Cr ₹25,000</td><td class="p-3"><span class="tag-critical text-xs px-2 py-0.5 rounded-full">🔴 Critical</span></td><td class="p-3 text-green-600 font-medium">Indirect Incomes</td></tr>
+              <tr class="hover:bg-gray-50"><td class="p-3 text-gray-400">8</td><td class="p-3 font-medium text-gray-800">ABC Traders</td><td class="p-3 text-gray-500">Sundry Debtors</td><td class="p-3 text-gray-700">Cr ₹50,000</td><td class="p-3"><span class="tag-review text-xs px-2 py-0.5 rounded-full">🟡 Review</span></td><td class="p-3 text-yellow-600 font-medium">Verify first</td></tr>
+              <tr class="hover:bg-gray-50"><td class="p-3 text-gray-400">1</td><td class="p-3 font-medium text-gray-800">HDFC Bank</td><td class="p-3 text-gray-500">Bank Accounts</td><td class="p-3 text-gray-700">Dr ₹2,45,000</td><td class="p-3"><span class="tag-ok text-xs px-2 py-0.5 rounded-full">✅ OK</span></td><td class="p-3 text-gray-400">—</td></tr>
+              <tr class="hover:bg-gray-50"><td class="p-3 text-gray-400">2</td><td class="p-3 font-medium text-gray-800">Cash in Hand</td><td class="p-3 text-gray-500">Cash-in-Hand</td><td class="p-3 text-gray-700">Dr ₹12,500</td><td class="p-3"><span class="tag-ok text-xs px-2 py-0.5 rounded-full">✅ OK</span></td><td class="p-3 text-gray-400">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ASK CA PAGE ===== -->
+    <div id="page-askca" class="page" style="height:calc(100vh - 64px); display:none; flex-direction:column;">
+
+      <!-- Context Banner -->
+      <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-8 py-3 flex items-center gap-4 flex-shrink-0">
+        <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+          <i class="fas fa-database text-white text-sm"></i>
+        </div>
+        <div class="flex-1">
+          <div class="text-white text-sm font-medium">Context: AJKL Trial Balance — FY 2025-26 (120 ledgers, 7 critical errors)</div>
+          <div class="text-blue-200 text-xs">AI is reading your uploaded data to give specific answers</div>
+        </div>
+        <div class="flex items-center gap-1.5 bg-green-500/20 border border-green-400/30 px-3 py-1 rounded-full">
+          <span class="w-2 h-2 rounded-full bg-green-400 inline-block pulse"></span>
+          <span class="text-green-200 text-xs font-medium">Data Connected</span>
+        </div>
+      </div>
+
+      <!-- Chat messages -->
+      <div id="chatMessages" class="flex-1 overflow-y-auto p-6 space-y-5" style="min-height:0;">
+
+        <!-- AI greeting with context -->
+        <div class="flex items-start gap-3">
+          <div class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+            <i class="fas fa-robot text-white text-sm"></i>
+          </div>
+          <div class="chat-bubble-ai p-4 max-w-lg">
+            <p class="text-sm text-gray-700 font-semibold mb-1">Hello Sagar! I've read your AJKL Trial Balance.</p>
+            <p class="text-sm text-gray-600 mb-3">I can see <strong>120 ledgers</strong>, <strong>7 critical errors</strong>, and <strong>12 items needing review</strong>. Your compliance health is <strong>72%</strong>. Here's what I noticed immediately:</p>
+            <div class="space-y-2">
+              <div class="flex items-start gap-2 text-xs text-gray-600 bg-red-50 p-2 rounded-lg">
+                <i class="fas fa-exclamation-circle text-red-400 mt-0.5 flex-shrink-0"></i>
+                <span><strong>TDS Receivable</strong> is grouped under Duties &amp; Taxes — this is an asset mis-classified as liability.</span>
+              </div>
+              <div class="flex items-start gap-2 text-xs text-gray-600 bg-yellow-50 p-2 rounded-lg">
+                <i class="fas fa-exclamation-triangle text-yellow-400 mt-0.5 flex-shrink-0"></i>
+                <span><strong>Bank Interest Received ₹25,000</strong> placed under Indirect Expenses — this understates your profit.</span>
+              </div>
+              <div class="flex items-start gap-2 text-xs text-gray-600 bg-orange-50 p-2 rounded-lg">
+                <i class="fas fa-clock text-orange-400 mt-0.5 flex-shrink-0"></i>
+                <span><strong>TDS deposit overdue</strong> by 7 days — ₹9,700 pending, interest accruing at 1.5%/month.</span>
+              </div>
+            </div>
+            <p class="text-xs text-gray-400 mt-3">Ask me anything about your books — I'll give specific answers based on your data.</p>
+          </div>
+        </div>
+
+        <!-- Example Q&A 1 — contextual -->
+        <div class="flex items-start gap-3 flex-row-reverse">
+          <div class="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+            <i class="fas fa-user text-gray-600 text-sm"></i>
+          </div>
+          <div class="chat-bubble-user p-4 max-w-sm">
+            <p class="text-sm">Why is my profit low this month?</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <div class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+            <i class="fas fa-robot text-white text-sm"></i>
+          </div>
+          <div class="chat-bubble-ai p-4 max-w-lg">
+            <p class="text-sm text-gray-700 font-semibold mb-2">Based on your AJKL Trial Balance, here are 4 reasons:</p>
+            <div class="space-y-2 mb-3">
+              <div class="flex items-start gap-2 text-xs text-gray-700 bg-white border border-gray-200 p-2.5 rounded-lg">
+                <span class="text-red-500 font-bold flex-shrink-0">1.</span>
+                <span><strong>Bank Interest ₹25,000 mis-booked as expense</strong> — This single error is reducing your reported profit by ₹25,000. Fix: re-group to Indirect Incomes.</span>
+              </div>
+              <div class="flex items-start gap-2 text-xs text-gray-700 bg-white border border-gray-200 p-2.5 rounded-lg">
+                <span class="text-orange-500 font-bold flex-shrink-0">2.</span>
+                <span><strong>ABC Traders outstanding ₹50,000 (credit balance)</strong> — A debtor has a credit balance, suggesting advance received but not moved to liability.</span>
+              </div>
+              <div class="flex items-start gap-2 text-xs text-gray-700 bg-white border border-gray-200 p-2.5 rounded-lg">
+                <span class="text-yellow-500 font-bold flex-shrink-0">3.</span>
+                <span><strong>Opening balance difference ₹15,000</strong> — Carried as Dr balance, inflating assets but creating P&amp;L noise.</span>
+              </div>
+              <div class="flex items-start gap-2 text-xs text-gray-700 bg-white border border-gray-200 p-2.5 rounded-lg">
+                <span class="text-blue-500 font-bold flex-shrink-0">4.</span>
+                <span><strong>7 unreconciled bank entries</strong> — Possible unbooked income of ₹12,500 from ABC Corp not reflected in P&amp;L.</span>
+              </div>
+            </div>
+            <p class="text-xs text-blue-600 font-medium">Fix all 7 critical errors → your profit will improve by an estimated ₹37,500+</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Quick question chips -->
+      <div class="px-6 pb-3 flex-shrink-0">
+        <div class="flex flex-wrap gap-2 mb-3">
+          <button onclick="quickAsk('What are my top 3 errors to fix first?')" class="text-xs bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full hover:border-blue-300 hover:text-blue-600 transition">Top 3 errors to fix?</button>
+          <button onclick="quickAsk('How much TDS is pending and what is the interest?')" class="text-xs bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full hover:border-blue-300 hover:text-blue-600 transition">TDS pending &amp; interest?</button>
+          <button onclick="quickAsk('Which debtors have credit balances?')" class="text-xs bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full hover:border-blue-300 hover:text-blue-600 transition">Debtors with credit balance?</button>
+          <button onclick="quickAsk('What journal entries do I need to pass to fix the errors?')" class="text-xs bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full hover:border-blue-300 hover:text-blue-600 transition">Journal entries to fix errors?</button>
+          <button onclick="quickAsk('What is my compliance health score and how to improve it?')" class="text-xs bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full hover:border-blue-300 hover:text-blue-600 transition">Improve compliance score?</button>
+        </div>
+        <!-- Input -->
+        <div class="bg-white rounded-2xl border border-gray-200 p-3 flex items-end gap-3 card-shadow">
+          <textarea id="chatInput" rows="2" placeholder="Ask anything about your books... e.g. 'Why is profit low?' or 'What TDS is pending?'"
+            class="flex-1 resize-none text-sm text-gray-700 placeholder-gray-400 focus:outline-none"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
+          <button onclick="sendChat()" class="bg-blue-600 hover:bg-blue-700 text-white w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition">
+            <i class="fas fa-paper-plane text-sm"></i>
+          </button>
+        </div>
+        <p class="text-xs text-gray-400 mt-2 text-center">AI answers are based on your uploaded AJKL Trial Balance data · FY 2025-26</p>
+      </div>
+    </div>
+
+    <!-- ===== JOURNAL ENTRY GUIDE PAGE ===== -->
+    <div id="page-journal" class="page p-8">
+      <div class="max-w-3xl mx-auto">
+        <div class="bg-white rounded-2xl card-shadow p-6 mb-6">
+          <h3 class="text-xl font-bold text-gray-800 mb-2">Journal Entry Guide</h3>
+          <p class="text-gray-500 text-sm mb-5">Type your transaction in plain English and get the correct journal entry</p>
+          <div class="flex gap-3">
+            <input type="text" id="journalInput" placeholder="e.g. Paid salary ₹50,000 to employees via bank..."
+              value="Paid salary ₹50,000 via HDFC Bank"
+              class="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400"/>
+            <button onclick="showJournalEntry()" class="bg-blue-600 text-white px-6 py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition">
+              Generate Entry
+            </button>
+          </div>
+        </div>
+
+        <!-- Journal Result -->
+        <div id="journalResult" class="bg-white rounded-2xl card-shadow p-6 mb-6">
+          <div class="flex items-center gap-3 mb-5">
+            <div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
+              <i class="fas fa-book-open text-green-500"></i>
+            </div>
+            <div>
+              <div class="font-semibold text-gray-800">Journal Entry — Salary Payment</div>
+              <div class="text-xs text-gray-400">Voucher Type: Payment</div>
+            </div>
+          </div>
+
+          <div class="border border-gray-200 rounded-xl overflow-hidden mb-5">
+            <table class="w-full text-sm">
+              <thead><tr class="bg-gray-50"><th class="p-3 text-left text-gray-500 font-medium text-xs uppercase">Particulars</th><th class="p-3 text-center text-gray-500 font-medium text-xs uppercase">Dr / Cr</th><th class="p-3 text-right text-gray-500 font-medium text-xs uppercase">Amount</th></tr></thead>
+              <tbody>
+                <tr class="border-t border-gray-100">
+                  <td class="p-3"><span class="font-semibold text-gray-800">Salary A/c</span><div class="text-xs text-gray-400">Under: Indirect Expenses</div></td>
+                  <td class="p-3 text-center"><span class="debit-tag">DEBIT</span></td>
+                  <td class="p-3 text-right font-bold text-gray-800">₹50,000</td>
+                </tr>
+                <tr class="border-t border-gray-100">
+                  <td class="p-3 pl-8"><span class="font-semibold text-gray-800">HDFC Bank</span><div class="text-xs text-gray-400">Under: Bank Accounts</div></td>
+                  <td class="p-3 text-center"><span class="credit-tag">CREDIT</span></td>
+                  <td class="p-3 text-right font-bold text-gray-800">₹50,000</td>
+                </tr>
+              </tbody>
+              <tfoot class="bg-gray-50"><tr><td class="p-3 font-semibold text-gray-600" colspan="2">Total</td><td class="p-3 text-right font-bold text-gray-800">₹50,000</td></tr></tfoot>
+            </table>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div class="bg-blue-50 rounded-xl p-4">
+              <p class="text-xs font-semibold text-blue-700 mb-2"><i class="fas fa-tally mr-2"></i>Tally Steps</p>
+              <div class="text-xs text-blue-600 space-y-1">
+                <p>1. Go to Payment Voucher (F5)</p>
+                <p>2. Select HDFC Bank as account</p>
+                <p>3. Debit: Salary A/c ₹50,000</p>
+                <p>4. Add narration → Save</p>
+              </div>
+            </div>
+            <div class="bg-yellow-50 rounded-xl p-4">
+              <p class="text-xs font-semibold text-yellow-700 mb-2"><i class="fas fa-exclamation-triangle mr-2"></i>Important Notes</p>
+              <div class="text-xs text-yellow-600 space-y-1">
+                <p>• Ensure salary ledger is under Indirect Expenses</p>
+                <p>• If TDS deducted on salary, add TDS payable ledger</p>
+                <p>• Check PT (Kolkata) deduction if applicable</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Common Entries Quick Reference -->
+        <div class="bg-white rounded-2xl card-shadow p-6">
+          <h4 class="font-semibold text-gray-800 mb-4">Quick Reference — Common Entries</h4>
+          <div class="grid grid-cols-2 gap-3">
+            <div onclick="quickEntry('rent')" class="entry-card p-3 cursor-pointer hover:border-blue-300 hover:bg-blue-50/30 transition">
+              <div class="text-sm font-medium text-gray-700">🏢 Office Rent Payment</div>
+              <div class="text-xs text-gray-400 mt-1">Debit: Rent | Credit: Bank</div>
+            </div>
+            <div onclick="quickEntry('tds')" class="entry-card p-3 cursor-pointer hover:border-blue-300 hover:bg-blue-50/30 transition">
+              <div class="text-sm font-medium text-gray-700">📋 TDS Deduction</div>
+              <div class="text-xs text-gray-400 mt-1">Debit: Expense | Credit: TDS Payable + Vendor</div>
+            </div>
+            <div onclick="quickEntry('depreciation')" class="entry-card p-3 cursor-pointer hover:border-blue-300 hover:bg-blue-50/30 transition">
+              <div class="text-sm font-medium text-gray-700">📉 Depreciation</div>
+              <div class="text-xs text-gray-400 mt-1">Debit: Depreciation | Credit: Fixed Asset</div>
+            </div>
+            <div onclick="quickEntry('salary')" class="entry-card p-3 cursor-pointer hover:border-blue-300 hover:bg-blue-50/30 transition">
+              <div class="text-sm font-medium text-gray-700">👥 Salary with PT</div>
+              <div class="text-xs text-gray-400 mt-1">Debit: Salary | Credit: Bank + PT Payable</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== COMPLIANCE PAGE ===== -->
+    <div id="page-compliance" class="page p-8">
+      <div class="grid grid-cols-3 gap-6 mb-6">
+        <div class="stat-card card-shadow col-span-1">
+          <div class="text-sm text-gray-500 mb-1">Overdue</div>
+          <div class="text-3xl font-bold text-red-600">1</div>
+        </div>
+        <div class="stat-card card-shadow col-span-1">
+          <div class="text-sm text-gray-500 mb-1">Due This Week</div>
+          <div class="text-3xl font-bold text-yellow-600">2</div>
+        </div>
+        <div class="stat-card card-shadow col-span-1">
+          <div class="text-sm text-gray-500 mb-1">Completed (Mar)</div>
+          <div class="text-3xl font-bold text-green-600">3</div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl card-shadow p-6">
+        <h3 class="font-semibold text-gray-800 mb-5">March 2026 — Compliance Calendar</h3>
+        <div class="space-y-4">
+
+          <div class="compliance-card overdue rounded-xl p-4 flex items-center gap-4">
+            <div class="w-14 h-14 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
+              <div class="text-center"><div class="text-red-600 font-bold text-lg leading-none">7</div><div class="text-red-400 text-xs">MAR</div></div>
+            </div>
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="font-semibold text-red-700">TDS Deposit — February 2026</span>
+                <span class="bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded-full pulse">OVERDUE</span>
+              </div>
+              <div class="text-sm text-red-500">Section 200 — TDS deducted in Feb must be deposited by 7th March</div>
+              <div class="text-xs text-red-400 mt-1">Penalty: ₹200/day + 1.5% interest per month if delayed</div>
+            </div>
+            <button class="bg-red-500 text-white px-4 py-2 rounded-xl text-xs hover:bg-red-600">Mark Done</button>
+          </div>
+
+          <div class="compliance-card upcoming rounded-xl p-4 flex items-center gap-4">
+            <div class="w-14 h-14 rounded-xl bg-yellow-100 flex items-center justify-center flex-shrink-0">
+              <div class="text-center"><div class="text-yellow-600 font-bold text-lg leading-none">21</div><div class="text-yellow-400 text-xs">MAR</div></div>
+            </div>
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="font-semibold text-yellow-700">Professional Tax — Kolkata</span>
+                <span class="bg-yellow-100 text-yellow-600 text-xs px-2 py-0.5 rounded-full">7 DAYS LEFT</span>
+              </div>
+              <div class="text-sm text-yellow-600">PT deducted from employee salary must be deposited by 21st March</div>
+              <div class="text-xs text-yellow-500 mt-1">Kolkata Municipal Corporation — PT challan via Grips portal</div>
+            </div>
+            <button class="bg-yellow-500 text-white px-4 py-2 rounded-xl text-xs hover:bg-yellow-600">Mark Done</button>
+          </div>
+
+          <div class="compliance-card upcoming rounded-xl p-4 flex items-center gap-4">
+            <div class="w-14 h-14 rounded-xl bg-yellow-100 flex items-center justify-center flex-shrink-0">
+              <div class="text-center"><div class="text-yellow-600 font-bold text-lg leading-none">31</div><div class="text-yellow-400 text-xs">MAR</div></div>
+            </div>
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="font-semibold text-yellow-700">Salary Payment — March 2026</span>
+                <span class="bg-yellow-100 text-yellow-600 text-xs px-2 py-0.5 rounded-full">17 DAYS LEFT</span>
+              </div>
+              <div class="text-sm text-yellow-600">Process March salary before year end. Deduct PT & TDS if applicable.</div>
+              <div class="text-xs text-yellow-500 mt-1">Post provision entry if payment delayed beyond 31st March</div>
+            </div>
+            <button class="bg-yellow-500 text-white px-4 py-2 rounded-xl text-xs hover:bg-yellow-600">Mark Done</button>
+          </div>
+
+          <div class="compliance-card done rounded-xl p-4 flex items-center gap-4">
+            <div class="w-14 h-14 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
+              <div class="text-center"><div class="text-green-600 font-bold text-lg leading-none">28</div><div class="text-green-400 text-xs">FEB</div></div>
+            </div>
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="font-semibold text-green-700">Salary Payment — February 2026</span>
+                <span class="bg-green-100 text-green-600 text-xs px-2 py-0.5 rounded-full">✓ DONE</span>
+              </div>
+              <div class="text-sm text-green-600">Salary paid on 28th February 2026. PT deposited on 20th Feb.</div>
+            </div>
+            <i class="fas fa-check-circle text-green-500 text-xl"></i>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== HISTORY PAGE ===== -->
+    <div id="page-history" class="page p-8">
+      <div class="bg-white rounded-2xl card-shadow p-6">
+        <div class="flex items-center justify-between mb-5">
+          <h3 class="font-semibold text-gray-800">Upload History</h3>
+          <div class="flex gap-2">
+            <input type="text" placeholder="Search..." class="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none"/>
+            <select class="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-600 focus:outline-none">
+              <option>All Status</option><option>Critical</option><option>Review</option><option>All OK</option>
+            </select>
+          </div>
+        </div>
+        <table class="w-full text-sm">
+          <thead><tr class="text-left text-gray-400 border-b border-gray-100 text-xs uppercase">
+            <th class="pb-3 font-medium">File Name</th><th class="pb-3 font-medium">Uploaded By</th>
+            <th class="pb-3 font-medium">Date</th><th class="pb-3 font-medium">Period</th>
+            <th class="pb-3 font-medium">Result</th><th class="pb-3 font-medium">Action</th>
+          </tr></thead>
+          <tbody class="divide-y divide-gray-50">
+            <tr class="hover:bg-gray-50 cursor-pointer" onclick="showPage('results')">
+              <td class="py-3.5"><div class="flex items-center gap-2"><i class="fas fa-file-excel text-green-500"></i><span class="font-medium text-gray-800">AJKL Traial balance.xlsx</span></div></td>
+              <td class="py-3.5 text-gray-500">Sagar Pathak</td>
+              <td class="py-3.5 text-gray-500">14 Mar 2026</td>
+              <td class="py-3.5 text-gray-500">FY 2025-26</td>
+              <td class="py-3.5"><div class="flex gap-1"><span class="tag-critical text-xs px-2 py-0.5 rounded-full">7 Critical</span><span class="tag-review text-xs px-2 py-0.5 rounded-full">12 Review</span></div></td>
+              <td class="py-3.5"><button class="text-blue-600 text-xs hover:underline">View Report</button></td>
+            </tr>
+            <tr class="hover:bg-gray-50 cursor-pointer">
+              <td class="py-3.5"><div class="flex items-center gap-2"><i class="fas fa-file-excel text-green-500"></i><span class="font-medium text-gray-800">AJKL Trial Balance March.xlsx</span></div></td>
+              <td class="py-3.5 text-gray-500">Rahul Sharma</td>
+              <td class="py-3.5 text-gray-500">11 Mar 2026</td>
+              <td class="py-3.5 text-gray-500">FY 2024-25</td>
+              <td class="py-3.5"><span class="tag-ok text-xs px-2 py-0.5 rounded-full">✅ All OK</span></td>
+              <td class="py-3.5"><button class="text-blue-600 text-xs hover:underline">View Report</button></td>
+            </tr>
+            <tr class="hover:bg-gray-50 cursor-pointer">
+              <td class="py-3.5"><div class="flex items-center gap-2"><i class="fas fa-file-excel text-green-500"></i><span class="font-medium text-gray-800">TB_Feb2026.xlsx</span></div></td>
+              <td class="py-3.5 text-gray-500">Sagar Pathak</td>
+              <td class="py-3.5 text-gray-500">07 Mar 2026</td>
+              <td class="py-3.5 text-gray-500">FY 2025-26</td>
+              <td class="py-3.5"><span class="tag-review text-xs px-2 py-0.5 rounded-full">5 Review</span></td>
+              <td class="py-3.5"><button class="text-blue-600 text-xs hover:underline">View Report</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== ADMIN PAGE ===== -->
+    <div id="page-admin" class="page p-8">
+      <div class="grid grid-cols-3 gap-6 mb-6">
+        <div class="stat-card card-shadow"><div class="text-sm text-gray-500 mb-1">Total Users</div><div class="text-3xl font-bold text-gray-800">4</div></div>
+        <div class="stat-card card-shadow"><div class="text-sm text-gray-500 mb-1">Total Uploads</div><div class="text-3xl font-bold text-gray-800">24</div></div>
+        <div class="stat-card card-shadow"><div class="text-sm text-gray-500 mb-1">Errors Fixed</div><div class="text-3xl font-bold text-green-600">47</div></div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6">
+        <div class="bg-white rounded-2xl card-shadow p-6">
+          <div class="flex items-center justify-between mb-5">
+            <h3 class="font-semibold text-gray-800">Users</h3>
+            <button class="bg-blue-600 text-white px-3 py-2 rounded-xl text-xs hover:bg-blue-700 transition">
+              <i class="fas fa-plus mr-1"></i>Add User
+            </button>
+          </div>
+          <div class="space-y-3">
+            <div class="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
+              <div class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm">S</div>
+              <div class="flex-1"><div class="text-sm font-medium text-gray-800">Sagar Pathak</div><div class="text-xs text-gray-400">admin@company.com</div></div>
+              <span class="bg-blue-100 text-blue-600 text-xs px-2 py-0.5 rounded-full">Admin</span>
+            </div>
+            <div class="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50">
+              <div class="w-9 h-9 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold text-sm">R</div>
+              <div class="flex-1"><div class="text-sm font-medium text-gray-800">Rahul Sharma</div><div class="text-xs text-gray-400">rahul@company.com</div></div>
+              <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">User</span>
+              <button class="text-red-400 hover:text-red-500 text-xs ml-2"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50">
+              <div class="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center text-white font-bold text-sm">P</div>
+              <div class="flex-1"><div class="text-sm font-medium text-gray-800">Priya Mehta</div><div class="text-xs text-gray-400">priya@company.com</div></div>
+              <span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">User</span>
+              <button class="text-red-400 hover:text-red-500 text-xs ml-2"><i class="fas fa-trash"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl card-shadow p-6">
+          <h3 class="font-semibold text-gray-800 mb-5">All Uploads — Overview</h3>
+          <div class="space-y-3">
+            <div class="flex items-center gap-3 p-3 rounded-xl border border-gray-100">
+              <i class="fas fa-file-excel text-green-500"></i>
+              <div class="flex-1"><div class="text-sm font-medium text-gray-700">AJKL Traial balance.xlsx</div><div class="text-xs text-gray-400">Sagar Pathak • 14 Mar 2026</div></div>
+              <span class="tag-critical text-xs px-2 py-0.5 rounded-full">7 Critical</span>
+            </div>
+            <div class="flex items-center gap-3 p-3 rounded-xl border border-gray-100">
+              <i class="fas fa-file-excel text-green-500"></i>
+              <div class="flex-1"><div class="text-sm font-medium text-gray-700">AJKL Trial Balance March.xlsx</div><div class="text-xs text-gray-400">Rahul Sharma • 11 Mar 2026</div></div>
+              <span class="tag-ok text-xs px-2 py-0.5 rounded-full">✅ All OK</span>
+            </div>
+            <div class="flex items-center gap-3 p-3 rounded-xl border border-gray-100">
+              <i class="fas fa-file-excel text-green-500"></i>
+              <div class="flex-1"><div class="text-sm font-medium text-gray-700">TB_Feb2026.xlsx</div><div class="text-xs text-gray-400">Sagar Pathak • 07 Mar 2026</div></div>
+              <span class="tag-review text-xs px-2 py-0.5 rounded-full">5 Review</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== BANK RECONCILIATION PAGE ===== -->
+    <div id="page-bankrec" class="page p-8">
+
+      <!-- Upload strip -->
+      <div class="grid grid-cols-2 gap-6 mb-6">
+        <div class="bg-white rounded-2xl card-shadow p-5">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center"><i class="fas fa-university text-blue-500"></i></div>
+            <div><div class="text-sm font-semibold text-gray-800">Bank Statement</div><div class="text-xs text-gray-400">Upload CSV/Excel from your bank</div></div>
+          </div>
+          <div class="upload-zone rounded-xl p-5 text-center cursor-pointer" onclick="simulateBankUpload('statement')">
+            <i class="fas fa-cloud-upload-alt text-blue-400 text-2xl mb-2 block"></i>
+            <p class="text-xs text-gray-500 mb-2">Drop bank statement here</p>
+            <span class="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-xs font-medium">Choose File</span>
+          </div>
+          <div id="bankStatementLoaded" class="hidden mt-3 flex items-center gap-2 p-2 bg-green-50 rounded-lg">
+            <i class="fas fa-check-circle text-green-500 text-sm"></i>
+            <span class="text-xs text-green-700 font-medium">HDFC_Statement_Mar2026.csv — 143 transactions loaded</span>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl card-shadow p-5">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center"><i class="fas fa-book text-purple-500"></i></div>
+            <div><div class="text-sm font-semibold text-gray-800">Tally Bank Ledger</div><div class="text-xs text-gray-400">Export bank ledger from Tally as Excel</div></div>
+          </div>
+          <div class="upload-zone rounded-xl p-5 text-center cursor-pointer" onclick="simulateBankUpload('tally')">
+            <i class="fas fa-cloud-upload-alt text-purple-400 text-2xl mb-2 block"></i>
+            <p class="text-xs text-gray-500 mb-2">Drop Tally bank ledger here</p>
+            <span class="bg-purple-600 text-white px-4 py-1.5 rounded-lg text-xs font-medium">Choose File</span>
+          </div>
+          <div id="tallyLedgerLoaded" class="hidden mt-3 flex items-center gap-2 p-2 bg-green-50 rounded-lg">
+            <i class="fas fa-check-circle text-green-500 text-sm"></i>
+            <span class="text-xs text-green-700 font-medium">HDFC_TallyLedger.xlsx — 138 entries loaded</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reconciliation Summary -->
+      <div id="bancRecSummary" class="hidden">
+        <div class="grid grid-cols-4 gap-5 mb-6">
+          <div class="stat-card card-shadow text-center border-t-4 border-green-400">
+            <div class="text-3xl font-bold text-green-600">131</div>
+            <div class="text-sm text-gray-500 mt-1">Matched</div>
+            <div class="text-xs text-green-400 mt-1">91.6%</div>
+          </div>
+          <div class="stat-card card-shadow text-center border-t-4 border-red-400">
+            <div class="text-3xl font-bold text-red-600">7</div>
+            <div class="text-sm text-gray-500 mt-1">Unmatched</div>
+            <div class="text-xs text-red-400 mt-1">In bank, not in Tally</div>
+          </div>
+          <div class="stat-card card-shadow text-center border-t-4 border-yellow-400">
+            <div class="text-3xl font-bold text-yellow-600">3</div>
+            <div class="text-sm text-gray-500 mt-1">Tally Only</div>
+            <div class="text-xs text-yellow-400 mt-1">In Tally, not in bank</div>
+          </div>
+          <div class="stat-card card-shadow text-center border-t-4 border-orange-400">
+            <div class="text-3xl font-bold text-orange-600">2</div>
+            <div class="text-sm text-gray-500 mt-1">Duplicates</div>
+            <div class="text-xs text-orange-400 mt-1">Same amount, same date</div>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex gap-2 mb-5">
+          <button id="brtab-unmatched" onclick="switchBRTab('unmatched')" class="px-4 py-2 rounded-xl text-sm font-medium bg-red-500 text-white transition">🔴 Unmatched (7)</button>
+          <button id="brtab-tally" onclick="switchBRTab('tally')" class="px-4 py-2 rounded-xl text-sm font-medium bg-white text-gray-500 hover:bg-gray-50 transition">🟡 Tally Only (3)</button>
+          <button id="brtab-duplicate" onclick="switchBRTab('duplicate')" class="px-4 py-2 rounded-xl text-sm font-medium bg-white text-gray-500 hover:bg-gray-50 transition">🟠 Duplicates (2)</button>
+          <button id="brtab-matched" onclick="switchBRTab('matched')" class="px-4 py-2 rounded-xl text-sm font-medium bg-white text-gray-500 hover:bg-gray-50 transition">✅ Matched (131)</button>
+        </div>
+
+        <!-- Unmatched Tab -->
+        <div id="brtab-content-unmatched" class="space-y-3">
+          <div class="bg-white rounded-2xl card-shadow p-5 border-l-4 border-red-400">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <span class="tag-critical text-xs px-3 py-1 rounded-full font-semibold">UNMATCHED</span>
+                <span class="text-xs text-gray-400">Bank — 03 Mar 2026</span>
+              </div>
+              <span class="text-sm font-semibold text-gray-700">₹45,000 Dr</span>
+            </div>
+            <div class="text-sm font-medium text-gray-800 mb-1">NEFT/RTGS — Vendor Payment — M/s Kapoor Supplies</div>
+            <div class="text-xs text-gray-400 mb-3">Bank Ref: HDFC2603000123 · Narration: "Payment against invoice KS-2023"</div>
+            <div class="bg-red-50 rounded-xl p-3">
+              <p class="text-xs text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>This payment appears in your bank statement but has <strong>no matching entry in Tally</strong>. Possible reasons: payment voucher not posted, wrong date entered, or posted to different ledger.</p>
+            </div>
+          </div>
+          <div class="bg-white rounded-2xl card-shadow p-5 border-l-4 border-red-400">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <span class="tag-critical text-xs px-3 py-1 rounded-full font-semibold">UNMATCHED</span>
+                <span class="text-xs text-gray-400">Bank — 07 Mar 2026</span>
+              </div>
+              <span class="text-sm font-semibold text-gray-700">₹12,500 Cr</span>
+            </div>
+            <div class="text-sm font-medium text-gray-800 mb-1">IMPS — Receipt from ABC Corp</div>
+            <div class="text-xs text-gray-400 mb-3">Bank Ref: HDFC2607000456 · UTR: 26070012345</div>
+            <div class="bg-red-50 rounded-xl p-3">
+              <p class="text-xs text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>Customer receipt in bank not recorded in Tally. Create a receipt voucher: Dr HDFC Bank Cr ABC Corp ₹12,500.</p>
+            </div>
+          </div>
+          <div class="bg-white rounded-2xl card-shadow p-5 border-l-4 border-red-400">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <span class="tag-critical text-xs px-3 py-1 rounded-full font-semibold">UNMATCHED</span>
+                <span class="text-xs text-gray-400">Bank — 10 Mar 2026</span>
+              </div>
+              <span class="text-sm font-semibold text-gray-700">₹2,360 Dr</span>
+            </div>
+            <div class="text-sm font-medium text-gray-800 mb-1">Bank Charges — HDFC Processing Fee</div>
+            <div class="text-xs text-gray-400 mb-3">Auto-debit by bank · Ref: CHGS2026MAR</div>
+            <div class="bg-red-50 rounded-xl p-3">
+              <p class="text-xs text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>Bank charges not recorded in Tally. Create a journal: Dr Bank Charges A/c Cr HDFC Bank ₹2,360.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tally Only Tab -->
+        <div id="brtab-content-tally" class="space-y-3 hidden">
+          <div class="bg-white rounded-2xl card-shadow p-5 border-l-4 border-yellow-400">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <span class="tag-review text-xs px-3 py-1 rounded-full font-semibold">TALLY ONLY</span>
+                <span class="text-xs text-gray-400">Tally — 05 Mar 2026</span>
+              </div>
+              <span class="text-sm font-semibold text-gray-700">₹18,000 Cr</span>
+            </div>
+            <div class="text-sm font-medium text-gray-800 mb-1">Payment Voucher — PV-0341 · Rohan Enterprises</div>
+            <div class="text-xs text-gray-400 mb-3">Entered in Tally by Rahul Sharma</div>
+            <div class="bg-yellow-50 rounded-xl p-3">
+              <p class="text-xs text-yellow-700"><i class="fas fa-info-circle mr-1"></i>This entry is in Tally but the bank has no record of it. Possible outstanding cheque not yet cleared, or incorrect amount entered in Tally.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Duplicate Tab -->
+        <div id="brtab-content-duplicate" class="space-y-3 hidden">
+          <div class="bg-white rounded-2xl card-shadow p-5 border-l-4 border-orange-400">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <span style="background:#fff7ed;color:#c2410c;border:1px solid #fed7aa" class="text-xs px-3 py-1 rounded-full font-semibold">DUPLICATE</span>
+                <span class="text-xs text-gray-400">11 Mar 2026</span>
+              </div>
+              <span class="text-sm font-semibold text-gray-700">₹8,500 Dr × 2</span>
+            </div>
+            <div class="text-sm font-medium text-gray-800 mb-1">Salary Advance — Staff Member</div>
+            <div class="text-xs text-gray-400 mb-3">Same amount, same date — two entries found in Tally (PV-0352 and PV-0353)</div>
+            <div class="bg-orange-50 rounded-xl p-3">
+              <p class="text-xs text-orange-700"><i class="fas fa-exclamation-triangle mr-1"></i>Possible double entry. Bank shows only 1 debit of ₹8,500 on this date. Delete duplicate voucher PV-0353 in Tally after verification.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Matched Tab -->
+        <div id="brtab-content-matched" class="hidden">
+          <div class="bg-white rounded-2xl card-shadow p-6">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
+                <i class="fas fa-check-double text-green-500"></i>
+              </div>
+              <div>
+                <div class="font-semibold text-gray-800">131 Transactions Matched</div>
+                <div class="text-sm text-gray-500">These entries match exactly between bank statement and Tally</div>
+              </div>
+            </div>
+            <table class="w-full text-sm">
+              <thead><tr class="text-left text-gray-400 border-b border-gray-100 text-xs uppercase">
+                <th class="pb-2 font-medium">Date</th><th class="pb-2 font-medium">Narration</th>
+                <th class="pb-2 font-medium">Bank Amount</th><th class="pb-2 font-medium">Tally Amount</th><th class="pb-2 font-medium">Status</th>
+              </tr></thead>
+              <tbody class="divide-y divide-gray-50 text-xs">
+                <tr><td class="py-2.5 text-gray-500">01 Mar 2026</td><td class="text-gray-700">Opening Balance</td><td class="text-gray-700">Dr ₹2,45,000</td><td class="text-gray-700">Dr ₹2,45,000</td><td><span class="tag-ok text-xs px-2 py-0.5 rounded-full">✅ Match</span></td></tr>
+                <tr><td class="py-2.5 text-gray-500">02 Mar 2026</td><td class="text-gray-700">Sales Receipt — DEF Ltd</td><td class="text-gray-700">Cr ₹75,000</td><td class="text-gray-700">Cr ₹75,000</td><td><span class="tag-ok text-xs px-2 py-0.5 rounded-full">✅ Match</span></td></tr>
+                <tr><td class="py-2.5 text-gray-500">04 Mar 2026</td><td class="text-gray-700">Rent Payment</td><td class="text-gray-700">Dr ₹35,000</td><td class="text-gray-700">Dr ₹35,000</td><td><span class="tag-ok text-xs px-2 py-0.5 rounded-full">✅ Match</span></td></tr>
+                <tr><td class="py-2.5 text-gray-500">06 Mar 2026</td><td class="text-gray-700">TDS Deposit — Feb</td><td class="text-gray-700">Dr ₹10,000</td><td class="text-gray-700">Dr ₹10,000</td><td><span class="tag-ok text-xs px-2 py-0.5 rounded-full">✅ Match</span></td></tr>
+                <tr><td class="py-2.5 text-gray-500">08 Mar 2026</td><td class="text-gray-700">Sales Receipt — GHI Corp</td><td class="text-gray-700">Cr ₹1,20,000</td><td class="text-gray-700">Cr ₹1,20,000</td><td><span class="tag-ok text-xs px-2 py-0.5 rounded-full">✅ Match</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty state before upload -->
+      <div id="bancRecEmpty" class="bg-white rounded-2xl card-shadow p-12 text-center">
+        <div class="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-4">
+          <i class="fas fa-exchange-alt text-blue-400 text-3xl"></i>
+        </div>
+        <div class="text-gray-700 font-semibold mb-1">Upload both files to start reconciliation</div>
+        <div class="text-gray-400 text-sm">Upload your bank statement and Tally bank ledger above to automatically match and flag differences</div>
+      </div>
+    </div>
+
+    <!-- ===== TDS ANALYSIS PAGE ===== -->
+    <div id="page-tdsanalysis" class="page p-8">
+
+      <!-- Summary Cards -->
+      <div class="grid grid-cols-4 gap-5 mb-6">
+        <div class="stat-card card-shadow border-t-4 border-blue-400">
+          <div class="text-sm text-gray-500 mb-1">TDS Deducted (FY)</div>
+          <div class="text-3xl font-bold text-gray-800">₹48,200</div>
+          <div class="text-xs text-gray-400 mt-1">Across all sections</div>
+        </div>
+        <div class="stat-card card-shadow border-t-4 border-green-400">
+          <div class="text-sm text-gray-500 mb-1">TDS Deposited</div>
+          <div class="text-3xl font-bold text-green-600">₹38,500</div>
+          <div class="text-xs text-green-400 mt-1">Paid to government</div>
+        </div>
+        <div class="stat-card card-shadow border-t-4 border-red-400">
+          <div class="text-sm text-gray-500 mb-1">Pending Deposit</div>
+          <div class="text-3xl font-bold text-red-600">₹9,700</div>
+          <div class="text-xs text-red-400 mt-1 pulse">⚠ Overdue</div>
+        </div>
+        <div class="stat-card card-shadow border-t-4 border-orange-400">
+          <div class="text-sm text-gray-500 mb-1">Late Payment Interest</div>
+          <div class="text-3xl font-bold text-orange-600">₹291</div>
+          <div class="text-xs text-orange-400 mt-1">@ 1.5%/month on ₹9,700</div>
+        </div>
+      </div>
+
+      <!-- Section-wise TDS -->
+      <div class="grid grid-cols-3 gap-6 mb-6">
+        <div class="col-span-2 bg-white rounded-2xl card-shadow p-6">
+          <h3 class="font-semibold text-gray-800 mb-5">Section-wise TDS Breakdown</h3>
+          <table class="w-full text-sm">
+            <thead><tr class="text-left text-gray-400 border-b border-gray-100 text-xs uppercase">
+              <th class="pb-2 font-medium">Section</th>
+              <th class="pb-2 font-medium">Nature</th>
+              <th class="pb-2 font-medium">Deducted</th>
+              <th class="pb-2 font-medium">Deposited</th>
+              <th class="pb-2 font-medium">Pending</th>
+              <th class="pb-2 font-medium">Status</th>
+            </tr></thead>
+            <tbody class="divide-y divide-gray-50 text-xs">
+              <tr>
+                <td class="py-3 font-semibold text-gray-700">194C</td>
+                <td class="text-gray-500">Contractor Payment</td>
+                <td class="text-gray-700">₹18,000</td>
+                <td class="text-green-600 font-medium">₹18,000</td>
+                <td class="text-gray-400">₹0</td>
+                <td><span class="tag-ok text-xs px-2 py-0.5 rounded-full">✅ Clear</span></td>
+              </tr>
+              <tr>
+                <td class="py-3 font-semibold text-gray-700">194J</td>
+                <td class="text-gray-500">Professional Fee</td>
+                <td class="text-gray-700">₹15,200</td>
+                <td class="text-green-600 font-medium">₹12,000</td>
+                <td class="text-red-600 font-semibold">₹3,200</td>
+                <td><span class="tag-critical text-xs px-2 py-0.5 rounded-full">⚠ Pending</span></td>
+              </tr>
+              <tr>
+                <td class="py-3 font-semibold text-gray-700">194I</td>
+                <td class="text-gray-500">Rent</td>
+                <td class="text-gray-700">₹8,500</td>
+                <td class="text-green-600 font-medium">₹8,500</td>
+                <td class="text-gray-400">₹0</td>
+                <td><span class="tag-ok text-xs px-2 py-0.5 rounded-full">✅ Clear</span></td>
+              </tr>
+              <tr>
+                <td class="py-3 font-semibold text-gray-700">192</td>
+                <td class="text-gray-500">Salary</td>
+                <td class="text-gray-700">₹6,500</td>
+                <td class="text-green-600 font-medium">₹0</td>
+                <td class="text-red-600 font-semibold">₹6,500</td>
+                <td><span class="tag-critical text-xs px-2 py-0.5 rounded-full">⚠ Overdue</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Interest Calculation -->
+        <div class="bg-white rounded-2xl card-shadow p-6">
+          <h3 class="font-semibold text-gray-800 mb-4">Late Payment Interest</h3>
+          <div class="space-y-3">
+            <div class="compliance-card overdue rounded-xl p-3">
+              <div class="text-xs font-semibold text-red-700 mb-1">194J — ₹3,200 (overdue 37 days)</div>
+              <div class="text-xs text-red-600">Interest: ₹3,200 × 1.5% × 2 months = <strong>₹96</strong></div>
+            </div>
+            <div class="compliance-card overdue rounded-xl p-3">
+              <div class="text-xs font-semibold text-red-700 mb-1">192 Salary — ₹6,500 (overdue 37 days)</div>
+              <div class="text-xs text-red-600">Interest: ₹6,500 × 1.5% × 2 months = <strong>₹195</strong></div>
+            </div>
+            <div class="bg-red-50 rounded-xl p-3 border border-red-200">
+              <div class="text-xs font-bold text-red-700">Total Interest Liability: ₹291</div>
+              <div class="text-xs text-red-500 mt-1">Payable under Section 201(1A)</div>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-3">
+              <div class="text-xs text-gray-500">Rate: 1% for non-deduction, 1.5%/month for non-deposit</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TDS Return Mismatch -->
+      <div class="bg-white rounded-2xl card-shadow p-6">
+        <div class="flex items-center justify-between mb-5">
+          <h3 class="font-semibold text-gray-800">TDS Return Mismatch (Form 26AS vs Books)</h3>
+          <span class="bg-red-100 text-red-600 text-xs px-3 py-1 rounded-full font-medium">3 Mismatches</span>
+        </div>
+        <table class="w-full text-sm">
+          <thead><tr class="text-left text-gray-400 border-b border-gray-100 text-xs uppercase">
+            <th class="pb-2 font-medium">Deductor</th>
+            <th class="pb-2 font-medium">Section</th>
+            <th class="pb-2 font-medium">As per 26AS</th>
+            <th class="pb-2 font-medium">As per Books</th>
+            <th class="pb-2 font-medium">Difference</th>
+            <th class="pb-2 font-medium">Action</th>
+          </tr></thead>
+          <tbody class="divide-y divide-gray-50 text-xs">
+            <tr>
+              <td class="py-3 font-medium text-gray-700">ABC Corp Pvt Ltd</td>
+              <td class="text-gray-500">194J</td>
+              <td class="text-gray-700">₹5,000</td>
+              <td class="text-gray-700">₹4,500</td>
+              <td class="text-red-600 font-semibold">₹500 short</td>
+              <td><button class="text-blue-600 text-xs hover:underline">Reconcile</button></td>
+            </tr>
+            <tr>
+              <td class="py-3 font-medium text-gray-700">XYZ Trading Co.</td>
+              <td class="text-gray-500">194C</td>
+              <td class="text-gray-700">₹2,000</td>
+              <td class="text-gray-700">₹2,000</td>
+              <td class="text-green-600 font-semibold">Match</td>
+              <td><span class="tag-ok text-xs px-2 py-0.5 rounded-full">✅ OK</span></td>
+            </tr>
+            <tr>
+              <td class="py-3 font-medium text-gray-700">Rahul Enterprises</td>
+              <td class="text-gray-500">194J</td>
+              <td class="text-gray-700">₹10,000</td>
+              <td class="text-gray-700">₹8,000</td>
+              <td class="text-red-600 font-semibold">₹2,000 short</td>
+              <td><button class="text-blue-600 text-xs hover:underline">Reconcile</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ===== PROFESSIONAL TAX (PT) SECTION — KOLKATA ===== -->
+      <div class="mt-6">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-9 h-9 rounded-xl bg-teal-50 flex items-center justify-center">
+            <i class="fas fa-building-columns text-teal-600"></i>
+          </div>
+          <div>
+            <h3 class="font-semibold text-gray-800">Professional Tax (PT) — Kolkata / West Bengal</h3>
+            <p class="text-xs text-gray-400">State-level salary deduction · Deposit by 21st of every month · Grips Portal (WB)</p>
+          </div>
+          <span class="ml-auto bg-red-100 text-red-600 text-xs px-3 py-1 rounded-full font-medium pulse">⚠ Deposit Pending</span>
+        </div>
+
+        <!-- PT Summary Cards -->
+        <div class="grid grid-cols-4 gap-5 mb-6">
+          <div class="stat-card card-shadow border-t-4 border-teal-400">
+            <div class="text-sm text-gray-500 mb-1">PT Deducted (Mar)</div>
+            <div class="text-2xl font-bold text-gray-800">₹2,640</div>
+            <div class="text-xs text-gray-400 mt-1">From 12 employees</div>
+          </div>
+          <div class="stat-card card-shadow border-t-4 border-green-400">
+            <div class="text-sm text-gray-500 mb-1">PT Deposited</div>
+            <div class="text-2xl font-bold text-red-500">₹0</div>
+            <div class="text-xs text-red-400 mt-1 pulse">Not yet deposited</div>
+          </div>
+          <div class="stat-card card-shadow border-t-4 border-red-400">
+            <div class="text-sm text-gray-500 mb-1">Due Date</div>
+            <div class="text-2xl font-bold text-red-600">21 Mar</div>
+            <div class="text-xs text-red-400 mt-1">6 days remaining</div>
+          </div>
+          <div class="stat-card card-shadow border-t-4 border-blue-400">
+            <div class="text-sm text-gray-500 mb-1">Deposit Portal</div>
+            <div class="text-sm font-bold text-blue-600 mt-2">Grips — WB Govt</div>
+            <div class="text-xs text-gray-400 mt-1">wbifms.gov.in/grips</div>
+          </div>
+        </div>
+
+        <!-- WB PT Slabs + Employee-wise -->
+        <div class="grid grid-cols-2 gap-6">
+
+          <!-- WB PT Slabs -->
+          <div class="bg-white rounded-2xl card-shadow p-6">
+            <h4 class="font-semibold text-gray-800 mb-1">West Bengal PT Slabs (Per Month)</h4>
+            <p class="text-xs text-gray-400 mb-4">As per WB PT Act — applicable to all salaried employees in Kolkata</p>
+            <table class="w-full text-sm">
+              <thead><tr class="text-left text-gray-400 border-b border-gray-100 text-xs uppercase">
+                <th class="pb-2 font-medium">Gross Monthly Salary</th>
+                <th class="pb-2 font-medium">PT Per Month</th>
+              </tr></thead>
+              <tbody class="divide-y divide-gray-50 text-xs">
+                <tr><td class="py-2.5 text-gray-700">Up to ₹10,000</td><td class="text-green-600 font-semibold">Nil</td></tr>
+                <tr><td class="py-2.5 text-gray-700">₹10,001 – ₹15,000</td><td class="text-gray-800 font-semibold">₹110</td></tr>
+                <tr><td class="py-2.5 text-gray-700">₹15,001 – ₹25,000</td><td class="text-gray-800 font-semibold">₹130</td></tr>
+                <tr><td class="py-2.5 text-gray-700">₹25,001 – ₹40,000</td><td class="text-gray-800 font-semibold">₹150</td></tr>
+                <tr class="bg-blue-50"><td class="py-2.5 text-gray-700 font-medium">Above ₹40,000</td><td class="text-blue-700 font-bold">₹200</td></tr>
+              </tbody>
+            </table>
+            <div class="mt-4 bg-teal-50 rounded-xl p-3">
+              <p class="text-xs text-teal-700"><i class="fas fa-info-circle mr-1"></i><strong>Note:</strong> PT is deducted from employee salary each month and deposited to KMC / WB Govt via the Grips portal by the <strong>21st of the following month</strong>. Employer is liable if not deposited.</p>
+            </div>
+          </div>
+
+          <!-- Employee-wise PT -->
+          <div class="bg-white rounded-2xl card-shadow p-6">
+            <h4 class="font-semibold text-gray-800 mb-4">Employee-wise PT — March 2026</h4>
+            <table class="w-full text-sm">
+              <thead><tr class="text-left text-gray-400 border-b border-gray-100 text-xs uppercase">
+                <th class="pb-2 font-medium">Employee</th>
+                <th class="pb-2 font-medium">Gross Salary</th>
+                <th class="pb-2 font-medium">Slab</th>
+                <th class="pb-2 font-medium">PT Due</th>
+              </tr></thead>
+              <tbody class="divide-y divide-gray-50 text-xs">
+                <tr>
+                  <td class="py-2.5 text-gray-700 font-medium">Rahul Sharma</td>
+                  <td class="text-gray-500">₹55,000</td>
+                  <td class="text-gray-400">Above ₹40K</td>
+                  <td class="font-semibold text-gray-800">₹200</td>
+                </tr>
+                <tr>
+                  <td class="py-2.5 text-gray-700 font-medium">Priya Mehta</td>
+                  <td class="text-gray-500">₹38,000</td>
+                  <td class="text-gray-400">₹25K–₹40K</td>
+                  <td class="font-semibold text-gray-800">₹150</td>
+                </tr>
+                <tr>
+                  <td class="py-2.5 text-gray-700 font-medium">Amit Das</td>
+                  <td class="text-gray-500">₹22,000</td>
+                  <td class="text-gray-400">₹15K–₹25K</td>
+                  <td class="font-semibold text-gray-800">₹130</td>
+                </tr>
+                <tr>
+                  <td class="py-2.5 text-gray-700 font-medium">Sunita Roy</td>
+                  <td class="text-gray-500">₹13,500</td>
+                  <td class="text-gray-400">₹10K–₹15K</td>
+                  <td class="font-semibold text-gray-800">₹110</td>
+                </tr>
+                <tr>
+                  <td class="py-2.5 text-gray-700 font-medium">Vikram Ghosh</td>
+                  <td class="text-gray-500">₹48,000</td>
+                  <td class="text-gray-400">Above ₹40K</td>
+                  <td class="font-semibold text-gray-800">₹200</td>
+                </tr>
+                <tr class="bg-blue-50">
+                  <td class="py-2.5 font-bold text-gray-800" colspan="3">Total (5 of 12 shown)</td>
+                  <td class="text-blue-700 font-bold">₹790</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- PT Journal Entries -->
+        <div class="mt-5 bg-white rounded-2xl card-shadow p-6">
+          <h4 class="font-semibold text-gray-800 mb-1">Tally Journal Entries for PT — March 2026</h4>
+          <p class="text-xs text-gray-400 mb-4">Pass both entries in Tally for correct salary and PT accounting</p>
+          <div class="grid grid-cols-2 gap-5">
+            <div class="bg-purple-50 rounded-xl p-4 border border-purple-100">
+              <p class="text-xs font-semibold text-purple-700 mb-3"><i class="fas fa-magic mr-1"></i>Entry 1 — PT Deduction (on salary date)</p>
+              <div class="je-row"><span class="debit-tag">Dr</span><span class="text-sm text-gray-700 flex-1">Salary Account</span><span class="text-sm font-semibold">₹2,640</span></div>
+              <div class="je-row"><span class="credit-tag">Cr</span><span class="text-sm text-gray-700 flex-1">PT Payable (Duties &amp; Taxes)</span><span class="text-sm font-semibold">₹2,640</span></div>
+              <p class="text-xs text-purple-500 mt-2 italic">Date: 31 March 2026 (salary processing date)</p>
+            </div>
+            <div class="bg-green-50 rounded-xl p-4 border border-green-100">
+              <p class="text-xs font-semibold text-green-700 mb-3"><i class="fas fa-university mr-1"></i>Entry 2 — PT Deposit via Grips (by 21st April)</p>
+              <div class="je-row"><span class="debit-tag">Dr</span><span class="text-sm text-gray-700 flex-1">PT Payable (Duties &amp; Taxes)</span><span class="text-sm font-semibold">₹2,640</span></div>
+              <div class="je-row"><span class="credit-tag">Cr</span><span class="text-sm text-gray-700 flex-1">HDFC Bank</span><span class="text-sm font-semibold">₹2,640</span></div>
+              <p class="text-xs text-green-600 mt-2 italic">Narration: PT Mar 2026 — Grips Challan No. [xxx]</p>
+            </div>
+          </div>
+          <div class="mt-4 bg-blue-50 rounded-xl p-4">
+            <p class="text-xs font-semibold text-blue-700 mb-2"><i class="fas fa-list-ol mr-2"></i>How to deposit PT via Grips (Step-by-step)</p>
+            <div class="text-xs text-blue-600 space-y-1">
+              <p>1. Go to <strong>wbifms.gov.in</strong> → Click <strong>Grips</strong></p>
+              <p>2. Select Department: <strong>Commercial Taxes</strong> → Head of Account: <strong>Professional Tax</strong></p>
+              <p>3. Enter: Employer Registration No., Period (March 2026), No. of employees, Total PT amount</p>
+              <p>4. Pay via Net Banking / NEFT before <strong>21st April 2026</strong> (for March salary)</p>
+              <p>5. Download Grips challan → Enter challan no. as narration in Tally Entry 2</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== LEDGER DRILL-DOWN MODAL ===== -->
+    <div id="drillDownModal" class="modal-overlay modal-hidden">
+      <div class="modal-box">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between p-6 border-b border-gray-100">
+          <div>
+            <h3 id="drillDownTitle" class="text-lg font-bold text-gray-800">Ledger Drill-Down</h3>
+            <p id="drillDownSubtitle" class="text-xs text-gray-500 mt-0.5">Full transaction history and voucher details</p>
+          </div>
+          <button onclick="closeDrillDown()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-times text-gray-500 text-sm"></i>
+          </button>
+        </div>
+
+        <!-- Ledger Summary -->
+        <div class="p-6 border-b border-gray-100">
+          <div class="grid grid-cols-4 gap-4">
+            <div class="bg-gray-50 rounded-xl p-3 text-center">
+              <div class="text-xs text-gray-400 mb-1">Opening Balance</div>
+              <div id="dd-opening" class="text-base font-bold text-gray-700">—</div>
+            </div>
+            <div class="bg-blue-50 rounded-xl p-3 text-center">
+              <div class="text-xs text-gray-400 mb-1">Total Debits</div>
+              <div id="dd-debits" class="text-base font-bold text-blue-700">—</div>
+            </div>
+            <div class="bg-purple-50 rounded-xl p-3 text-center">
+              <div class="text-xs text-gray-400 mb-1">Total Credits</div>
+              <div id="dd-credits" class="text-base font-bold text-purple-700">—</div>
+            </div>
+            <div class="bg-green-50 rounded-xl p-3 text-center">
+              <div class="text-xs text-gray-400 mb-1">Closing Balance</div>
+              <div id="dd-closing" class="text-base font-bold text-green-700">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transaction History -->
+        <div class="p-6">
+          <h4 class="text-sm font-semibold text-gray-700 mb-4"><i class="fas fa-list-ul mr-2 text-gray-400"></i>Transaction History — FY 2025-26</h4>
+          <div id="dd-transactions" class="space-y-2">
+            <!-- Filled by JS -->
+          </div>
+
+          <!-- Voucher Detail -->
+          <div class="drill-section">
+            <h4 class="text-sm font-semibold text-gray-700 mb-4"><i class="fas fa-receipt mr-2 text-gray-400"></i>Related Vouchers</h4>
+            <div id="dd-vouchers" class="space-y-2">
+              <!-- Filled by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== EXPORT MODAL ===== -->
+    <div id="exportModal" class="modal-overlay modal-hidden">
+      <div class="modal-box" style="max-width:580px;">
+        <div class="flex items-center justify-between p-6 border-b border-gray-100">
+          <div>
+            <h3 class="text-lg font-bold text-gray-800">Export Corrections</h3>
+            <p class="text-xs text-gray-500 mt-0.5">Choose format to export and implement in Tally</p>
+          </div>
+          <button onclick="closeExportModal()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-times text-gray-500 text-sm"></i>
+          </button>
+        </div>
+
+        <div class="p-6">
+          <!-- Summary -->
+          <div class="bg-blue-50 rounded-xl p-4 mb-6 flex items-center gap-3">
+            <i class="fas fa-info-circle text-blue-500"></i>
+            <div>
+              <div class="text-sm font-semibold text-blue-800">7 corrections ready to export</div>
+              <div class="text-xs text-blue-600 mt-0.5">Includes all Critical and Review items from AJKL Trial Balance</div>
+            </div>
+          </div>
+
+          <!-- Export options -->
+          <div class="grid grid-cols-3 gap-4 mb-6">
+            <button onclick="doExport('xml')" class="export-btn group">
+              <div class="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center group-hover:bg-orange-100 transition">
+                <i class="fas fa-code text-orange-500 text-xl"></i>
+              </div>
+              <div class="text-sm font-semibold text-gray-700">Tally XML</div>
+              <div class="text-xs text-gray-400 text-center">Import directly into Tally via XML</div>
+            </button>
+            <button onclick="doExport('excel')" class="export-btn group">
+              <div class="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center group-hover:bg-green-100 transition">
+                <i class="fas fa-file-excel text-green-500 text-xl"></i>
+              </div>
+              <div class="text-sm font-semibold text-gray-700">Excel Sheet</div>
+              <div class="text-xs text-gray-400 text-center">Correction sheet with all fixes listed</div>
+            </button>
+            <button onclick="doExport('tally')" class="export-btn group">
+              <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition">
+                <i class="fas fa-file-import text-blue-500 text-xl"></i>
+              </div>
+              <div class="text-sm font-semibold text-gray-700">Tally Import</div>
+              <div class="text-xs text-gray-400 text-center">.csv file formatted for Tally import</div>
+            </button>
+          </div>
+
+          <!-- XML instructions -->
+          <div class="bg-gray-50 rounded-xl p-4">
+            <p class="text-xs font-semibold text-gray-700 mb-2"><i class="fas fa-info-circle mr-1 text-gray-400"></i>How to import XML into Tally</p>
+            <div class="text-xs text-gray-500 space-y-1">
+              <p>1. Download the XML file from above</p>
+              <p>2. Gateway of Tally → Import Data → Masters → Select the XML file</p>
+              <p>3. Tally will update ledger groups automatically</p>
+              <p>4. Verify changes under Display → Trial Balance</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Export success toast (hidden) -->
+        <div id="exportSuccess" class="hidden mx-6 mb-6 bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3">
+          <i class="fas fa-check-circle text-green-500"></i>
+          <div>
+            <div id="exportSuccessMsg" class="text-sm font-semibold text-green-800">File ready for download</div>
+            <div class="text-xs text-green-600 mt-0.5">Your correction file has been generated successfully.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end content area -->
+</div><!-- end main app -->
+
+<script>
+function showApp() {
+  document.getElementById('loginPage').classList.add('hidden');
+  document.getElementById('mainApp').classList.remove('hidden');
+  document.getElementById('mainApp').classList.add('flex');
+}
+function logout() {
+  document.getElementById('mainApp').classList.add('hidden');
+  document.getElementById('mainApp').classList.remove('flex');
+  document.getElementById('loginPage').classList.remove('hidden');
+}
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => { p.classList.remove('active'); p.style.display=''; });
+  document.querySelectorAll('.nav-item').forEach(n => {
+    n.classList.remove('active');
+    n.querySelector('i')?.classList.replace('text-blue-400','text-slate-400');
+    if(n.querySelector('span')) n.querySelector('span').classList.replace('text-slate-200','text-slate-400');
+  });
+  const pg = document.getElementById('page-'+page);
+  if(pg) {
+    if(page === 'askca') { pg.style.display = 'flex'; }
+    else { pg.classList.add('active'); }
+  }
+  const titles = {
+    dashboard:'Dashboard', upload:'Upload & Analyze', results:'Analysis Results',
+    history:'History', askca:'Ask Your CA', journal:'Journal Entry Guide',
+    compliance:'Compliance Calendar', admin:'Admin Panel',
+    bankrec:'Bank Reconciliation', tdsanalysis:'TDS Analysis'
+  };
+  const subs = {
+    dashboard:'Welcome back, Sagar', upload:'Upload Tally Trial Balance Excel',
+    results:'AJKL Trial Balance — FY 2025-26', history:'All your past uploads',
+    askca:'AI reads your uploaded data to answer specific questions', journal:'Get correct journal entries instantly',
+    compliance:'TDS, PT, Salary due dates', admin:'Manage users and monitor activity',
+    bankrec:'Match bank statement vs Tally — find unmatched & duplicate entries',
+    tdsanalysis:'Section-wise TDS payable, deposited, pending & return mismatches'
+  };
+  document.getElementById('pageTitle').textContent = titles[page]||'';
+  document.getElementById('pageSubtitle').textContent = subs[page]||'';
+}
+function switchTab(tab) {
+  ['critical','review','ok','all'].forEach(t => {
+    document.getElementById('tab-content-'+t)?.classList.add('hidden');
+    const btn = document.getElementById('tab-'+t);
+    if(btn) { btn.className='px-5 py-2.5 rounded-xl text-sm font-medium bg-white text-gray-500 hover:bg-gray-50 transition'; }
+  });
+  document.getElementById('tab-content-'+tab)?.classList.remove('hidden');
+  const active = document.getElementById('tab-'+tab);
+  if(active) {
+    const colors = {critical:'bg-red-500 text-white', review:'bg-yellow-500 text-white', ok:'bg-green-500 text-white', all:'bg-blue-600 text-white'};
+    active.className='px-5 py-2.5 rounded-xl text-sm font-medium transition '+colors[tab];
+  }
+}
+function simulateUpload() {
+  // Switch to processing screen
+  document.getElementById('uploadStep1').classList.add('hidden');
+  document.getElementById('uploadStep2').classList.remove('hidden');
+
+  let prog = 0;
+  const bar = document.getElementById('progressBar');
+  const text = document.getElementById('progressText');
+  const title = document.getElementById('processingTitle');
+  const subtitle = document.getElementById('processingSubtitle');
+  const s1 = document.getElementById('step1');
+  const s2 = document.getElementById('step2');
+  const s3 = document.getElementById('step3');
+
+  // Step 1 active immediately
+  s1.classList.remove('opacity-30');
+  s1.querySelector('div').className = 'w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center mx-auto mb-2';
+  s1.querySelector('i').className = 'fas fa-upload text-blue-500';
+
+  const interval = setInterval(() => {
+    prog += 2;
+    bar.style.width = prog + '%';
+    text.textContent = prog + '%';
+
+    if (prog === 35) {
+      title.textContent = 'Found 243 ledgers — checking 20 rules...';
+      subtitle.textContent = 'Running analysis engine';
+      s2.classList.remove('opacity-30');
+      s2.querySelector('div').className = 'w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center mx-auto mb-2';
+      s2.querySelector('i').className = 'fas fa-search text-blue-500';
+    }
+    if (prog === 70) {
+      title.textContent = 'Almost done — auto-detecting columns...';
+      subtitle.textContent = 'Mapping your file structure';
+    }
+    if (prog >= 100) {
+      clearInterval(interval);
+      s3.classList.remove('opacity-30');
+      s3.querySelector('div').className = 'w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center mx-auto mb-2';
+      s3.querySelector('i').className = 'fas fa-check text-green-500';
+      title.textContent = 'Analysis complete!';
+      subtitle.textContent = 'Found 7 errors — review auto-detected columns below';
+      document.getElementById('processingIcon').style.animation = 'none';
+      document.getElementById('processingIcon').className = 'fas fa-check-circle text-green-500 text-2xl';
+
+      // After a beat, show the column confirmation step
+      setTimeout(() => {
+        document.getElementById('uploadStep2').classList.add('hidden');
+        document.getElementById('uploadStep3').classList.remove('hidden');
+        document.getElementById('uploadStep3').scrollIntoView({ behavior: 'smooth' });
+      }, 800);
+    }
+  }, 35);
+}
+
+function toggleTallyGuide() {
+  const content = document.getElementById('tallyGuideContent');
+  const chevron = document.getElementById('tallyGuideChevron');
+  content.classList.toggle('hidden');
+  chevron.style.transform = content.classList.contains('hidden') ? '' : 'rotate(180deg)';
+}
+
+function toggleOtherFormats() {
+  document.getElementById('otherFormatsPanel').classList.toggle('hidden');
+}
+
+function selectFileType(type) {
+  // Just highlight the chosen type and close the panel after a beat
+  document.getElementById('otherFormatsPanel').classList.add('hidden');
+  // Trigger same upload simulation for demo
+  simulateUpload();
+}
+function sendChat() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if(!msg) return;
+  const chat = document.getElementById('chatMessages');
+  chat.innerHTML += `<div class="flex items-start gap-3 flex-row-reverse">
+    <div class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0"><i class="fas fa-user text-gray-600 text-xs"></i></div>
+    <div class="chat-bubble-user p-4 max-w-sm"><p class="text-sm">${msg}</p></div></div>`;
+  chat.innerHTML += `<div id="typingIndicator" class="flex items-start gap-3">
+    <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0"><i class="fas fa-robot text-white text-xs"></i></div>
+    <div class="chat-bubble-ai p-4"><div class="typing"><span></span><span></span><span></span></div></div></div>`;
+  chat.scrollTop = chat.scrollHeight;
+  input.value = '';
+  setTimeout(() => {
+    document.getElementById('typingIndicator')?.remove();
+    chat.innerHTML += `<div class="flex items-start gap-3">
+      <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0"><i class="fas fa-robot text-white text-xs"></i></div>
+      <div class="chat-bubble-ai p-4 max-w-lg"><p class="text-sm text-gray-700">I understand your question about <strong>"${msg}"</strong>. In the full app, I'll give you a complete CA-level answer with journal entries, Tally steps, and compliance notes. This is a prototype — the real AI will be connected to give instant expert answers!</p></div></div>`;
+    chat.scrollTop = chat.scrollHeight;
+  }, 1500);
+}
+function quickAsk(q) {
+  document.getElementById('chatInput').value = q;
+  sendChat();
+}
+function showJournalEntry() { /* already shown */ }
+function quickEntry(type) { /* show entry for type */ }
+function selectFileType(type) {
+  const hints = {
+    excel: { icon:'fa-file-excel', color:'green', label:'Excel Trial Balance', hint:'1. Gateway of Tally → Display More Reports → Trial Balance<br>2. Set date range to full financial year<br>3. Press Alt+E → Export as Excel (.xlsx)', fmt:'Supports: .xlsx, .xls, .csv — Max 10MB' },
+    xml:   { icon:'fa-code', color:'orange', label:'Tally XML Export', hint:'1. Gateway of Tally → Export Data → Masters & Transactions<br>2. Select XML format<br>3. Upload the .xml file here', fmt:'Supports: .xml — Max 20MB' },
+    ledger:{ icon:'fa-book', color:'purple', label:'Ledger Dump', hint:'1. Gateway of Tally → Display More Reports → Account Books → Ledger<br>2. Select all ledgers → Alt+E → Export as Excel', fmt:'Supports: .xlsx, .xls, .csv — Max 10MB' },
+    bank:  { icon:'fa-university', color:'blue', label:'Bank Statement', hint:'1. Login to your bank\'s net banking<br>2. Download statement as CSV or Excel<br>3. Supports HDFC, ICICI, SBI, Axis, Kotak formats', fmt:'Supports: .xlsx, .csv — Max 5MB' },
+    gst:   { icon:'fa-percent', color:'teal', label:'GST JSON (GSTR-2A/2B)', hint:'1. Login to GST Portal → Returns → View e-Filed Returns<br>2. Download GSTR-2A or GSTR-2B as JSON<br>3. Upload here for GST reconciliation', fmt:'Supports: .json — Max 10MB' },
+  };
+  const h = hints[type];
+  document.querySelectorAll('.ftype-btn').forEach(b => b.className = 'ftype-btn flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 hover:border-gray-300 transition');
+  document.getElementById('ftype-'+type).className = 'ftype-btn flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-blue-500 bg-blue-50 transition';
+  document.getElementById('uploadTypeLabel').innerHTML = `<div class="w-8 h-8 rounded-lg bg-${h.color}-50 flex items-center justify-center"><i class="fas ${h.icon} text-${h.color}-500"></i></div><div><div class="text-sm font-semibold text-gray-800">${h.label}</div></div>`;
+  document.getElementById('uploadHint').innerHTML = `<p class="text-sm font-medium text-blue-800 mb-2"><i class="fas fa-info-circle mr-2"></i>How to get this file</p><div class="text-xs text-blue-600 space-y-1">${h.hint.split('<br>').map(s=>`<p>${s}</p>`).join('')}</div>`;
+  document.getElementById('uploadFormats').textContent = h.fmt;
+}
+function toggleDownloadMenu() {
+  const m = document.getElementById('downloadMenu');
+  m.classList.toggle('hidden');
+}
+function downloadReport(type) {
+  document.getElementById('downloadMenu').classList.add('hidden');
+  const msgs = { pdf:'PDF report downloading...', excel:'Excel report downloading...', csv:'CSV export downloading...' };
+  alert(msgs[type] || 'Downloading...');
+}
+function updateStatus(sel, id) {
+  const colors = { open:'border-red-300 bg-red-50', inprogress:'border-blue-300 bg-blue-50', resolved:'border-green-300 bg-green-50', ignored:'border-gray-300 bg-gray-50' };
+  const card = sel.closest('.bg-white');
+  // Update border color of the card
+}
+function markResolved(btn, id) {
+  const card = btn.closest('.bg-white');
+  const sel = card.querySelector('select');
+  if(sel) sel.value = 'resolved';
+  btn.innerHTML = '<i class="fas fa-check-double"></i> Resolved';
+  btn.className = btn.className.replace('bg-green-600','bg-gray-400').replace('hover:bg-green-700','');
+  btn.disabled = true;
+}
+function simulateBankUpload(type) {
+  if(type === 'statement') {
+    document.getElementById('bankStatementLoaded').classList.remove('hidden');
+  } else {
+    document.getElementById('tallyLedgerLoaded').classList.remove('hidden');
+  }
+  const s = document.getElementById('bankStatementLoaded');
+  const t = document.getElementById('tallyLedgerLoaded');
+  if(!s.classList.contains('hidden') && !t.classList.contains('hidden')) {
+    setTimeout(() => {
+      document.getElementById('bancRecEmpty').classList.add('hidden');
+      document.getElementById('bancRecSummary').classList.remove('hidden');
+    }, 600);
+  }
+}
+function switchBRTab(tab) {
+  ['unmatched','tally','duplicate','matched'].forEach(t => {
+    document.getElementById('brtab-content-'+t)?.classList.add('hidden');
+    const btn = document.getElementById('brtab-'+t);
+    if(btn) btn.className = 'px-4 py-2 rounded-xl text-sm font-medium bg-white text-gray-500 hover:bg-gray-50 transition';
+  });
+  document.getElementById('brtab-content-'+tab)?.classList.remove('hidden');
+  const colors = { unmatched:'bg-red-500 text-white', tally:'bg-yellow-500 text-white', duplicate:'bg-orange-500 text-white', matched:'bg-green-500 text-white' };
+  const active = document.getElementById('brtab-'+tab);
+  if(active) active.className = 'px-4 py-2 rounded-xl text-sm font-medium transition ' + colors[tab];
+}
+
+/* ---- Drill-Down Data ---- */
+const drillDownData = {
+  tds_receivable: {
+    title: 'TDS Receivable', subtitle: 'Ledger #14 — Duties & Taxes (wrong)',
+    opening: 'Dr ₹0', debits: 'Dr ₹10,000', credits: 'Cr ₹0', closing: 'Dr ₹10,000',
+    transactions: [
+      { date:'01 Apr 2025', voucher:'Journal JV-001', narration:'TDS deducted by client ABC Corp on invoice #101', debit:'₹4,000', credit:'—' },
+      { date:'15 Jun 2025', voucher:'Journal JV-023', narration:'TDS deducted by client XYZ Ltd on invoice #134', debit:'₹3,500', credit:'—' },
+      { date:'10 Sep 2025', voucher:'Journal JV-047', narration:'TDS deducted by Rahul Traders on service bill', debit:'₹2,500', credit:'—' },
+    ],
+    vouchers: [
+      { no:'JV-001', date:'01 Apr 2025', type:'Journal', amount:'₹4,000', party:'ABC Corp' },
+      { no:'JV-023', date:'15 Jun 2025', type:'Journal', amount:'₹3,500', party:'XYZ Ltd' },
+      { no:'JV-047', date:'10 Sep 2025', type:'Journal', amount:'₹2,500', party:'Rahul Traders' },
+    ]
+  },
+  bank_interest: {
+    title: 'Bank Interest Received', subtitle: 'Ledger #27 — Indirect Expenses (wrong)',
+    opening: 'Cr ₹0', debits: 'Dr ₹0', credits: 'Cr ₹25,000', closing: 'Cr ₹25,000',
+    transactions: [
+      { date:'30 Jun 2025', voucher:'Receipt RV-008', narration:'HDFC Bank quarterly interest credit', debit:'—', credit:'₹8,000' },
+      { date:'30 Sep 2025', voucher:'Receipt RV-019', narration:'HDFC Bank quarterly interest credit', debit:'—', credit:'₹9,200' },
+      { date:'31 Dec 2025', voucher:'Receipt RV-031', narration:'HDFC Bank quarterly interest credit', debit:'—', credit:'₹7,800' },
+    ],
+    vouchers: [
+      { no:'RV-008', date:'30 Jun 2025', type:'Receipt', amount:'₹8,000', party:'HDFC Bank' },
+      { no:'RV-019', date:'30 Sep 2025', type:'Receipt', amount:'₹9,200', party:'HDFC Bank' },
+      { no:'RV-031', date:'31 Dec 2025', type:'Receipt', amount:'₹7,800', party:'HDFC Bank' },
+    ]
+  },
+  opening_balance: {
+    title: 'Difference in Opening Balance', subtitle: 'Ledger #41 — Opening balance mismatch',
+    opening: 'Dr ₹15,000', debits: 'Dr ₹0', credits: 'Cr ₹0', closing: 'Dr ₹15,000',
+    transactions: [
+      { date:'01 Apr 2025', voucher:'Opening OB-001', narration:'Opening balance entry — difference from last year migration', debit:'₹15,000', credit:'—' },
+    ],
+    vouchers: [
+      { no:'OB-001', date:'01 Apr 2025', type:'Opening Balance', amount:'₹15,000', party:'—' },
+    ]
+  }
+};
+
+function openDrillDown(key) {
+  const d = drillDownData[key];
+  if(!d) return;
+  document.getElementById('drillDownTitle').textContent = d.title;
+  document.getElementById('drillDownSubtitle').textContent = d.subtitle;
+  document.getElementById('dd-opening').textContent = d.opening;
+  document.getElementById('dd-debits').textContent = d.debits;
+  document.getElementById('dd-credits').textContent = d.credits;
+  document.getElementById('dd-closing').textContent = d.closing;
+  // Transactions
+  document.getElementById('dd-transactions').innerHTML = d.transactions.map(t => `
+    <div class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-gray-50 text-sm">
+      <div class="text-xs text-gray-400 w-24 flex-shrink-0">${t.date}</div>
+      <div class="text-xs text-blue-600 font-medium w-28 flex-shrink-0">${t.voucher}</div>
+      <div class="text-gray-600 flex-1 text-xs">${t.narration}</div>
+      <div class="text-green-700 font-semibold text-xs w-20 text-right">${t.debit !== '—' ? '<span class="debit-tag">Dr '+t.debit+'</span>' : ''}</div>
+      <div class="text-purple-700 font-semibold text-xs w-20 text-right">${t.credit !== '—' ? '<span class="credit-tag">Cr '+t.credit+'</span>' : ''}</div>
+    </div>`).join('');
+  // Vouchers
+  document.getElementById('dd-vouchers').innerHTML = d.vouchers.map(v => `
+    <div class="flex items-center gap-4 p-3 rounded-xl bg-gray-50 border border-gray-100 text-sm">
+      <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+        <i class="fas fa-receipt text-blue-500 text-xs"></i>
+      </div>
+      <div class="text-blue-600 font-semibold text-xs w-20">${v.no}</div>
+      <div class="text-gray-400 text-xs w-24">${v.date}</div>
+      <div class="text-gray-500 text-xs flex-1">${v.type} · ${v.party}</div>
+      <div class="text-gray-800 font-semibold text-xs">${v.amount}</div>
+    </div>`).join('');
+  document.getElementById('drillDownModal').classList.remove('modal-hidden');
+  document.body.style.overflow = 'hidden';
+}
+function closeDrillDown() {
+  document.getElementById('drillDownModal').classList.add('modal-hidden');
+  document.body.style.overflow = '';
+}
+function openExportModal() {
+  document.getElementById('exportSuccess').classList.add('hidden');
+  document.getElementById('exportModal').classList.remove('modal-hidden');
+  document.body.style.overflow = 'hidden';
+}
+function closeExportModal() {
+  document.getElementById('exportModal').classList.add('modal-hidden');
+  document.body.style.overflow = '';
+}
+function doExport(type) {
+  const msgs = {
+    xml: 'Tally XML file ready — import via Gateway of Tally → Import Data → Masters',
+    excel: 'Excel correction sheet ready — open and share with your accountant',
+    tally: 'Tally import CSV ready — use Gateway of Tally → Import Data'
+  };
+  const el = document.getElementById('exportSuccess');
+  document.getElementById('exportSuccessMsg').textContent = msgs[type];
+  el.classList.remove('hidden');
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+</script>
+</body>
+</html>

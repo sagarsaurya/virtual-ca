@@ -1,0 +1,6 @@
+node_modules/
+.obsidian/
+unpacked_explainer/
+*.pyc
+__pycache__/
+.env
