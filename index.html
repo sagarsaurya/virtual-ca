@@ -1610,16 +1610,22 @@
         <div class="bg-white rounded-2xl card-shadow p-5">
           <div class="flex items-center gap-3 mb-3">
             <div class="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center"><i class="fas fa-university text-blue-500"></i></div>
-            <div><div class="text-sm font-semibold text-gray-800">Bank Statement</div><div class="text-xs text-gray-400">Upload CSV/Excel from your bank</div></div>
+            <div><div class="text-sm font-semibold text-gray-800">Bank Statement</div><div class="text-xs text-gray-400">Upload PDF, CSV or Excel from your bank</div></div>
           </div>
-          <div class="upload-zone rounded-xl p-5 text-center cursor-pointer" onclick="simulateBankUpload('statement')">
+          <label class="upload-zone rounded-xl p-5 text-center cursor-pointer block" for="bankStatementInput">
             <i class="fas fa-cloud-upload-alt text-blue-400 text-2xl mb-2 block"></i>
-            <p class="text-xs text-gray-500 mb-2">Drop bank statement here</p>
+            <p class="text-xs text-gray-500 mb-1" id="bankStatementName">Drop bank statement here</p>
+            <input type="file" id="bankStatementInput" accept=".pdf,.xlsx,.xls,.csv" class="hidden"
+              onchange="handleBankStatementUpload(this)">
             <span class="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-xs font-medium">Choose File</span>
-          </div>
+            <p class="text-xs text-gray-400 mt-2">Supports: PDF, .xlsx, .csv &nbsp;·&nbsp; HDFC, ICICI, SBI, Axis, Kotak</p>
+          </label>
           <div id="bankStatementLoaded" class="hidden mt-3 flex items-center gap-2 p-2 bg-green-50 rounded-lg">
             <i class="fas fa-check-circle text-green-500 text-sm"></i>
-            <span class="text-xs text-green-700 font-medium">HDFC_Statement_Mar2026.csv — 143 transactions loaded</span>
+            <span class="text-xs text-green-700 font-medium" id="bankStatementLoadedText"></span>
+          </div>
+          <div id="bankStatementPDFNote" class="hidden mt-2 p-2 bg-blue-50 rounded-lg">
+            <p class="text-xs text-blue-700"><i class="fas fa-info-circle mr-1"></i>PDF detected — we'll extract transactions automatically. Works best with digital (not scanned) bank PDFs.</p>
           </div>
         </div>
         <div class="bg-white rounded-2xl card-shadow p-5">
@@ -2875,6 +2881,21 @@ function markResolved(btn, id) {
   btn.className = btn.className.replace('bg-green-600','bg-gray-400').replace('hover:bg-green-700','');
   btn.disabled = true;
 }
+function handleBankStatementUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const isPDF = file.name.toLowerCase().endsWith('.pdf');
+  const nameEl    = document.getElementById('bankStatementName');
+  const loadedEl  = document.getElementById('bankStatementLoaded');
+  const loadedTxt = document.getElementById('bankStatementLoadedText');
+  const pdfNote   = document.getElementById('bankStatementPDFNote');
+
+  nameEl.textContent = file.name;
+  loadedEl.classList.remove('hidden');
+  loadedTxt.textContent = file.name + (isPDF ? ' — PDF ready for extraction' : ' — ready to reconcile');
+  pdfNote.classList.toggle('hidden', !isPDF);
+}
+
 function simulateBankUpload(type) {
   if(type === 'statement') {
     document.getElementById('bankStatementLoaded').classList.remove('hidden');
