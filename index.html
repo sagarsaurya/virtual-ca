@@ -1022,111 +1022,112 @@
     </div>
 
     <!-- ===== ASK CA PAGE ===== -->
-    <div id="page-askca" class="page" style="height:calc(100vh - 64px); display:none; flex-direction:column;">
+    <div id="page-askca" class="page" style="height:calc(100vh - 64px); display:none; flex-direction:column; overflow:hidden;">
 
-      <!-- Context Banner -->
-      <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-8 py-3 flex items-center gap-4 flex-shrink-0">
-        <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
-          <i class="fas fa-database text-white text-sm"></i>
-        </div>
-        <div class="flex-1">
-          <div id="caBannerTitle" class="text-white text-sm font-medium">No audit data loaded — upload a Trial Balance first for context-aware answers</div>
-          <div class="text-blue-200 text-xs">AI reads your uploaded data to give specific CA-level answers</div>
-        </div>
-        <div id="caBannerStatus" class="flex items-center gap-1.5 bg-yellow-500/20 border border-yellow-400/30 px-3 py-1 rounded-full">
-          <span class="w-2 h-2 rounded-full bg-yellow-400 inline-block"></span>
-          <span class="text-yellow-200 text-xs font-medium">No Data</span>
-        </div>
-      </div>
-
-      <!-- Chat messages -->
-      <div id="chatMessages" class="flex-1 overflow-y-auto p-6 space-y-5" style="min-height:0;">
-
-        <!-- AI greeting with context -->
-        <div class="flex items-start gap-3">
-          <div class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+      <!-- Header -->
+      <div class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between flex-shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
             <i class="fas fa-robot text-white text-sm"></i>
           </div>
-          <div class="chat-bubble-ai p-4 max-w-lg">
-            <p class="text-sm text-gray-700 font-semibold mb-1">Hello Sagar! I've read your AJKL Trial Balance.</p>
-            <p class="text-sm text-gray-600 mb-3">I can see <strong>120 ledgers</strong>, <strong>7 critical errors</strong>, and <strong>12 items needing review</strong>. Your compliance health is <strong>72%</strong>. Here's what I noticed immediately:</p>
-            <div class="space-y-2">
-              <div class="flex items-start gap-2 text-xs text-gray-600 bg-red-50 p-2 rounded-lg">
-                <i class="fas fa-exclamation-circle text-red-400 mt-0.5 flex-shrink-0"></i>
-                <span><strong>TDS Receivable</strong> is grouped under Duties &amp; Taxes — this is an asset mis-classified as liability.</span>
-              </div>
-              <div class="flex items-start gap-2 text-xs text-gray-600 bg-yellow-50 p-2 rounded-lg">
-                <i class="fas fa-exclamation-triangle text-yellow-400 mt-0.5 flex-shrink-0"></i>
-                <span><strong>Bank Interest Received ₹25,000</strong> placed under Indirect Expenses — this understates your profit.</span>
-              </div>
-              <div class="flex items-start gap-2 text-xs text-gray-600 bg-orange-50 p-2 rounded-lg">
-                <i class="fas fa-clock text-orange-400 mt-0.5 flex-shrink-0"></i>
-                <span><strong>TDS deposit overdue</strong> by 7 days — ₹9,700 pending, interest accruing at 1.5%/month.</span>
-              </div>
-            </div>
-            <p class="text-xs text-gray-400 mt-3">Ask me anything about your books — I'll give specific answers based on your data.</p>
+          <div>
+            <div class="font-bold text-gray-800">Ask Your CA <span class="ml-1 text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full font-semibold">AI</span></div>
+            <div id="caHeaderSub" class="text-xs text-gray-400">Upload a Trial Balance to get started</div>
           </div>
         </div>
-
-        <!-- Example Q&A 1 — contextual -->
-        <div class="flex items-start gap-3 flex-row-reverse">
-          <div class="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
-            <i class="fas fa-user text-gray-600 text-sm"></i>
-          </div>
-          <div class="chat-bubble-user p-4 max-w-sm">
-            <p class="text-sm">Why is my profit low this month?</p>
-          </div>
-        </div>
-        <div class="flex items-start gap-3">
-          <div class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-            <i class="fas fa-robot text-white text-sm"></i>
-          </div>
-          <div class="chat-bubble-ai p-4 max-w-lg">
-            <p class="text-sm text-gray-700 font-semibold mb-2">Based on your AJKL Trial Balance, here are 4 reasons:</p>
-            <div class="space-y-2 mb-3">
-              <div class="flex items-start gap-2 text-xs text-gray-700 bg-white border border-gray-200 p-2.5 rounded-lg">
-                <span class="text-red-500 font-bold flex-shrink-0">1.</span>
-                <span><strong>Bank Interest ₹25,000 mis-booked as expense</strong> — This single error is reducing your reported profit by ₹25,000. Fix: re-group to Indirect Incomes.</span>
-              </div>
-              <div class="flex items-start gap-2 text-xs text-gray-700 bg-white border border-gray-200 p-2.5 rounded-lg">
-                <span class="text-orange-500 font-bold flex-shrink-0">2.</span>
-                <span><strong>ABC Traders outstanding ₹50,000 (credit balance)</strong> — A debtor has a credit balance, suggesting advance received but not moved to liability.</span>
-              </div>
-              <div class="flex items-start gap-2 text-xs text-gray-700 bg-white border border-gray-200 p-2.5 rounded-lg">
-                <span class="text-yellow-500 font-bold flex-shrink-0">3.</span>
-                <span><strong>Opening balance difference ₹15,000</strong> — Carried as Dr balance, inflating assets but creating P&amp;L noise.</span>
-              </div>
-              <div class="flex items-start gap-2 text-xs text-gray-700 bg-white border border-gray-200 p-2.5 rounded-lg">
-                <span class="text-blue-500 font-bold flex-shrink-0">4.</span>
-                <span><strong>7 unreconciled bank entries</strong> — Possible unbooked income of ₹12,500 from ABC Corp not reflected in P&amp;L.</span>
-              </div>
-            </div>
-            <p class="text-xs text-blue-600 font-medium">Fix all 7 critical errors → your profit will improve by an estimated ₹37,500+</p>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Quick question chips -->
-      <div class="px-6 pb-3 flex-shrink-0">
-        <div class="flex flex-wrap gap-2 mb-3">
-          <button onclick="quickAsk('What are my top 3 errors to fix first?')" class="text-xs bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full hover:border-blue-300 hover:text-blue-600 transition">Top 3 errors to fix?</button>
-          <button onclick="quickAsk('How much TDS is pending and what is the interest?')" class="text-xs bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full hover:border-blue-300 hover:text-blue-600 transition">TDS pending &amp; interest?</button>
-          <button onclick="quickAsk('Which debtors have credit balances?')" class="text-xs bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full hover:border-blue-300 hover:text-blue-600 transition">Debtors with credit balance?</button>
-          <button onclick="quickAsk('What journal entries do I need to pass to fix the errors?')" class="text-xs bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full hover:border-blue-300 hover:text-blue-600 transition">Journal entries to fix errors?</button>
-          <button onclick="quickAsk('What is my compliance health score and how to improve it?')" class="text-xs bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full hover:border-blue-300 hover:text-blue-600 transition">Improve compliance score?</button>
-        </div>
-        <!-- Input -->
-        <div class="bg-white rounded-2xl border border-gray-200 p-3 flex items-end gap-3 card-shadow">
-          <textarea id="chatInput" rows="2" placeholder="Ask anything about your books... e.g. 'Why is profit low?' or 'What TDS is pending?'"
-            class="flex-1 resize-none text-sm text-gray-700 placeholder-gray-400 focus:outline-none"
-            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
-          <button onclick="sendChat()" class="bg-blue-600 hover:bg-blue-700 text-white w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition">
-            <i class="fas fa-paper-plane text-sm"></i>
+        <div class="flex gap-2">
+          <button onclick="rerunCAQueries()" class="bg-blue-50 text-blue-600 text-xs font-medium px-4 py-2 rounded-xl border border-blue-200 hover:bg-blue-100 transition">
+            <i class="fas fa-sync-alt mr-1"></i>Re-analyse
+          </button>
+          <button onclick="showPage('fullaudit')" class="bg-gray-800 text-white text-xs font-medium px-4 py-2 rounded-xl hover:bg-gray-700 transition">
+            <i class="fas fa-upload mr-1"></i>Upload Data
           </button>
         </div>
-        <p class="text-xs text-gray-400 mt-2 text-center">AI answers are based on your uploaded AJKL Trial Balance data · FY 2025-26</p>
       </div>
+
+      <!-- Two-panel body -->
+      <div class="flex flex-1 overflow-hidden">
+
+        <!-- LEFT: Queries Panel -->
+        <div class="flex flex-col border-r border-gray-200 bg-white" style="width:55%; min-width:0;">
+
+          <!-- Summary + filter bar -->
+          <div class="px-4 py-2.5 border-b border-gray-100 bg-gray-50 flex items-center gap-3 flex-shrink-0 flex-wrap">
+            <div id="ca-count-critical" class="flex items-center gap-1.5 bg-red-50 border border-red-200 rounded-lg px-3 py-1.5">
+              <span class="w-2 h-2 bg-red-500 rounded-full pulse"></span>
+              <span class="text-red-700 font-bold text-xs">0 Critical</span>
+            </div>
+            <div id="ca-count-important" class="flex items-center gap-1.5 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-1.5">
+              <span class="w-2 h-2 bg-yellow-500 rounded-full"></span>
+              <span class="text-yellow-700 font-bold text-xs">0 Important</span>
+            </div>
+            <div id="ca-count-info" class="flex items-center gap-1.5 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5">
+              <span class="w-2 h-2 bg-blue-400 rounded-full"></span>
+              <span class="text-blue-700 font-bold text-xs">0 Info</span>
+            </div>
+            <div class="ml-auto flex gap-1.5">
+              <button onclick="filterCAQueries('all')" id="cafilter-all" class="text-xs bg-blue-600 text-white px-3 py-1 rounded-lg font-medium">All</button>
+              <button onclick="filterCAQueries('critical')" id="cafilter-critical" class="text-xs text-gray-500 bg-white border border-gray-200 px-3 py-1 rounded-lg">🔴 Critical</button>
+              <button onclick="filterCAQueries('pending')" id="cafilter-pending" class="text-xs text-gray-500 bg-white border border-gray-200 px-3 py-1 rounded-lg">⏳ Pending</button>
+              <button onclick="filterCAQueries('resolved')" id="cafilter-resolved" class="text-xs text-gray-500 bg-white border border-gray-200 px-3 py-1 rounded-lg">✅ Done</button>
+            </div>
+          </div>
+
+          <!-- Query list -->
+          <div id="caQueryList" class="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+            <!-- populated by JS -->
+            <div class="flex flex-col items-center justify-center py-16 text-center text-gray-400">
+              <i class="fas fa-robot text-4xl mb-3 text-gray-200"></i>
+              <div class="text-sm font-medium">No queries yet</div>
+              <div class="text-xs mt-1">Upload a Trial Balance or Daybook to generate queries</div>
+              <button onclick="showPage('fullaudit')" class="mt-4 bg-blue-600 text-white text-xs px-4 py-2 rounded-xl">Upload Now</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Chat Panel -->
+        <div class="flex flex-col bg-gray-50" style="width:45%; min-width:0;">
+
+          <!-- Chat header -->
+          <div class="px-4 py-3 bg-white border-b border-gray-200 flex items-center gap-3 flex-shrink-0">
+            <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+              <i class="fas fa-robot text-white text-xs"></i>
+            </div>
+            <div class="flex-1">
+              <div class="text-sm font-bold text-gray-800">Chat with Your CA</div>
+              <div class="flex items-center gap-1">
+                <span class="w-2 h-2 bg-green-400 rounded-full pulse"></span>
+                <span class="text-xs text-gray-400">Online · Powered by Groq AI</span>
+              </div>
+            </div>
+            <button onclick="clearCAChat()" class="text-xs text-gray-400 hover:text-gray-600 transition"><i class="fas fa-trash-alt"></i></button>
+          </div>
+
+          <!-- Chat messages -->
+          <div id="chatMessages" class="flex-1 overflow-y-auto px-4 py-4 space-y-3" style="min-height:0;">
+            <!-- greeting injected by JS -->
+          </div>
+
+          <!-- Quick chips + input -->
+          <div class="px-4 pb-4 flex-shrink-0 bg-gray-50">
+            <div class="flex flex-wrap gap-1.5 mb-2">
+              <button onclick="quickAsk('What are my top 3 errors to fix first?')" class="text-xs bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full hover:border-blue-300 hover:text-blue-600 transition">Top 3 errors?</button>
+              <button onclick="quickAsk('How much TDS is pending and what is the interest liability?')" class="text-xs bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full hover:border-blue-300 hover:text-blue-600 transition">TDS pending?</button>
+              <button onclick="quickAsk('Am I ready to file ITR?')" class="text-xs bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full hover:border-blue-300 hover:text-blue-600 transition">Ready to file ITR?</button>
+              <button onclick="quickAsk('Give me all journal entries needed to fix the errors')" class="text-xs bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full hover:border-blue-300 hover:text-blue-600 transition">Fix journal entries?</button>
+            </div>
+            <div class="bg-white rounded-2xl border border-gray-200 p-3 flex items-end gap-3 card-shadow">
+              <textarea id="chatInput" rows="2" placeholder="Ask anything about your books..."
+                class="flex-1 resize-none text-sm text-gray-700 placeholder-gray-400 focus:outline-none"
+                onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
+              <button onclick="sendChat()" class="bg-blue-600 hover:bg-blue-700 text-white w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition">
+                <i class="fas fa-paper-plane text-sm"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- end two-panel -->
     </div>
 
     <!-- ===== JOURNAL ENTRY GUIDE PAGE ===== -->
@@ -2473,6 +2474,243 @@ function selectFileType(type) {
   // Trigger same upload simulation for demo
   simulateUpload();
 }
+// ── CA Queries ────────────────────────────────────────────────────────────────
+let caQueries     = [];      // [{id, severity, category, title, detail, status, reply, aiReply}]
+let caQueryFilter = 'all';
+
+function buildCAQueries(data) {
+  if (!data) return [];
+  const queries = [];
+  let id = 1;
+  const s = data.summary || {};
+
+  // Critical ledger issues
+  (data.ledger_classification || []).forEach(item => {
+    if (item.severity === 'Critical') {
+      const amt = item.amount ? `₹${Number(item.amount).toLocaleString('en-IN')}` : '';
+      queries.push({
+        id: id++, severity: 'critical', category: 'LEDGER',
+        title: `${item.ledger} — ${item.issue}`,
+        detail: `Group: ${item.group || '—'}. Balance: ${amt}. This mis-classification affects your financial statements.`,
+        alert: `Fix: Move to correct group in Tally → Gateway → Alter → Ledger`,
+        status: 'pending', reply: '', aiReply: ''
+      });
+    }
+  });
+
+  // Cash violations
+  (data.cash_violations || []).slice(0, 5).forEach(v => {
+    const amt = `₹${Number(v.amount).toLocaleString('en-IN')}`;
+    queries.push({
+      id: id++, severity: 'critical', category: 'SEC 40A(3)',
+      title: `Cash payment ${amt} to ${v.party} — Sec 40A(3) violation`,
+      detail: `Date: ${v.date}. Cash payments above ₹10,000 to a single person in a day are disallowed as deduction under Sec 40A(3).`,
+      alert: `Disallowance risk: ${amt}. Obtain confirmation that this was actually paid via bank.`,
+      status: 'pending', reply: '', aiReply: ''
+    });
+  });
+
+  // Outstanding / abnormal balances
+  (data.outstanding || []).forEach(o => {
+    const sev = o.severity === 'Critical' ? 'critical' : 'important';
+    const bal = `₹${Number(o.balance || 0).toLocaleString('en-IN')}`;
+    queries.push({
+      id: id++, severity: sev, category: 'BALANCE',
+      title: `${o.ledger} — ${o.issue}`,
+      detail: `Balance: ${bal}. ${o.note || ''}`,
+      alert: null,
+      status: 'pending', reply: '', aiReply: ''
+    });
+  });
+
+  // Large expenses (TDS threshold)
+  (data.large_expenses || []).slice(0, 6).forEach(e => {
+    const amt = `₹${Number(e.amount).toLocaleString('en-IN')}`;
+    queries.push({
+      id: id++, severity: 'important', category: 'TDS · BILL',
+      title: `${e.party} — ${amt} paid. TDS deducted?`,
+      detail: `Date: ${e.date}. Voucher: ${e.voucher_type || '—'}. Amount crosses TDS threshold. Check if applicable section (194C/194J/194I/194H) applies.`,
+      alert: `TDS @ applicable rate may be required. Verify and deduct if missed.`,
+      status: 'pending', reply: '', aiReply: ''
+    });
+  });
+
+  // Loans
+  (data.loans || []).forEach(l => {
+    const bal = `₹${Number(l.balance || 0).toLocaleString('en-IN')}`;
+    queries.push({
+      id: id++, severity: 'important', category: 'LOAN',
+      title: `${l.ledger} — ${bal} ${l.note || ''}`,
+      detail: `Loan balance needs documentation — agreement, interest terms, repayment schedule.`,
+      alert: null,
+      status: 'pending', reply: '', aiReply: ''
+    });
+  });
+
+  return queries;
+}
+
+function renderCAQueries() {
+  const list = document.getElementById('caQueryList');
+  if (!list) return;
+
+  let filtered = caQueries;
+  if (caQueryFilter === 'critical')  filtered = caQueries.filter(q => q.severity === 'critical');
+  if (caQueryFilter === 'pending')   filtered = caQueries.filter(q => q.status === 'pending');
+  if (caQueryFilter === 'resolved')  filtered = caQueries.filter(q => q.status === 'resolved');
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="flex flex-col items-center justify-center py-16 text-center text-gray-400">
+      <i class="fas fa-check-circle text-4xl mb-3 text-green-300"></i>
+      <div class="text-sm font-medium">${caQueryFilter === 'resolved' ? 'No resolved items yet' : 'No items in this category'}</div>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(q => {
+    const borderColor = q.severity === 'critical' ? '#ef4444' : q.severity === 'important' ? '#eab308' : '#60a5fa';
+    const badgeClass  = q.severity === 'critical' ? 'bg-red-100 text-red-700' : q.severity === 'important' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700';
+    const badgeText   = q.severity === 'critical' ? 'CRITICAL' : q.severity === 'important' ? 'IMPORTANT' : 'INFO';
+    const statusBadge = q.status === 'resolved'
+      ? `<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700">✅ DONE</span>`
+      : `<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">PENDING</span>`;
+    const opacity = q.status === 'resolved' ? 'opacity-70' : '';
+
+    const alertHtml = q.alert ? `<div class="bg-red-50 rounded-lg px-3 py-2 text-xs text-red-700 mt-2">
+      <i class="fas fa-exclamation-circle mr-1"></i>${q.alert}</div>` : '';
+
+    const resolvedHtml = q.status === 'resolved' ? `
+      <div class="mt-2 bg-gray-50 rounded-lg px-3 py-2 text-xs text-gray-600">
+        <span class="font-medium text-gray-700">Your reply:</span> "${escapeHtml(q.reply)}"
+      </div>
+      <div class="mt-1 bg-green-50 rounded-lg px-3 py-2 text-xs text-green-700">
+        <i class="fas fa-check-circle mr-1"></i>${escapeHtml(q.aiReply || 'Marked resolved.')}
+      </div>` : `
+      <div class="mt-3 flex gap-2">
+        <input type="text" id="qreply-${q.id}" placeholder="Reply to this query..."
+          class="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-400"
+          onkeydown="if(event.key==='Enter') replyToQuery(${q.id})">
+        <button onclick="replyToQuery(${q.id})" class="bg-blue-500 text-white text-xs px-3 py-2 rounded-lg font-medium hover:bg-blue-600 transition">Reply</button>
+        <button onclick="askAboutQuery(${q.id})" class="bg-gray-100 text-gray-600 text-xs px-3 py-2 rounded-lg font-medium hover:bg-gray-200 transition" title="Ask CA about this"><i class="fas fa-comment-dots"></i></button>
+      </div>`;
+
+    return `<div class="bg-white rounded-xl border border-gray-100 overflow-hidden ${opacity}" style="border-left:4px solid ${borderColor}; margin-bottom:10px;">
+      <div class="px-4 py-3">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex items-start gap-2 flex-1">
+            <span class="text-gray-400 text-xs font-bold mt-0.5 w-5 flex-shrink-0">#${q.id}</span>
+            <div class="flex-1">
+              <div class="flex items-center gap-1.5 mb-1 flex-wrap">
+                <span class="text-xs font-bold px-2 py-0.5 rounded-full ${badgeClass}">${badgeText}</span>
+                <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">${escapeHtml(q.category)}</span>
+              </div>
+              <div class="text-sm font-semibold text-gray-800 mb-1">${escapeHtml(q.title)}</div>
+              <div class="text-xs text-gray-500">${escapeHtml(q.detail)}</div>
+              ${alertHtml}
+              ${resolvedHtml}
+            </div>
+          </div>
+          <div class="flex-shrink-0">${statusBadge}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Update counts
+  const crit = caQueries.filter(q => q.severity === 'critical').length;
+  const imp  = caQueries.filter(q => q.severity === 'important').length;
+  const info = caQueries.filter(q => q.severity === 'info').length;
+  const critEl = document.getElementById('ca-count-critical');
+  const impEl  = document.getElementById('ca-count-important');
+  const infoEl = document.getElementById('ca-count-info');
+  if (critEl) critEl.querySelector('span:last-child').textContent = `${crit} Critical`;
+  if (impEl)  impEl.querySelector('span:last-child').textContent  = `${imp} Important`;
+  if (infoEl) infoEl.querySelector('span:last-child').textContent = `${info} Info`;
+}
+
+function filterCAQueries(f) {
+  caQueryFilter = f;
+  ['all','critical','pending','resolved'].forEach(k => {
+    const btn = document.getElementById('cafilter-' + k);
+    if (!btn) return;
+    btn.className = k === f
+      ? 'text-xs bg-blue-600 text-white px-3 py-1 rounded-lg font-medium'
+      : 'text-xs text-gray-500 bg-white border border-gray-200 px-3 py-1 rounded-lg';
+  });
+  renderCAQueries();
+}
+
+async function replyToQuery(id) {
+  const q = caQueries.find(x => x.id === id);
+  if (!q) return;
+  const inp = document.getElementById('qreply-' + id);
+  const reply = inp ? inp.value.trim() : '';
+  if (!reply) return;
+
+  q.reply = reply;
+  q.status = 'resolved';
+
+  // Ask AI to acknowledge the reply
+  try {
+    const res = await fetch(`${API_BASE}/api/ca-chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: `Query #${id}: "${q.title}" — User replied: "${reply}". Acknowledge in 1-2 sentences and confirm if resolved or if more info needed.`,
+        history: []
+      })
+    });
+    const data = await res.json();
+    q.aiReply = data.reply || 'Noted. Marked resolved.';
+  } catch(e) {
+    q.aiReply = 'Noted. Marked resolved.';
+  }
+
+  renderCAQueries();
+}
+
+function askAboutQuery(id) {
+  const q = caQueries.find(x => x.id === id);
+  if (!q) return;
+  document.getElementById('chatInput').value = `Tell me more about query #${id}: ${q.title}`;
+  sendChat();
+}
+
+function rerunCAQueries() {
+  if (!auditData) { alert('No audit data loaded. Upload a Trial Balance first.'); return; }
+  caQueries = buildCAQueries(auditData);
+  renderCAQueries();
+  showCAGreeting(auditData);
+}
+
+function showCAGreeting(data) {
+  const chat = document.getElementById('chatMessages');
+  if (!chat || !data) return;
+  const s = data.summary || {};
+  const company = s.company || 'your company';
+  const crit = s.critical || 0;
+  const warn = s.warnings || 0;
+  const score = s.score != null ? s.score : '—';
+
+  chat.innerHTML = `<div class="flex gap-2 items-start">
+    <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+      <i class="fas fa-robot text-white" style="font-size:11px"></i>
+    </div>
+    <div>
+      <div class="bg-white border border-gray-200 rounded-2xl rounded-tl-sm p-4 max-w-xs text-sm text-gray-700 leading-relaxed">
+        <div class="font-bold text-gray-800 mb-1">Hello Sagar! 👋</div>
+        I've analysed <strong>${escapeHtml(company)}</strong> for <strong>${escapeHtml(s.period || 'FY 2025-26')}</strong>.<br><br>
+        Found <strong class="text-red-600">${crit} critical issues</strong> and <strong class="text-yellow-600">${warn} warnings</strong>. Compliance score: <strong>${score}/100</strong>.<br><br>
+        I've raised <strong>${caQueries.length} queries</strong> on the left — reply to them or ask me anything here. 👈
+      </div>
+      <div class="text-xs text-gray-400 mt-1 ml-1">Just now</div>
+    </div>
+  </div>`;
+
+  caChatHistory = [];
+}
+
+// ── CA Chat ────────────────────────────────────────────────────────────────────
 // Conversation history for CA chat (keeps last 20 turns in memory)
 let caChatHistory = [];
 
@@ -2574,18 +2812,22 @@ function updateCABanner(data) {
   const company = s.company || 'Trial Balance';
   const period  = s.period  || '';
   const score   = s.score   != null ? `${s.score}/100` : '';
-  const crit    = s.critical || 0;
-  const warn    = s.warnings || 0;
 
-  const title = document.getElementById('caBannerTitle');
-  const status = document.getElementById('caBannerStatus');
-  if (!title || !status) return;
+  // Update header subtitle
+  const sub = document.getElementById('caHeaderSub');
+  if (sub) sub.textContent = `${company}${period ? ' — ' + period : ''} · Score ${score} · Powered by Groq AI`;
 
-  title.textContent = `${company}${period ? ' — ' + period : ''} · Score ${score} · ${crit} Critical · ${warn} Warnings`;
+  // Build queries from audit data
+  caQueries = buildCAQueries(data);
+  renderCAQueries();
+  showCAGreeting(data);
+}
 
-  status.className = 'flex items-center gap-1.5 bg-green-500/20 border border-green-400/30 px-3 py-1 rounded-full';
-  status.innerHTML = `<span class="w-2 h-2 rounded-full bg-green-400 inline-block pulse"></span>
-    <span class="text-green-200 text-xs font-medium">Data Connected</span>`;
+function clearCAChat() {
+  const chat = document.getElementById('chatMessages');
+  if (chat) chat.innerHTML = '';
+  caChatHistory = [];
+  if (auditData) showCAGreeting(auditData);
 }
 
 // Load dashboard data on startup
