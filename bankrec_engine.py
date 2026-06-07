@@ -633,24 +633,41 @@ def reconcile(bank_txns: List[Dict], tally_txns: List[Dict],
     tally_dupes, tally_clean = find_dupes(tally_txns, 'Tally')
     duplicates = bank_dupes + tally_dupes
 
-    # Match bank vs tally (date ±1 day, amount exact)
+    # Match bank vs tally (date ±1 day, amount within Rs.1)
     tally_used = [False] * len(tally_clean)
+    amount_mismatches = []   # matched entries where amount differs by paise
 
     for bt in bank_clean:
         found = False
         for j, tt in enumerate(tally_clean):
             if tally_used[j]: continue
             date_diff = abs((bt['date'] - tt['date']).days)
-            amt_match = abs(bt['amount'] - tt['amount']) < 1.0  # allow Rs.1 rounding
+            amt_diff  = round(bt['amount'] - tt['amount'], 2)
+            amt_match = abs(amt_diff) < 1.0  # allow Rs.1 rounding
             if date_diff <= 1 and amt_match:
-                matched.append({
-                    'date':          str(bt['date']),
+                entry = {
+                    'date':           str(bt['date']),
                     'bank_narration': bt['narration'],
                     'tally_narration':tt['narration'],
-                    'amount':        bt['amount'],
-                    'dr_cr':         bt['dr_cr'],
-                    'date_diff':     date_diff,
-                })
+                    'bank_amount':    round(bt['amount'], 2),
+                    'tally_amount':   round(tt['amount'], 2),
+                    'amount':         bt['amount'],
+                    'dr_cr':          bt['dr_cr'],
+                    'date_diff':      date_diff,
+                    'amt_diff':       amt_diff,
+                }
+                matched.append(entry)
+                # Track paise-level mismatches within matched entries
+                if abs(amt_diff) >= 0.01:
+                    amount_mismatches.append({
+                        'date':           str(bt['date']),
+                        'narration':      bt['narration'],
+                        'bank_amount':    round(bt['amount'], 2),
+                        'tally_amount':   round(tt['amount'], 2),
+                        'difference':     amt_diff,          # positive = bank higher
+                        'dr_cr':          bt['dr_cr'],
+                        'issue':          f"Paise difference: Bank ₹{bt['amount']:.2f} vs Tally ₹{tt['amount']:.2f} (diff ₹{amt_diff:+.2f})",
+                    })
                 tally_used[j] = True
                 found = True
                 break
@@ -720,21 +737,27 @@ def reconcile(bank_txns: List[Dict], tally_txns: List[Dict],
     cb_diff   = round(abs(cb_bank - cb_tally), 2) if (cb_bank is not None and cb_tally is not None) else None
     cb_match  = (cb_diff is not None and cb_diff < 1.0)   # within Re.1 = match
 
+    # Total paise difference explained by amount mismatches
+    total_paise_diff = round(sum(m['difference'] for m in amount_mismatches), 2)
+
     return {
-        'matched':      matched,
-        'bank_only':    remaining_bank_only,
-        'tally_only':   remaining_tally_only,
-        'duplicates':   dupes_out,
-        'wrong_date':   wrong_date,
+        'matched':          matched,
+        'bank_only':        remaining_bank_only,
+        'tally_only':       remaining_tally_only,
+        'duplicates':       dupes_out,
+        'wrong_date':       wrong_date,
+        'amount_mismatches':amount_mismatches,
         'summary': {
-            'total_bank':    len(bank_txns),
-            'total_tally':   len(tally_txns),
-            'matched':       len(matched),
-            'bank_only':     len(remaining_bank_only),
-            'tally_only':    len(remaining_tally_only),
-            'duplicates':    len(dupes_out),
-            'wrong_date':    len(wrong_date),
-            'match_pct':     round(len(matched) / max(len(bank_txns), 1) * 100, 1),
+            'total_bank':        len(bank_txns),
+            'total_tally':       len(tally_txns),
+            'matched':           len(matched),
+            'bank_only':         len(remaining_bank_only),
+            'tally_only':        len(remaining_tally_only),
+            'duplicates':        len(dupes_out),
+            'wrong_date':        len(wrong_date),
+            'amount_mismatches': len(amount_mismatches),
+            'total_paise_diff':  total_paise_diff,
+            'match_pct':         round(len(matched) / max(len(bank_txns), 1) * 100, 1),
             'closing_balance_bank':  cb_bank,
             'closing_balance_tally': cb_tally,
             'closing_dr_cr_tally':   closing_dr_cr_tally,

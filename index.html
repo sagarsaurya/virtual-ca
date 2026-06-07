@@ -2955,23 +2955,42 @@ function renderBankRec(data) {
       const bankAmt   = '₹' + Number(s.closing_balance_bank).toLocaleString('en-IN', {minimumFractionDigits:2});
       const tallyAmt  = '₹' + Number(s.closing_balance_tally).toLocaleString('en-IN', {minimumFractionDigits:2}) + ' ' + (s.closing_dr_cr_tally || '');
       const diffAmt   = '₹' + Number(s.closing_balance_diff).toLocaleString('en-IN', {minimumFractionDigits:2});
+      const paiseMismatches = data.amount_mismatches || [];
+      const paiseExplains = s.total_paise_diff != null && Math.abs(s.total_paise_diff - s.closing_balance_diff) < 0.05;
+
       if (matched) {
         cbBanner.className = 'mb-4 p-4 rounded-xl border border-green-400 bg-green-50 flex items-start gap-3';
         cbBanner.innerHTML = `
           <div class="text-green-500 text-2xl mt-0.5"><i class="fas fa-check-circle"></i></div>
-          <div>
+          <div class="flex-1">
             <div class="font-bold text-green-700 text-base">Closing Balance Matches ✅</div>
             <div class="text-sm text-green-600 mt-1">Bank: <strong>${bankAmt}</strong> &nbsp;|&nbsp; Tally: <strong>${tallyAmt}</strong></div>
-            <div class="text-xs text-green-500 mt-1">No missing entries detected based on closing balance comparison.</div>
+            <div class="text-xs text-green-500 mt-1">No missing entries — all amounts accounted for.</div>
           </div>`;
       } else {
+        // Build paise explanation
+        let paiseHtml = '';
+        if (paiseMismatches.length > 0) {
+          const sign = s.total_paise_diff > 0 ? 'Bank is higher by' : 'Tally is higher by';
+          paiseHtml = `
+            <div class="mt-2 border-t border-red-200 pt-2">
+              <div class="text-xs font-bold text-red-700 mb-1">🔍 Paise difference traced to ${paiseMismatches.length} entry(ies) — total ₹${Math.abs(s.total_paise_diff).toFixed(2)} ${sign.toLowerCase().replace('bank is higher by','bank higher').replace('tally is higher by','tally higher')}:</div>
+              ${paiseMismatches.map(m => `
+                <div class="text-xs bg-white border border-red-200 rounded-lg px-3 py-2 mb-1">
+                  <span class="font-medium text-gray-700">${m.date}</span> · ${m.narration.substring(0,40)}${m.narration.length>40?'...':''}
+                  <br><span class="text-red-600">Bank: ₹${m.bank_amount.toFixed(2)}</span> &nbsp;vs&nbsp; <span class="text-yellow-700">Tally: ₹${m.tally_amount.toFixed(2)}</span>
+                  &nbsp;→ <strong class="text-red-700">Diff: ₹${m.difference > 0 ? '+' : ''}${m.difference.toFixed(2)}</strong> (${m.difference > 0 ? 'Tally entered less' : 'Tally entered more'})
+                </div>`).join('')}
+            </div>`;
+        }
         cbBanner.className = 'mb-4 p-4 rounded-xl border border-red-400 bg-red-50 flex items-start gap-3';
         cbBanner.innerHTML = `
           <div class="text-red-500 text-2xl mt-0.5"><i class="fas fa-exclamation-triangle"></i></div>
-          <div>
+          <div class="flex-1">
             <div class="font-bold text-red-700 text-base">Closing Balance Mismatch ⚠️</div>
             <div class="text-sm text-red-600 mt-1">Bank: <strong>${bankAmt}</strong> &nbsp;|&nbsp; Tally: <strong>${tallyAmt}</strong></div>
-            <div class="text-sm text-red-600 mt-1">Difference: <strong>${diffAmt}</strong> — Some entries may be missing or incorrect in Tally.</div>
+            <div class="text-sm text-red-600 mt-1">Difference: <strong>${diffAmt}</strong></div>
+            ${paiseHtml}
           </div>`;
       }
       cbBanner.classList.remove('hidden');
