@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-import os, json, tempfile
+import os, json, tempfile, sys
 from audit_engine import run_full_audit
 
 app = Flask(__name__, static_folder='.', static_url_path='')
@@ -128,5 +128,6 @@ def get_personal_marks():
     return jsonify(load_personal())
 
 if __name__ == '__main__':
-    print("VirtualCA backend running on http://localhost:5050")
-    app.run(debug=True, port=5050)
+    port = int(os.environ.get('PORT', 5050))
+    print(f"VirtualCA backend running on port {port}")
+    app.run(host='0.0.0.0', port=port)

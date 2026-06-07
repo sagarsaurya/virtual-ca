@@ -2494,7 +2494,9 @@ function selectFileType(type) {
   document.getElementById('uploadHint').innerHTML = `<p class="text-sm font-medium text-blue-800 mb-2"><i class="fas fa-info-circle mr-2"></i>How to get this file</p><div class="text-xs text-blue-600 space-y-1">${h.hint.split('<br>').map(s=>`<p>${s}</p>`).join('')}</div>`;
   document.getElementById('uploadFormats').textContent = h.fmt;
 }
-const API_BASE = 'http://localhost:5050';
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://localhost:5050'
+  : '';
 let auditData = null;
 
 function startFullAudit() {
