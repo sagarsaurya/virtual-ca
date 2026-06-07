@@ -1633,163 +1633,84 @@
             <div class="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center"><i class="fas fa-book text-purple-500"></i></div>
             <div><div class="text-sm font-semibold text-gray-800">Tally Bank Ledger</div><div class="text-xs text-gray-400">Export bank ledger from Tally as Excel</div></div>
           </div>
-          <div class="upload-zone rounded-xl p-5 text-center cursor-pointer" onclick="simulateBankUpload('tally')">
+          <label class="upload-zone rounded-xl p-5 text-center cursor-pointer block" for="tallyLedgerInput">
             <i class="fas fa-cloud-upload-alt text-purple-400 text-2xl mb-2 block"></i>
-            <p class="text-xs text-gray-500 mb-2">Drop Tally bank ledger here</p>
+            <p class="text-xs text-gray-500 mb-2" id="tallyLedgerName">Drop Tally bank ledger here</p>
+            <input type="file" id="tallyLedgerInput" accept=".xlsx,.xls,.csv" class="hidden"
+              onchange="handleTallyLedgerUpload(this)">
             <span class="bg-purple-600 text-white px-4 py-1.5 rounded-lg text-xs font-medium">Choose File</span>
-          </div>
+            <p class="text-xs text-gray-400 mt-2">Tally → Account Books → Bank Ledger → Export Excel</p>
+          </label>
           <div id="tallyLedgerLoaded" class="hidden mt-3 flex items-center gap-2 p-2 bg-green-50 rounded-lg">
             <i class="fas fa-check-circle text-green-500 text-sm"></i>
-            <span class="text-xs text-green-700 font-medium">HDFC_TallyLedger.xlsx — 138 entries loaded</span>
+            <span class="text-xs text-green-700 font-medium" id="tallyLedgerLoadedText"></span>
           </div>
         </div>
+      </div>
+
+      <!-- Run Button -->
+      <div id="brRunWrap" class="hidden mb-6">
+        <button onclick="runBankRec()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl text-base font-bold transition flex items-center justify-center gap-3">
+          <i class="fas fa-balance-scale"></i> Run Reconciliation
+        </button>
+      </div>
+
+      <!-- Loading -->
+      <div id="brLoading" class="hidden bg-white rounded-2xl card-shadow p-8 text-center mb-6">
+        <i class="fas fa-cog text-blue-500 text-3xl mb-3 block" style="animation:spin 1.5s linear infinite"></i>
+        <div class="font-semibold text-gray-700 mb-1">Reconciling transactions...</div>
+        <div class="text-sm text-gray-400">Matching bank statement vs Tally entries</div>
       </div>
 
       <!-- Reconciliation Summary -->
       <div id="bancRecSummary" class="hidden">
         <div class="grid grid-cols-4 gap-5 mb-6">
           <div class="stat-card card-shadow text-center border-t-4 border-green-400">
-            <div class="text-3xl font-bold text-green-600">131</div>
+            <div class="text-3xl font-bold text-green-600" id="br-matched">—</div>
             <div class="text-sm text-gray-500 mt-1">Matched</div>
-            <div class="text-xs text-green-400 mt-1">91.6%</div>
+            <div class="text-xs text-green-400 mt-1" id="br-match-pct">—</div>
           </div>
           <div class="stat-card card-shadow text-center border-t-4 border-red-400">
-            <div class="text-3xl font-bold text-red-600">7</div>
-            <div class="text-sm text-gray-500 mt-1">Unmatched</div>
+            <div class="text-3xl font-bold text-red-600" id="br-bank-only">—</div>
+            <div class="text-sm text-gray-500 mt-1">Bank Only</div>
             <div class="text-xs text-red-400 mt-1">In bank, not in Tally</div>
           </div>
           <div class="stat-card card-shadow text-center border-t-4 border-yellow-400">
-            <div class="text-3xl font-bold text-yellow-600">3</div>
+            <div class="text-3xl font-bold text-yellow-600" id="br-tally-only">—</div>
             <div class="text-sm text-gray-500 mt-1">Tally Only</div>
             <div class="text-xs text-yellow-400 mt-1">In Tally, not in bank</div>
           </div>
           <div class="stat-card card-shadow text-center border-t-4 border-orange-400">
-            <div class="text-3xl font-bold text-orange-600">2</div>
+            <div class="text-3xl font-bold text-orange-600" id="br-duplicates">—</div>
             <div class="text-sm text-gray-500 mt-1">Duplicates</div>
             <div class="text-xs text-orange-400 mt-1">Same amount, same date</div>
           </div>
         </div>
 
         <!-- Tabs -->
-        <div class="flex gap-2 mb-5">
-          <button id="brtab-unmatched" onclick="switchBRTab('unmatched')" class="px-4 py-2 rounded-xl text-sm font-medium bg-red-500 text-white transition">🔴 Unmatched (7)</button>
-          <button id="brtab-tally" onclick="switchBRTab('tally')" class="px-4 py-2 rounded-xl text-sm font-medium bg-white text-gray-500 hover:bg-gray-50 transition">🟡 Tally Only (3)</button>
-          <button id="brtab-duplicate" onclick="switchBRTab('duplicate')" class="px-4 py-2 rounded-xl text-sm font-medium bg-white text-gray-500 hover:bg-gray-50 transition">🟠 Duplicates (2)</button>
-          <button id="brtab-matched" onclick="switchBRTab('matched')" class="px-4 py-2 rounded-xl text-sm font-medium bg-white text-gray-500 hover:bg-gray-50 transition">✅ Matched (131)</button>
+        <div class="flex gap-2 mb-5" id="br-tabs">
+          <button id="brtab-unmatched" onclick="switchBRTab('unmatched')" class="px-4 py-2 rounded-xl text-sm font-medium bg-red-500 text-white transition">🔴 Bank Only (<span id="br-tab-bank-count">0</span>)</button>
+          <button id="brtab-tally" onclick="switchBRTab('tally')" class="px-4 py-2 rounded-xl text-sm font-medium bg-white text-gray-500 hover:bg-gray-50 transition">🟡 Tally Only (<span id="br-tab-tally-count">0</span>)</button>
+          <button id="brtab-duplicate" onclick="switchBRTab('duplicate')" class="px-4 py-2 rounded-xl text-sm font-medium bg-white text-gray-500 hover:bg-gray-50 transition">🟠 Duplicates (<span id="br-tab-dup-count">0</span>)</button>
+          <button id="brtab-matched" onclick="switchBRTab('matched')" class="px-4 py-2 rounded-xl text-sm font-medium bg-white text-gray-500 hover:bg-gray-50 transition">✅ Matched (<span id="br-tab-match-count">0</span>)</button>
         </div>
 
         <!-- Unmatched Tab -->
         <div id="brtab-content-unmatched" class="space-y-3">
-          <div class="bg-white rounded-2xl card-shadow p-5 border-l-4 border-red-400">
-            <div class="flex items-center justify-between mb-3">
-              <div class="flex items-center gap-3">
-                <span class="tag-critical text-xs px-3 py-1 rounded-full font-semibold">UNMATCHED</span>
-                <span class="text-xs text-gray-400">Bank — 03 Mar 2026</span>
-              </div>
-              <span class="text-sm font-semibold text-gray-700">₹45,000 Dr</span>
-            </div>
-            <div class="text-sm font-medium text-gray-800 mb-1">NEFT/RTGS — Vendor Payment — M/s Kapoor Supplies</div>
-            <div class="text-xs text-gray-400 mb-3">Bank Ref: HDFC2603000123 · Narration: "Payment against invoice KS-2023"</div>
-            <div class="bg-red-50 rounded-xl p-3">
-              <p class="text-xs text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>This payment appears in your bank statement but has <strong>no matching entry in Tally</strong>. Possible reasons: payment voucher not posted, wrong date entered, or posted to different ledger.</p>
-            </div>
-          </div>
-          <div class="bg-white rounded-2xl card-shadow p-5 border-l-4 border-red-400">
-            <div class="flex items-center justify-between mb-3">
-              <div class="flex items-center gap-3">
-                <span class="tag-critical text-xs px-3 py-1 rounded-full font-semibold">UNMATCHED</span>
-                <span class="text-xs text-gray-400">Bank — 07 Mar 2026</span>
-              </div>
-              <span class="text-sm font-semibold text-gray-700">₹12,500 Cr</span>
-            </div>
-            <div class="text-sm font-medium text-gray-800 mb-1">IMPS — Receipt from ABC Corp</div>
-            <div class="text-xs text-gray-400 mb-3">Bank Ref: HDFC2607000456 · UTR: 26070012345</div>
-            <div class="bg-red-50 rounded-xl p-3">
-              <p class="text-xs text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>Customer receipt in bank not recorded in Tally. Create a receipt voucher: Dr HDFC Bank Cr ABC Corp ₹12,500.</p>
-            </div>
-          </div>
-          <div class="bg-white rounded-2xl card-shadow p-5 border-l-4 border-red-400">
-            <div class="flex items-center justify-between mb-3">
-              <div class="flex items-center gap-3">
-                <span class="tag-critical text-xs px-3 py-1 rounded-full font-semibold">UNMATCHED</span>
-                <span class="text-xs text-gray-400">Bank — 10 Mar 2026</span>
-              </div>
-              <span class="text-sm font-semibold text-gray-700">₹2,360 Dr</span>
-            </div>
-            <div class="text-sm font-medium text-gray-800 mb-1">Bank Charges — HDFC Processing Fee</div>
-            <div class="text-xs text-gray-400 mb-3">Auto-debit by bank · Ref: CHGS2026MAR</div>
-            <div class="bg-red-50 rounded-xl p-3">
-              <p class="text-xs text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>Bank charges not recorded in Tally. Create a journal: Dr Bank Charges A/c Cr HDFC Bank ₹2,360.</p>
-            </div>
-          </div>
+          <div id="br-bank-only-list"><div class="text-sm text-gray-400 p-4 text-center">Run reconciliation to see results</div></div>
         </div>
-
-        <!-- Tally Only Tab -->
         <div id="brtab-content-tally" class="space-y-3 hidden">
-          <div class="bg-white rounded-2xl card-shadow p-5 border-l-4 border-yellow-400">
-            <div class="flex items-center justify-between mb-3">
-              <div class="flex items-center gap-3">
-                <span class="tag-review text-xs px-3 py-1 rounded-full font-semibold">TALLY ONLY</span>
-                <span class="text-xs text-gray-400">Tally — 05 Mar 2026</span>
-              </div>
-              <span class="text-sm font-semibold text-gray-700">₹18,000 Cr</span>
-            </div>
-            <div class="text-sm font-medium text-gray-800 mb-1">Payment Voucher — PV-0341 · Rohan Enterprises</div>
-            <div class="text-xs text-gray-400 mb-3">Entered in Tally by Rahul Sharma</div>
-            <div class="bg-yellow-50 rounded-xl p-3">
-              <p class="text-xs text-yellow-700"><i class="fas fa-info-circle mr-1"></i>This entry is in Tally but the bank has no record of it. Possible outstanding cheque not yet cleared, or incorrect amount entered in Tally.</p>
-            </div>
-          </div>
+          <div id="br-tally-only-list"><div class="text-sm text-gray-400 p-4 text-center">Run reconciliation to see results</div></div>
         </div>
-
-        <!-- Duplicate Tab -->
         <div id="brtab-content-duplicate" class="space-y-3 hidden">
-          <div class="bg-white rounded-2xl card-shadow p-5 border-l-4 border-orange-400">
-            <div class="flex items-center justify-between mb-3">
-              <div class="flex items-center gap-3">
-                <span style="background:#fff7ed;color:#c2410c;border:1px solid #fed7aa" class="text-xs px-3 py-1 rounded-full font-semibold">DUPLICATE</span>
-                <span class="text-xs text-gray-400">11 Mar 2026</span>
-              </div>
-              <span class="text-sm font-semibold text-gray-700">₹8,500 Dr × 2</span>
-            </div>
-            <div class="text-sm font-medium text-gray-800 mb-1">Salary Advance — Staff Member</div>
-            <div class="text-xs text-gray-400 mb-3">Same amount, same date — two entries found in Tally (PV-0352 and PV-0353)</div>
-            <div class="bg-orange-50 rounded-xl p-3">
-              <p class="text-xs text-orange-700"><i class="fas fa-exclamation-triangle mr-1"></i>Possible double entry. Bank shows only 1 debit of ₹8,500 on this date. Delete duplicate voucher PV-0353 in Tally after verification.</p>
-            </div>
-          </div>
+          <div id="br-duplicates-list"><div class="text-sm text-gray-400 p-4 text-center">Run reconciliation to see results</div></div>
         </div>
-
-        <!-- Matched Tab -->
         <div id="brtab-content-matched" class="hidden">
-          <div class="bg-white rounded-2xl card-shadow p-6">
-            <div class="flex items-center gap-3 mb-4">
-              <div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
-                <i class="fas fa-check-double text-green-500"></i>
-              </div>
-              <div>
-                <div class="font-semibold text-gray-800">131 Transactions Matched</div>
-                <div class="text-sm text-gray-500">These entries match exactly between bank statement and Tally</div>
-              </div>
-            </div>
-            <table class="w-full text-sm">
-              <thead><tr class="text-left text-gray-400 border-b border-gray-100 text-xs uppercase">
-                <th class="pb-2 font-medium">Date</th><th class="pb-2 font-medium">Narration</th>
-                <th class="pb-2 font-medium">Bank Amount</th><th class="pb-2 font-medium">Tally Amount</th><th class="pb-2 font-medium">Status</th>
-              </tr></thead>
-              <tbody class="divide-y divide-gray-50 text-xs">
-                <tr><td class="py-2.5 text-gray-500">01 Mar 2026</td><td class="text-gray-700">Opening Balance</td><td class="text-gray-700">Dr ₹2,45,000</td><td class="text-gray-700">Dr ₹2,45,000</td><td><span class="tag-ok text-xs px-2 py-0.5 rounded-full">✅ Match</span></td></tr>
-                <tr><td class="py-2.5 text-gray-500">02 Mar 2026</td><td class="text-gray-700">Sales Receipt — DEF Ltd</td><td class="text-gray-700">Cr ₹75,000</td><td class="text-gray-700">Cr ₹75,000</td><td><span class="tag-ok text-xs px-2 py-0.5 rounded-full">✅ Match</span></td></tr>
-                <tr><td class="py-2.5 text-gray-500">04 Mar 2026</td><td class="text-gray-700">Rent Payment</td><td class="text-gray-700">Dr ₹35,000</td><td class="text-gray-700">Dr ₹35,000</td><td><span class="tag-ok text-xs px-2 py-0.5 rounded-full">✅ Match</span></td></tr>
-                <tr><td class="py-2.5 text-gray-500">06 Mar 2026</td><td class="text-gray-700">TDS Deposit — Feb</td><td class="text-gray-700">Dr ₹10,000</td><td class="text-gray-700">Dr ₹10,000</td><td><span class="tag-ok text-xs px-2 py-0.5 rounded-full">✅ Match</span></td></tr>
-                <tr><td class="py-2.5 text-gray-500">08 Mar 2026</td><td class="text-gray-700">Sales Receipt — GHI Corp</td><td class="text-gray-700">Cr ₹1,20,000</td><td class="text-gray-700">Cr ₹1,20,000</td><td><span class="tag-ok text-xs px-2 py-0.5 rounded-full">✅ Match</span></td></tr>
-              </tbody>
-            </table>
-          </div>
+          <div id="br-matched-list"><div class="text-sm text-gray-400 p-4 text-center">Run reconciliation to see results</div></div>
         </div>
       </div>
 
-      <!-- Empty state before upload -->
+            <!-- Empty state before upload -->
       <div id="bancRecEmpty" class="bg-white rounded-2xl card-shadow p-12 text-center">
         <div class="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-4">
           <i class="fas fa-exchange-alt text-blue-400 text-3xl"></i>
@@ -2885,15 +2806,125 @@ function handleBankStatementUpload(input) {
   const file = input.files[0];
   if (!file) return;
   const isPDF = file.name.toLowerCase().endsWith('.pdf');
-  const nameEl    = document.getElementById('bankStatementName');
-  const loadedEl  = document.getElementById('bankStatementLoaded');
-  const loadedTxt = document.getElementById('bankStatementLoadedText');
-  const pdfNote   = document.getElementById('bankStatementPDFNote');
+  document.getElementById('bankStatementName').textContent = file.name;
+  document.getElementById('bankStatementLoaded').classList.remove('hidden');
+  document.getElementById('bankStatementLoadedText').textContent = file.name + (isPDF ? ' — PDF ready for extraction' : ' — ready to reconcile');
+  document.getElementById('bankStatementPDFNote').classList.toggle('hidden', !isPDF);
+  checkBRReady();
+}
 
-  nameEl.textContent = file.name;
-  loadedEl.classList.remove('hidden');
-  loadedTxt.textContent = file.name + (isPDF ? ' — PDF ready for extraction' : ' — ready to reconcile');
-  pdfNote.classList.toggle('hidden', !isPDF);
+function handleTallyLedgerUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById('tallyLedgerName').textContent = file.name;
+  document.getElementById('tallyLedgerLoaded').classList.remove('hidden');
+  document.getElementById('tallyLedgerLoadedText').textContent = file.name + ' — ready to reconcile';
+  checkBRReady();
+}
+
+function checkBRReady() {
+  const bs = document.getElementById('bankStatementInput')?.files[0];
+  const tl = document.getElementById('tallyLedgerInput')?.files[0];
+  document.getElementById('brRunWrap').classList.toggle('hidden', !(bs && tl));
+  document.getElementById('bancRecEmpty').classList.toggle('hidden', !!(bs && tl));
+}
+
+async function runBankRec() {
+  const bs = document.getElementById('bankStatementInput')?.files[0];
+  const tl = document.getElementById('tallyLedgerInput')?.files[0];
+  if (!bs || !tl) { alert('Please upload both files first.'); return; }
+
+  document.getElementById('brRunWrap').classList.add('hidden');
+  document.getElementById('brLoading').classList.remove('hidden');
+  document.getElementById('bancRecSummary').classList.add('hidden');
+
+  try {
+    const fd = new FormData();
+    fd.append('bank_statement', bs);
+    fd.append('tally_ledger', tl);
+    const r = await fetch(API_BASE + '/api/bankrec', { method: 'POST', body: fd });
+    if (!r.ok) { const e = await r.json(); throw new Error(e.error || 'Server error'); }
+    const data = await r.json();
+    renderBankRec(data);
+  } catch(e) {
+    alert('Reconciliation failed: ' + e.message);
+    document.getElementById('brRunWrap').classList.remove('hidden');
+  } finally {
+    document.getElementById('brLoading').classList.add('hidden');
+  }
+}
+
+function renderBankRec(data) {
+  const s = data.summary;
+  document.getElementById('br-matched').textContent    = s.matched;
+  document.getElementById('br-match-pct').textContent  = s.match_pct + '% match rate';
+  document.getElementById('br-bank-only').textContent  = s.bank_only;
+  document.getElementById('br-tally-only').textContent = s.tally_only;
+  document.getElementById('br-duplicates').textContent = s.duplicates;
+  document.getElementById('br-tab-bank-count').textContent  = s.bank_only;
+  document.getElementById('br-tab-tally-count').textContent = s.tally_only;
+  document.getElementById('br-tab-dup-count').textContent   = s.duplicates;
+  document.getElementById('br-tab-match-count').textContent = s.matched;
+
+  // Bank only
+  document.getElementById('br-bank-only-list').innerHTML = !data.bank_only.length
+    ? '<div class="p-6 text-center text-green-600 font-semibold"><i class="fas fa-check-circle mr-2"></i>No unmatched bank entries</div>'
+    : data.bank_only.map(t => brCard(t, 'red', 'BANK ONLY', 'In bank statement but missing in Tally')).join('');
+
+  // Tally only
+  document.getElementById('br-tally-only-list').innerHTML = !data.tally_only.length
+    ? '<div class="p-6 text-center text-green-600 font-semibold"><i class="fas fa-check-circle mr-2"></i>No Tally-only entries</div>'
+    : data.tally_only.map(t => brCard(t, 'yellow', 'TALLY ONLY', 'In Tally but missing in bank statement')).join('');
+
+  // Duplicates
+  document.getElementById('br-duplicates-list').innerHTML = !data.duplicates.length
+    ? '<div class="p-6 text-center text-green-600 font-semibold"><i class="fas fa-check-circle mr-2"></i>No duplicate entries found</div>'
+    : data.duplicates.map(t => brCard(t, 'orange', 'DUPLICATE', t.issue)).join('');
+
+  // Matched table
+  document.getElementById('br-matched-list').innerHTML = !data.matched.length
+    ? '<div class="p-6 text-center text-gray-400">No matched entries</div>'
+    : `<div class="overflow-x-auto"><table class="w-full text-xs">
+        <thead><tr class="text-left text-gray-400 border-b border-gray-100 uppercase">
+          <th class="pb-2 font-medium">Date</th>
+          <th class="pb-2 font-medium">Bank Narration</th>
+          <th class="pb-2 font-medium">Tally Narration</th>
+          <th class="pb-2 font-medium">Amount</th>
+          <th class="pb-2 font-medium">Status</th>
+        </tr></thead>
+        <tbody class="divide-y divide-gray-50">
+          ${data.matched.map(t => `<tr>
+            <td class="py-2 text-gray-500">${t.date}</td>
+            <td class="text-gray-700">${t.bank_narration}</td>
+            <td class="text-gray-500">${t.tally_narration}</td>
+            <td class="text-gray-700 font-medium">${t.dr_cr} Rs.${Number(t.amount).toLocaleString('en-IN')}</td>
+            <td><span class="tag-ok text-xs px-2 py-0.5 rounded-full">${t.date_diff > 0 ? '~Match ('+t.date_diff+'d)' : 'Exact Match'}</span></td>
+          </tr>`).join('')}
+        </tbody>
+      </table></div>`;
+
+  document.getElementById('bancRecSummary').classList.remove('hidden');
+  document.getElementById('bancRecEmpty').classList.add('hidden');
+  switchBRTab('unmatched');
+}
+
+function brCard(t, color, label, issue) {
+  const colors = {
+    red:    'border-red-400 bg-red-50 text-red-700',
+    yellow: 'border-yellow-400 bg-yellow-50 text-yellow-700',
+    orange: 'border-orange-400 bg-orange-50 text-orange-700',
+  };
+  return `<div class="bg-white rounded-2xl card-shadow p-5 border-l-4 border-${color}-400 mb-3">
+    <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center gap-3">
+        <span class="text-xs px-3 py-1 rounded-full font-semibold ${colors[color]}">${label}</span>
+        <span class="text-xs text-gray-400">${t.date}</span>
+      </div>
+      <span class="text-sm font-semibold text-gray-700">${t.dr_cr} Rs.${Number(t.amount).toLocaleString('en-IN')}</span>
+    </div>
+    <div class="text-sm font-medium text-gray-800 mb-1">${t.narration || '—'}</div>
+    <div class="text-xs ${colors[color].split(' ')[2]} bg-${color}-50 rounded-xl p-2 mt-2">${issue}</div>
+  </div>`;
 }
 
 function simulateBankUpload(type) {

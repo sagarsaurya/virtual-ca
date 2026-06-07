@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os, json, tempfile, datetime
 from audit_engine import run_full_audit
+from bankrec_engine import run_bankrec
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
@@ -255,6 +256,33 @@ def unmark_personal():
 @app.route('/api/audit/personal-marks', methods=['GET'])
 def get_personal_marks():
     return jsonify(load_personal())
+
+# ── POST /api/bankrec ─────────────────────────────────────────────────────────
+@app.route('/api/bankrec', methods=['POST'])
+def bank_reconciliation():
+    if 'bank_statement' not in request.files or 'tally_ledger' not in request.files:
+        return jsonify({'error': 'Both bank_statement and tally_ledger files are required'}), 400
+
+    bs_file = request.files['bank_statement']
+    tl_file = request.files['tally_ledger']
+
+    bs_ext = os.path.splitext(bs_file.filename)[1] or '.pdf'
+    tl_ext = os.path.splitext(tl_file.filename)[1] or '.xlsx'
+
+    with tempfile.NamedTemporaryFile(suffix=bs_ext, delete=False) as tmp:
+        bs_path = tmp.name; bs_file.save(bs_path)
+    with tempfile.NamedTemporaryFile(suffix=tl_ext, delete=False) as tmp:
+        tl_path = tmp.name; tl_file.save(tl_path)
+
+    try:
+        result = run_bankrec(bs_path, tl_path, bs_file.filename)
+        return jsonify(result)
+    except Exception as e:
+        import traceback; traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        os.unlink(bs_path)
+        os.unlink(tl_path)
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5050))
