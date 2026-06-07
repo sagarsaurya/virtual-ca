@@ -3,3 +3,5 @@ flask-cors
 pandas
 openpyxl
 pdfplumber
+groq
+python-dotenv

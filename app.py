@@ -1,6 +1,13 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os, json, tempfile, datetime
+
+# Load .env file if present (local dev)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenv not installed — use system env vars (Render sets them directly)
 from audit_engine import run_full_audit
 from bankrec_engine import run_bankrec
 
@@ -283,6 +290,34 @@ def bank_reconciliation():
     finally:
         os.unlink(bs_path)
         os.unlink(tl_path)
+
+# ── POST /api/ca-chat ─────────────────────────────────────────────────────────
+@app.route('/api/ca-chat', methods=['POST'])
+def ca_chat():
+    data        = request.json or {}
+    user_msg    = data.get('message', '').strip()
+    history     = data.get('history', [])   # [{role, content}, ...]
+
+    if not user_msg:
+        return jsonify({'error': 'message required'}), 400
+
+    # Load last audit result as context (may be None if no audit run yet)
+    audit_data = None
+    if os.path.exists(RESULT_FILE):
+        try:
+            with open(RESULT_FILE) as f:
+                audit_data = json.load(f)
+        except Exception:
+            pass
+
+    try:
+        from ca_agent import chat as ca_chat_fn
+        reply = ca_chat_fn(user_msg, audit_data, history)
+        return jsonify({'reply': reply})
+    except Exception as e:
+        import traceback; traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5050))

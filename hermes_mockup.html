@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hermes — Ask Your CA</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  body { font-family: 'Inter', sans-serif; background: #f8fafc; }
+  .sidebar { width: 220px; min-height: 100vh; background: #1e293b; }
+  .nav-item { padding: 10px 16px; color: #94a3b8; cursor: pointer; border-radius: 8px; margin: 2px 8px; font-size: 13px; display: flex; align-items: center; gap: 10px; }
+  .nav-item.active { background: #0f172a; color: #fff; }
+  .nav-item:hover { background: #334155; color: #fff; }
+  .query-card { background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 10px; overflow: hidden; transition: all 0.2s; }
+  .query-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  .badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; letter-spacing: 0.5px; }
+  .chat-bubble-me { background: #3b82f6; color: white; border-radius: 16px 16px 4px 16px; padding: 10px 14px; max-width: 75%; margin-left: auto; font-size: 13px; }
+  .chat-bubble-hermes { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px 16px 16px 4px; padding: 10px 14px; max-width: 75%; font-size: 13px; }
+  .pulse { animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .scrollable { overflow-y: auto; }
+  .scrollable::-webkit-scrollbar { width: 4px; }
+  .scrollable::-webkit-scrollbar-track { background: #f1f5f9; }
+  .scrollable::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+</style>
+</head>
+<body class="flex">
+
+<!-- Sidebar -->
+<div class="sidebar flex flex-col py-4">
+  <div class="px-4 mb-6">
+    <div class="text-white font-bold text-lg">VirtualCA</div>
+    <div class="text-slate-400 text-xs">AI Accountant</div>
+  </div>
+  <div class="px-2 text-slate-500 text-xs uppercase tracking-wider mb-2 px-4">Main</div>
+  <div class="nav-item"><i class="fas fa-chart-pie w-4"></i> Dashboard</div>
+  <div class="nav-item"><i class="fas fa-upload w-4"></i> Upload & Analyze</div>
+  <div class="nav-item"><i class="fas fa-history w-4"></i> History</div>
+  <div class="nav-item"><i class="fas fa-exchange-alt w-4"></i> Bank Reconciliation</div>
+  <div class="px-2 text-slate-500 text-xs uppercase tracking-wider mb-2 mt-4 px-4">Tools</div>
+  <div class="nav-item active">
+    <i class="fas fa-robot w-4"></i> Ask Your CA
+    <span class="ml-auto bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">8</span>
+  </div>
+  <div class="nav-item"><i class="fas fa-book w-4"></i> Journal Guide</div>
+  <div class="nav-item">
+    <i class="fas fa-calendar w-4"></i> Compliance
+    <span class="ml-auto bg-orange-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">2</span>
+  </div>
+  <div class="nav-item"><i class="fas fa-search-dollar w-4"></i> TDS Analysis</div>
+  <div class="nav-item"><i class="fas fa-file-alt w-4"></i> Full Audit <span class="ml-2 bg-green-500 text-white text-xs px-1.5 py-0.5 rounded-full">New</span></div>
+</div>
+
+<!-- Main Content -->
+<div class="flex-1 flex flex-col" style="max-height:100vh; overflow:hidden;">
+
+  <!-- Header -->
+  <div class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+    <div>
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+          <i class="fas fa-robot text-white text-sm"></i>
+        </div>
+        <div>
+          <div class="font-bold text-gray-800 text-lg">Hermes — Your AI CA</div>
+          <div class="text-xs text-gray-400">Analysed AJKL Daybook FY 2025-26 · 660 entries · Last run: today 02:40 AM</div>
+        </div>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <button class="bg-blue-50 text-blue-600 text-sm font-medium px-4 py-2 rounded-xl border border-blue-200 hover:bg-blue-100">
+        <i class="fas fa-sync-alt mr-2"></i>Re-analyse
+      </button>
+      <button class="bg-gray-800 text-white text-sm font-medium px-4 py-2 rounded-xl">
+        <i class="fas fa-upload mr-2"></i>Upload Daybook
+      </button>
+    </div>
+  </div>
+
+  <div class="flex flex-1 overflow-hidden">
+
+    <!-- Left: Queries Panel -->
+    <div class="flex flex-col border-r border-gray-200 bg-white" style="width:55%;">
+
+      <!-- Summary bar -->
+      <div class="px-5 py-3 border-b border-gray-100 bg-gray-50 flex items-center gap-4">
+        <div class="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-1.5">
+          <span class="w-2 h-2 bg-red-500 rounded-full pulse"></span>
+          <span class="text-red-700 font-bold text-sm">5 Critical</span>
+        </div>
+        <div class="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-1.5">
+          <span class="w-2 h-2 bg-yellow-500 rounded-full"></span>
+          <span class="text-yellow-700 font-bold text-sm">9 Important</span>
+        </div>
+        <div class="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5">
+          <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+          <span class="text-green-700 font-bold text-sm">3 Info</span>
+        </div>
+        <div class="ml-auto flex gap-2">
+          <button class="text-xs text-gray-500 bg-white border border-gray-200 px-3 py-1 rounded-lg">All</button>
+          <button class="text-xs text-red-600 bg-red-50 border border-red-200 px-3 py-1 rounded-lg font-medium">🔴 Critical</button>
+          <button class="text-xs text-gray-500 bg-white border border-gray-200 px-3 py-1 rounded-lg">🟡 Pending</button>
+          <button class="text-xs text-gray-500 bg-white border border-gray-200 px-3 py-1 rounded-lg">✅ Resolved</button>
+        </div>
+      </div>
+
+      <!-- Query list -->
+      <div class="flex-1 scrollable px-4 py-3">
+
+        <!-- Query 1 — Critical -->
+        <div class="query-card border-l-4 border-red-500">
+          <div class="px-4 py-3">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-start gap-3 flex-1">
+                <span class="text-gray-400 text-xs font-bold mt-0.5 w-5">#1</span>
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="badge bg-red-100 text-red-700">CRITICAL</span>
+                    <span class="badge bg-gray-100 text-gray-600">TDS</span>
+                    <span class="text-xs text-gray-400">Multiple dates</span>
+                  </div>
+                  <div class="text-sm font-semibold text-gray-800 mb-1">Niraj Daga — ₹13,75,000 paid. Who is he?</div>
+                  <div class="text-xs text-gray-500 mb-2">7 payments made (₹4L × 2, ₹2.9L, ₹1L, ₹75K × 2, ₹25K). No receipt ever. No return payment. If professional/contractor → TDS under 194C/194J missed.</div>
+                  <div class="bg-red-50 rounded-lg px-3 py-2 text-xs text-red-700">
+                    <i class="fas fa-exclamation-circle mr-1"></i>
+                    TDS @ 10% on ₹13.75L = <strong>₹1,37,500 potentially missed</strong>
+                  </div>
+                </div>
+              </div>
+              <span class="badge bg-orange-100 text-orange-700 whitespace-nowrap">PENDING</span>
+            </div>
+            <!-- Reply box -->
+            <div class="mt-3 flex gap-2">
+              <input type="text" placeholder="Type your reply to Hermes..." class="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-400">
+              <button class="bg-blue-500 text-white text-xs px-3 py-2 rounded-lg font-medium">Reply</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Query 2 — Critical -->
+        <div class="query-card border-l-4 border-red-500">
+          <div class="px-4 py-3">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-start gap-3 flex-1">
+                <span class="text-gray-400 text-xs font-bold mt-0.5 w-5">#2</span>
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="badge bg-red-100 text-red-700">CRITICAL</span>
+                    <span class="badge bg-gray-100 text-gray-600">TDS · BILL</span>
+                    <span class="text-xs text-gray-400">20-Oct-2025</span>
+                  </div>
+                  <div class="text-sm font-semibold text-gray-800 mb-1">Legal Expenses Journal ₹15,47,026 — same as Anil Gupta total</div>
+                  <div class="text-xs text-gray-500 mb-2">Single journal entry for ₹15.47L as "Legal Expenses" on 20-Oct. Exact same amount as all Anil Gupta payments combined. Is Anil Gupta a lawyer? Bill required + TDS 194J @ 10% = ₹1,54,702.</div>
+                  <div class="bg-red-50 rounded-lg px-3 py-2 text-xs text-red-700">
+                    <i class="fas fa-exclamation-circle mr-1"></i>
+                    Bill for ₹15.47L required. TDS may be <strong>₹1,54,702 missed</strong>
+                  </div>
+                </div>
+              </div>
+              <span class="badge bg-orange-100 text-orange-700 whitespace-nowrap">PENDING</span>
+            </div>
+            <div class="mt-3 flex gap-2">
+              <input type="text" placeholder="Type your reply to Hermes..." class="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-400">
+              <button class="bg-blue-500 text-white text-xs px-3 py-2 rounded-lg font-medium">Reply</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Query 3 — Critical, Replied -->
+        <div class="query-card border-l-4 border-green-400 opacity-80">
+          <div class="px-4 py-3">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-start gap-3 flex-1">
+                <span class="text-gray-400 text-xs font-bold mt-0.5 w-5">#3</span>
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="badge bg-gray-100 text-gray-500">RESOLVED</span>
+                    <span class="badge bg-gray-100 text-gray-600">TDS</span>
+                  </div>
+                  <div class="text-sm font-semibold text-gray-600 mb-1">Lawyer Fees ₹54,000 — TDS 194J @ 10% = ₹5,400</div>
+                  <div class="text-xs text-gray-400 mb-2">Threshold ₹30,000 crossed. TDS should have been deducted.</div>
+                  <div class="bg-gray-50 rounded-lg px-3 py-2 text-xs text-gray-500">
+                    <span class="font-medium text-gray-700">Your reply:</span> "TDS has been paid separately — challan attached"
+                  </div>
+                  <div class="bg-green-50 rounded-lg px-3 py-2 text-xs text-green-700 mt-1">
+                    <i class="fas fa-check-circle mr-1"></i>
+                    Hermes: "Got it — please upload challan for records. Marked resolved."
+                  </div>
+                </div>
+              </div>
+              <span class="badge bg-green-100 text-green-700 whitespace-nowrap">✅ DONE</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Query 4 -->
+        <div class="query-card border-l-4 border-red-500">
+          <div class="px-4 py-3">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-start gap-3 flex-1">
+                <span class="text-gray-400 text-xs font-bold mt-0.5 w-5">#4</span>
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="badge bg-red-100 text-red-700">CRITICAL</span>
+                    <span class="badge bg-gray-100 text-gray-600">BILL</span>
+                    <span class="text-xs text-gray-400">14-Nov-2025</span>
+                  </div>
+                  <div class="text-sm font-semibold text-gray-800 mb-1">Sangeet Kala Mandir ₹4,79,866 — what is this?</div>
+                  <div class="text-xs text-gray-500">Single large payment. No narration. No receipt. Cultural organisation? Donation? Bill/receipt required for expense claim.</div>
+                </div>
+              </div>
+              <span class="badge bg-orange-100 text-orange-700">PENDING</span>
+            </div>
+            <div class="mt-3 flex gap-2">
+              <input type="text" placeholder="Type your reply to Hermes..." class="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-400">
+              <button class="bg-blue-500 text-white text-xs px-3 py-2 rounded-lg font-medium">Reply</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Query 5 — Important -->
+        <div class="query-card border-l-4 border-yellow-400">
+          <div class="px-4 py-3">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-start gap-3 flex-1">
+                <span class="text-gray-400 text-xs font-bold mt-0.5 w-5">#5</span>
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="badge bg-yellow-100 text-yellow-700">IMPORTANT</span>
+                    <span class="badge bg-gray-100 text-gray-600">LOAN</span>
+                  </div>
+                  <div class="text-sm font-semibold text-gray-800 mb-1">AIKIGAI EDTECH — ₹9.15L paid AND ₹7.45L received</div>
+                  <div class="text-xs text-gray-500">Money flowing both ways to same party. What is the relationship? Loan, investment, or service? Agreement/contract needed.</div>
+                </div>
+              </div>
+              <span class="badge bg-orange-100 text-orange-700">PENDING</span>
+            </div>
+            <div class="mt-3 flex gap-2">
+              <input type="text" placeholder="Type your reply to Hermes..." class="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-400">
+              <button class="bg-blue-500 text-white text-xs px-3 py-2 rounded-lg font-medium">Reply</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Query 6 -->
+        <div class="query-card border-l-4 border-yellow-400">
+          <div class="px-4 py-3">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-start gap-3 flex-1">
+                <span class="text-gray-400 text-xs font-bold mt-0.5 w-5">#6</span>
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="badge bg-yellow-100 text-yellow-700">IMPORTANT</span>
+                    <span class="badge bg-gray-100 text-gray-600">INCOME</span>
+                    <span class="text-xs text-gray-400">24-Apr-2025</span>
+                  </div>
+                  <div class="text-sm font-semibold text-gray-800 mb-1">Prakash Chandra — ₹8,00,000 received, nothing repaid</div>
+                  <div class="text-xs text-gray-500">Large single receipt. Full year — no repayment found. If loan → agreement needed. If income → taxable. If gift → relationship document needed.</div>
+                </div>
+              </div>
+              <span class="badge bg-orange-100 text-orange-700">PENDING</span>
+            </div>
+            <div class="mt-3 flex gap-2">
+              <input type="text" placeholder="Type your reply to Hermes..." class="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-400">
+              <button class="bg-blue-500 text-white text-xs px-3 py-2 rounded-lg font-medium">Reply</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Query 7 -->
+        <div class="query-card border-l-4 border-yellow-400">
+          <div class="px-4 py-3">
+            <div class="flex items-start gap-3">
+              <span class="text-gray-400 text-xs font-bold mt-0.5 w-5">#7</span>
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="badge bg-yellow-100 text-yellow-700">IMPORTANT</span>
+                  <span class="badge bg-gray-100 text-gray-600">GIFT · TAX</span>
+                  <span class="text-xs text-gray-400">FY 2025-26</span>
+                </div>
+                <div class="text-sm font-semibold text-gray-800 mb-1">Gift ₹5,00,000 received — from whom?</div>
+                <div class="text-xs text-gray-500">Gift from blood relative = tax free. From others = taxable if above ₹50,000. Who gave this gift? Gift deed required.</div>
+              </div>
+              <span class="badge bg-orange-100 text-orange-700 whitespace-nowrap">PENDING</span>
+            </div>
+            <div class="mt-3 flex gap-2">
+              <input type="text" placeholder="Type your reply to Hermes..." class="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-400">
+              <button class="bg-blue-500 text-white text-xs px-3 py-2 rounded-lg font-medium">Reply</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Query 8 — Info -->
+        <div class="query-card border-l-4 border-blue-300">
+          <div class="px-4 py-3">
+            <div class="flex items-start gap-3">
+              <span class="text-gray-400 text-xs font-bold mt-0.5 w-5">#8</span>
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="badge bg-blue-100 text-blue-700">INFO</span>
+                  <span class="badge bg-gray-100 text-gray-600">COMPLIANCE</span>
+                </div>
+                <div class="text-sm font-semibold text-gray-800 mb-1">PT not paid — ₹2,500/year due</div>
+                <div class="text-xs text-gray-500">No Professional Tax payment found in daybook for FY 25-26. Company PT = ₹2,500/year. Pay via GRIPS portal and upload challan.</div>
+              </div>
+              <span class="badge bg-orange-100 text-orange-700 whitespace-nowrap">PENDING</span>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- end query list -->
+    </div>
+
+    <!-- Right: Chat Panel -->
+    <div class="flex flex-col bg-gray-50" style="width:45%;">
+
+      <!-- Chat header -->
+      <div class="px-4 py-3 bg-white border-b border-gray-200 flex items-center gap-3">
+        <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+          <i class="fas fa-robot text-white text-xs"></i>
+        </div>
+        <div>
+          <div class="text-sm font-bold text-gray-800">Chat with Hermes</div>
+          <div class="flex items-center gap-1">
+            <span class="w-2 h-2 bg-green-400 rounded-full pulse"></span>
+            <span class="text-xs text-gray-400">Online · Knows your books</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat messages -->
+      <div class="flex-1 scrollable px-4 py-4 space-y-3">
+
+        <!-- Hermes intro -->
+        <div class="flex gap-2 items-start">
+          <div class="w-7 h-7 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+            <i class="fas fa-robot text-white" style="font-size:10px"></i>
+          </div>
+          <div>
+            <div class="chat-bubble-hermes">
+              <div class="font-semibold text-gray-800 text-xs mb-1">Hermes 🤖</div>
+              Namaste Ajay ji! I've analysed your AJKL daybook for FY 2025-26. Found <strong>660 entries</strong> across 12 months.<br><br>
+              I have <strong class="text-red-600">5 critical issues</strong> that need your attention before ITR filing — mainly TDS on Niraj Daga payments and the Legal Expenses journal entry.<br><br>
+              You can reply to queries on the left, or ask me anything here. 👈
+            </div>
+            <div class="text-xs text-gray-400 mt-1 ml-1">02:40 AM</div>
+          </div>
+        </div>
+
+        <!-- User message -->
+        <div class="flex gap-2 items-end justify-end">
+          <div>
+            <div class="chat-bubble-me">
+              Why is Niraj Daga payment so important?
+            </div>
+            <div class="text-xs text-gray-400 mt-1 mr-1 text-right">02:41 AM</div>
+          </div>
+        </div>
+
+        <!-- Hermes reply -->
+        <div class="flex gap-2 items-start">
+          <div class="w-7 h-7 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+            <i class="fas fa-robot text-white" style="font-size:10px"></i>
+          </div>
+          <div>
+            <div class="chat-bubble-hermes">
+              <div class="font-semibold text-gray-800 text-xs mb-1">Hermes 🤖</div>
+              Great question. Here's why it matters:<br><br>
+              You paid Niraj Daga <strong>₹13,75,000</strong> across 7 payments in FY 25-26. That's above ₹30,000 threshold which triggers TDS.<br><br>
+              If he's providing <strong>professional services</strong> → Section 194J → TDS @ 10% = <strong>₹1,37,500</strong><br>
+              If he's a <strong>contractor</strong> → Section 194C → TDS @ 2% = <strong>₹27,500</strong><br><br>
+              Since I don't see any TDS entry for him in your books, this amount may be unpaid. Income Tax can demand this + interest + penalty.<br><br>
+              Can you tell me — who is Niraj Daga and what service does he provide?
+            </div>
+            <div class="text-xs text-gray-400 mt-1 ml-1">02:41 AM</div>
+          </div>
+        </div>
+
+        <!-- User message 2 -->
+        <div class="flex gap-2 items-end justify-end">
+          <div>
+            <div class="chat-bubble-me">
+              He is my property broker
+            </div>
+            <div class="text-xs text-gray-400 mt-1 mr-1 text-right">02:42 AM</div>
+          </div>
+        </div>
+
+        <!-- Hermes reply 2 -->
+        <div class="flex gap-2 items-start">
+          <div class="w-7 h-7 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+            <i class="fas fa-robot text-white" style="font-size:10px"></i>
+          </div>
+          <div>
+            <div class="chat-bubble-hermes">
+              <div class="font-semibold text-gray-800 text-xs mb-1">Hermes 🤖</div>
+              Understood! Property broker = <strong>Commission/Brokerage</strong> → Section <strong>194H</strong><br><br>
+              📋 TDS @ <strong>5%</strong> on ₹13,75,000 = <strong>₹68,750</strong><br>
+              Threshold: ₹15,000 — clearly crossed.<br><br>
+              Action needed:<br>
+              1. Deposit ₹68,750 TDS to Income Tax (if not done)<br>
+              2. File Form 26Q for Q1-Q4<br>
+              3. Issue Form 16A to Niraj Daga<br><br>
+              I've updated Query #1 with this information. Do you have a brokerage agreement with him?
+            </div>
+            <div class="text-xs text-gray-400 mt-1 ml-1">02:42 AM</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Chat input -->
+      <div class="px-4 py-3 bg-white border-t border-gray-200">
+        <div class="flex gap-2 items-end">
+          <div class="flex-1">
+            <div class="text-xs text-gray-400 mb-1">Ask Hermes anything about your books...</div>
+            <div class="flex gap-2">
+              <input type="text" placeholder="e.g. Is my ITR ready? What TDS is pending?" class="flex-1 text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-blue-400 bg-gray-50">
+              <button class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2.5 rounded-xl font-medium text-sm">
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="flex gap-2 mt-2 flex-wrap">
+          <button class="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full hover:bg-gray-200">Am I ready to file ITR?</button>
+          <button class="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full hover:bg-gray-200">What TDS is pending?</button>
+          <button class="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full hover:bg-gray-200">Suspense account status?</button>
+        </div>
+      </div>
+
+    </div><!-- end chat panel -->
+
+  </div><!-- end flex -->
+</div><!-- end main -->
+
+</body>
+</html>

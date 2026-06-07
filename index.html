@@ -1030,12 +1030,12 @@
           <i class="fas fa-database text-white text-sm"></i>
         </div>
         <div class="flex-1">
-          <div class="text-white text-sm font-medium">Context: AJKL Trial Balance — FY 2025-26 (120 ledgers, 7 critical errors)</div>
-          <div class="text-blue-200 text-xs">AI is reading your uploaded data to give specific answers</div>
+          <div id="caBannerTitle" class="text-white text-sm font-medium">No audit data loaded — upload a Trial Balance first for context-aware answers</div>
+          <div class="text-blue-200 text-xs">AI reads your uploaded data to give specific CA-level answers</div>
         </div>
-        <div class="flex items-center gap-1.5 bg-green-500/20 border border-green-400/30 px-3 py-1 rounded-full">
-          <span class="w-2 h-2 rounded-full bg-green-400 inline-block pulse"></span>
-          <span class="text-green-200 text-xs font-medium">Data Connected</span>
+        <div id="caBannerStatus" class="flex items-center gap-1.5 bg-yellow-500/20 border border-yellow-400/30 px-3 py-1 rounded-full">
+          <span class="w-2 h-2 rounded-full bg-yellow-400 inline-block"></span>
+          <span class="text-yellow-200 text-xs font-medium">No Data</span>
         </div>
       </div>
 
@@ -2436,6 +2436,7 @@ async function simulateUpload() {
         document.getElementById('processingIcon').style.animation = 'none';
         document.getElementById('processingIcon').className = 'fas fa-check-circle text-green-500 text-2xl';
         auditData = data;
+        updateCABanner(data);
         setTimeout(() => {
           document.getElementById('uploadStep2').classList.add('hidden');
           // Go to Full Audit results
@@ -2472,27 +2473,74 @@ function selectFileType(type) {
   // Trigger same upload simulation for demo
   simulateUpload();
 }
-function sendChat() {
+// Conversation history for CA chat (keeps last 20 turns in memory)
+let caChatHistory = [];
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+// Very light markdown → HTML (bold, newlines, bullets)
+function renderMd(text) {
+  return escapeHtml(text)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/^- (.+)$/gm, '• $1')
+    .replace(/\n/g, '<br>');
+}
+
+async function sendChat() {
   const input = document.getElementById('chatInput');
   const msg = input.value.trim();
-  if(!msg) return;
+  if (!msg) return;
+
   const chat = document.getElementById('chatMessages');
+
+  // Show user bubble
   chat.innerHTML += `<div class="flex items-start gap-3 flex-row-reverse">
     <div class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0"><i class="fas fa-user text-gray-600 text-xs"></i></div>
-    <div class="chat-bubble-user p-4 max-w-sm"><p class="text-sm">${msg}</p></div></div>`;
+    <div class="chat-bubble-user p-4 max-w-sm"><p class="text-sm">${escapeHtml(msg)}</p></div></div>`;
+
+  // Show typing indicator
   chat.innerHTML += `<div id="typingIndicator" class="flex items-start gap-3">
     <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0"><i class="fas fa-robot text-white text-xs"></i></div>
     <div class="chat-bubble-ai p-4"><div class="typing"><span></span><span></span><span></span></div></div></div>`;
   chat.scrollTop = chat.scrollHeight;
   input.value = '';
-  setTimeout(() => {
+  input.style.height = 'auto';
+
+  try {
+    const res = await fetch(`${API_BASE}/api/ca-chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg, history: caChatHistory })
+    });
+    const data = await res.json();
     document.getElementById('typingIndicator')?.remove();
+
+    const reply = data.reply || data.error || 'Sorry, something went wrong.';
+
+    // Add to history
+    caChatHistory.push({ role: 'user', content: msg });
+    caChatHistory.push({ role: 'assistant', content: reply });
+    if (caChatHistory.length > 20) caChatHistory = caChatHistory.slice(-20);
+
     chat.innerHTML += `<div class="flex items-start gap-3">
       <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0"><i class="fas fa-robot text-white text-xs"></i></div>
-      <div class="chat-bubble-ai p-4 max-w-lg"><p class="text-sm text-gray-700">I understand your question about <strong>"${msg}"</strong>. In the full app, I'll give you a complete CA-level answer with journal entries, Tally steps, and compliance notes. This is a prototype — the real AI will be connected to give instant expert answers!</p></div></div>`;
-    chat.scrollTop = chat.scrollHeight;
-  }, 1500);
+      <div class="chat-bubble-ai p-4 max-w-lg text-sm text-gray-700 leading-relaxed">${renderMd(reply)}</div></div>`;
+
+  } catch (err) {
+    document.getElementById('typingIndicator')?.remove();
+    chat.innerHTML += `<div class="flex items-start gap-3">
+      <div class="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0"><i class="fas fa-exclamation text-white text-xs"></i></div>
+      <div class="chat-bubble-ai p-4 max-w-lg"><p class="text-sm text-red-600">Connection error — make sure the server is running.</p></div></div>`;
+  }
+
+  chat.scrollTop = chat.scrollHeight;
 }
+
 function quickAsk(q) {
   document.getElementById('chatInput').value = q;
   sendChat();
@@ -2519,10 +2567,40 @@ const API_BASE = (window.location.hostname === 'localhost' || window.location.ho
   : '';
 let auditData = null;
 
+// ── CA Chat banner updater ─────────────────────────────────────────────────────
+function updateCABanner(data) {
+  if (!data || !data.summary) return;
+  const s       = data.summary;
+  const company = s.company || 'Trial Balance';
+  const period  = s.period  || '';
+  const score   = s.score   != null ? `${s.score}/100` : '';
+  const crit    = s.critical || 0;
+  const warn    = s.warnings || 0;
+
+  const title = document.getElementById('caBannerTitle');
+  const status = document.getElementById('caBannerStatus');
+  if (!title || !status) return;
+
+  title.textContent = `${company}${period ? ' — ' + period : ''} · Score ${score} · ${crit} Critical · ${warn} Warnings`;
+
+  status.className = 'flex items-center gap-1.5 bg-green-500/20 border border-green-400/30 px-3 py-1 rounded-full';
+  status.innerHTML = `<span class="w-2 h-2 rounded-full bg-green-400 inline-block pulse"></span>
+    <span class="text-green-200 text-xs font-medium">Data Connected</span>`;
+}
+
 // Load dashboard data on startup
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
   loadDashboard();
   loadCompliance();
+  // Try to load last audit for CA chat context banner
+  try {
+    const r = await fetch(API_BASE + '/api/audit/last');
+    if (r.ok) {
+      const d = await r.json();
+      auditData = d;
+      updateCABanner(d);
+    }
+  } catch(e) {}
 });
 
 function startFullAudit() {
@@ -2561,6 +2639,7 @@ function startFullAudit() {
     .then(r => r.json())
     .then(data => {
       auditData = data;
+      updateCABanner(data);
       // Fast-forward progress to 100
       prog = 99;
     })
