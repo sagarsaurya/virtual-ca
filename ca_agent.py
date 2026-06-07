@@ -137,7 +137,7 @@ def chat(user_message: str, audit_data: dict = None, history: list = None) -> st
     messages.append({'role': 'user', 'content': user_message})
 
     response = client.chat.completions.create(
-        model='llama-3.1-70b-versatile',
+        model='llama-3.3-70b-versatile',
         max_tokens=1024,
         messages=messages,
     )

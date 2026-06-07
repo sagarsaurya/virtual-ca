@@ -2482,66 +2482,70 @@ function buildCAQueries(data) {
   if (!data) return [];
   const queries = [];
   let id = 1;
-  const s = data.summary || {};
 
-  // Critical ledger issues
+  // 1. Ledger classification issues
+  // Fields: severity, ledger, current_group, correct_group, balance, rule, fix
   (data.ledger_classification || []).forEach(item => {
-    if (item.severity === 'Critical') {
-      const amt = item.amount ? `₹${Number(item.amount).toLocaleString('en-IN')}` : '';
-      queries.push({
-        id: id++, severity: 'critical', category: 'LEDGER',
-        title: `${item.ledger} — ${item.issue}`,
-        detail: `Group: ${item.group || '—'}. Balance: ${amt}. This mis-classification affects your financial statements.`,
-        alert: `Fix: Move to correct group in Tally → Gateway → Alter → Ledger`,
-        status: 'pending', reply: '', aiReply: ''
-      });
-    }
-  });
-
-  // Cash violations
-  (data.cash_violations || []).slice(0, 5).forEach(v => {
-    const amt = `₹${Number(v.amount).toLocaleString('en-IN')}`;
+    const sev = item.severity === 'Critical' ? 'critical' : 'important';
+    const bal = item.balance ? `₹${Number(item.balance).toLocaleString('en-IN')}` : '';
     queries.push({
-      id: id++, severity: 'critical', category: 'SEC 40A(3)',
-      title: `Cash payment ${amt} to ${v.party} — Sec 40A(3) violation`,
-      detail: `Date: ${v.date}. Cash payments above ₹10,000 to a single person in a day are disallowed as deduction under Sec 40A(3).`,
-      alert: `Disallowance risk: ${amt}. Obtain confirmation that this was actually paid via bank.`,
+      id: id++, severity: sev, category: 'LEDGER',
+      title: `${item.ledger} — ${item.rule || 'Mis-classification'}`,
+      detail: `Current Group: ${item.current_group || '—'} → Should be: ${item.correct_group || '—'}. Balance: ${bal}.`,
+      alert: item.fix || `Fix: Gateway → Accounts Info → Ledgers → Alter → ${item.ledger} → Change Group`,
       status: 'pending', reply: '', aiReply: ''
     });
   });
 
-  // Outstanding / abnormal balances
+  // 2. Cash violations
+  // Fields: severity, date, party, amount, type, section, issue, impact
+  (data.cash_violations || []).slice(0, 5).forEach(v => {
+    const amt = `₹${Number(v.amount).toLocaleString('en-IN')}`;
+    const sev = v.severity === 'Critical' ? 'critical' : 'important';
+    queries.push({
+      id: id++, severity: sev, category: `SEC ${v.section || '40A(3)'}`,
+      title: `${v.party} — ${amt} ${v.type === 'cash_receipt' ? 'received' : 'paid'} in cash`,
+      detail: `Date: ${v.date}. ${v.issue || ''}`,
+      alert: v.impact || null,
+      status: 'pending', reply: '', aiReply: ''
+    });
+  });
+
+  // 3. Outstanding / abnormal balances
+  // Fields: type, ledger, amount, question, severity
   (data.outstanding || []).forEach(o => {
     const sev = o.severity === 'Critical' ? 'critical' : 'important';
-    const bal = `₹${Number(o.balance || 0).toLocaleString('en-IN')}`;
+    const amt = o.amount ? `₹${Number(o.amount).toLocaleString('en-IN')}` : '';
     queries.push({
       id: id++, severity: sev, category: 'BALANCE',
-      title: `${o.ledger} — ${o.issue}`,
-      detail: `Balance: ${bal}. ${o.note || ''}`,
+      title: `${o.ledger} — ${o.type ? o.type.replace(/_/g,' ') : 'Abnormal balance'}`,
+      detail: (o.question || `Balance: ${amt}`),
       alert: null,
       status: 'pending', reply: '', aiReply: ''
     });
   });
 
-  // Large expenses (TDS threshold)
+  // 4. Large expenses
+  // Fields: date, party, amount, question
   (data.large_expenses || []).slice(0, 6).forEach(e => {
     const amt = `₹${Number(e.amount).toLocaleString('en-IN')}`;
     queries.push({
       id: id++, severity: 'important', category: 'TDS · BILL',
-      title: `${e.party} — ${amt} paid. TDS deducted?`,
-      detail: `Date: ${e.date}. Voucher: ${e.voucher_type || '—'}. Amount crosses TDS threshold. Check if applicable section (194C/194J/194I/194H) applies.`,
-      alert: `TDS @ applicable rate may be required. Verify and deduct if missed.`,
+      title: `${e.party} — ${amt} paid. Bill & TDS check needed`,
+      detail: e.question || `Date: ${e.date}. Large payment — verify bill/invoice exists and TDS deducted if applicable.`,
+      alert: `Check: 194C (contractor), 194J (professional), 194I (rent), 194H (commission)`,
       status: 'pending', reply: '', aiReply: ''
     });
   });
 
-  // Loans
+  // 5. Loans
+  // Fields: ledger, group, balance, documents_required, question
   (data.loans || []).forEach(l => {
     const bal = `₹${Number(l.balance || 0).toLocaleString('en-IN')}`;
     queries.push({
       id: id++, severity: 'important', category: 'LOAN',
-      title: `${l.ledger} — ${bal} ${l.note || ''}`,
-      detail: `Loan balance needs documentation — agreement, interest terms, repayment schedule.`,
+      title: `${l.ledger} — ${bal} balance`,
+      detail: l.question || `Loan account needs documentation — agreement, interest terms, repayment schedule.`,
       alert: null,
       status: 'pending', reply: '', aiReply: ''
     });
