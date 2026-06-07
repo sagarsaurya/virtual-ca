@@ -615,22 +615,48 @@ def reconcile(bank_txns: List[Dict], tally_txns: List[Dict],
     # transaction. Same party, same amount, same date = two real payments.
     bank_clean = bank_txns
 
-    # Tally ledger: detect duplicates using EXACT full narration match.
-    # Only flag if date + amount + FULL narration are all identical — meaning
-    # someone accidentally entered the exact same voucher twice in Tally.
-    def find_tally_dupes(txns):
-        seen = {}
-        dupes = []
-        for t in txns:
-            key = (t['date'], round(t['amount'], 2), str(t['narration']).upper().strip())
-            if key in seen:
-                dupes.append({**t, 'duplicate_of': seen[key]['narration'], 'in': 'Tally'})
-            else:
-                seen[key] = t
-        dupe_keys = {(d['date'], round(d['amount'], 2), str(d['narration']).upper().strip()) for d in dupes}
-        return dupes, [t for t in txns if (t['date'], round(t['amount'], 2), str(t['narration']).upper().strip()) not in dupe_keys]
+    # Tally duplicate detection:
+    # Step 1 — find Tally entries with identical date + amount + exact narration
+    # Step 2 — cross-check bank: count how many times that date+amount appears
+    #           in bank statement (±1 day). If bank count >= Tally count, it is
+    #           NOT a duplicate — both entries are real. Only flag as duplicate
+    #           if Tally has MORE occurrences than the bank has.
+    from collections import Counter
 
-    tally_dupes, tally_clean = find_tally_dupes(tally_txns)
+    # Count occurrences in bank by (date, amount)
+    bank_count = Counter((t['date'], round(t['amount'], 2)) for t in bank_txns)
+
+    # Group Tally entries by (date, amount, exact narration)
+    tally_groups = {}
+    for t in tally_txns:
+        key = (t['date'], round(t['amount'], 2), str(t['narration']).upper().strip())
+        tally_groups.setdefault(key, []).append(t)
+
+    tally_dupes = []
+    tally_clean = []
+    for key, entries in tally_groups.items():
+        date, amt, _ = key
+        bank_occurrences = bank_count.get((date, amt), 0)
+        # Also check ±1 day in bank
+        from datetime import timedelta
+        bank_occurrences = max(
+            bank_occurrences,
+            bank_count.get((date - timedelta(days=1), amt), 0),
+            bank_count.get((date + timedelta(days=1), amt), 0),
+        )
+        real_count = max(bank_occurrences, 1)  # at least 1 is always real
+        # First `real_count` entries are real, rest are duplicates
+        for i, entry in enumerate(entries):
+            if i < real_count:
+                tally_clean.append(entry)
+            else:
+                tally_dupes.append({
+                    **entry,
+                    'duplicate_of': entries[0]['narration'],
+                    'in': 'Tally',
+                    'issue': f"Duplicate entry in Tally — bank has {real_count} occurrence(s) but Tally has {len(entries)}",
+                })
+
     duplicates = tally_dupes
 
     # Match bank vs tally (date ±1 day, amount within Rs.1)
