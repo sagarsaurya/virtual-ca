@@ -526,6 +526,29 @@ def parse_tally_ledger(filepath: str):
     tally_closing_balance = None
     tally_closing_dr_cr   = None
 
+    # First pass — scan ALL rows for Closing Balance (may not have a date)
+    for _, row in df.iterrows():
+        row_text = ' '.join(str(v).strip() for v in row if pd.notna(v)).upper()
+        if 'CLOSING BALANCE' in row_text:
+            cb_debit = cb_credit = 0.0
+            for ci, col in enumerate(cols):
+                col_u = str(col).upper()
+                val = row.iloc[ci]
+                if pd.isna(val): continue
+                amt = clean_amount(val)
+                if 'DEBIT' in col_u and amt:  cb_debit  = amt
+                if 'CREDIT' in col_u and amt: cb_credit = amt
+            if cb_debit == 0 and cb_credit == 0 and len(row) > 8:
+                cb_debit  = clean_amount(row.iloc[7])
+                cb_credit = clean_amount(row.iloc[8])
+            if cb_debit:
+                tally_closing_balance = cb_debit
+                tally_closing_dr_cr   = 'Dr'
+            elif cb_credit:
+                tally_closing_balance = cb_credit
+                tally_closing_dr_cr   = 'Cr'
+            break  # found it, stop scanning
+
     for _, row in df.iterrows():
         # Date
         date_val = row.iloc[0]
@@ -541,9 +564,9 @@ def parse_tally_ledger(filepath: str):
         if not narration or narration == 'nan':
             continue
 
-        # Capture Closing Balance row before skipping
+        # Skip Opening/Closing Balance rows from transaction list
         if narration in ('Closing Balance', 'Opening Balance'):
-            if narration == 'Closing Balance':
+            if narration == 'Closing Balance' and False:  # already handled above
                 # Extract amount from debit/credit columns
                 cb_debit = cb_credit = 0.0
                 for ci, col in enumerate(cols):

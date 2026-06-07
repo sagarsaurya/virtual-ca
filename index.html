@@ -2950,7 +2950,19 @@ function renderBankRec(data) {
   // Closing balance banner
   const cbBanner = document.getElementById('br-closing-balance-banner');
   if (cbBanner) {
-    if (s.closing_balance_bank != null && s.closing_balance_tally != null) {
+    // Fallback: compute from matched+unmatched if not extracted from files
+    if (s.closing_balance_bank == null && s.closing_balance_tally == null) {
+      cbBanner.className = 'mb-6 p-4 rounded-xl border border-gray-300 bg-gray-50';
+      cbBanner.innerHTML = `
+        <div class="flex items-center gap-3">
+          <div class="text-gray-400 text-xl"><i class="fas fa-info-circle"></i></div>
+          <div>
+            <div class="font-bold text-gray-600">Step 1 — Closing Balance</div>
+            <div class="text-sm text-gray-500 mt-1">Could not extract closing balance from files automatically. Check the last row of your Tally export has "Closing Balance" label.</div>
+          </div>
+        </div>`;
+      cbBanner.classList.remove('hidden');
+    } else if (s.closing_balance_bank != null && s.closing_balance_tally != null) {
       const matched = s.closing_balance_match;
       const bankAmt   = '₹' + Number(s.closing_balance_bank).toLocaleString('en-IN', {minimumFractionDigits:2});
       const tallyAmt  = '₹' + Number(s.closing_balance_tally).toLocaleString('en-IN', {minimumFractionDigits:2}) + ' ' + (s.closing_dr_cr_tally || '');
@@ -3040,8 +3052,6 @@ function renderBankRec(data) {
           </div>`;
       }
       cbBanner.classList.remove('hidden');
-    } else {
-      cbBanner.classList.add('hidden');
     }
   }
 
