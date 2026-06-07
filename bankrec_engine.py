@@ -20,6 +20,7 @@ except ImportError:
 # ── date helpers ──────────────────────────────────────────────────────────────
 DATE_FMTS = [
     '%d/%m/%Y', '%d-%m-%Y', '%d/%m/%y', '%d-%m-%y',
+    '%d.%m.%Y', '%d.%m.%y',
     '%d %b %Y', '%d %b %y', '%d-%b-%Y', '%d-%b-%y',
     '%d %B %Y', '%d/%b/%Y', '%Y-%m-%d',
 ]
@@ -163,52 +164,71 @@ def _guess_dr_cr(narration: str) -> str:
 # ── ICICI ─────────────────────────────────────────────────────────────────────
 def _parse_icici(rows, text):
     """
-    ICICI columns: Date | Transaction Remarks | Ref No | Value Date | Withdrawal (Dr) | Deposit (Cr) | Balance
+    ICICI text layout (actual format seen in real PDFs):
+    Each transaction appears as:
+      [Party Name line]
+      [S.No.] [DD.MM.YYYY] [optional ChequeNo] [Amount] [Balance]
+      [Narration detail lines...]
+
+    Dr/Cr determined by balance movement (balance up = Credit, down = Debit).
+    Date format: DD.MM.YYYY
     """
     txns = []
-    header_found = False
-    col_map = {}
+    lines = text.split('\n')
 
-    for row in rows:
-        if not row: continue
-        cells = [str(c or '').strip() for c in row]
+    # Pattern: serial_no  DD.MM.YYYY  [optional cheque]  amount  balance
+    TXN_LINE = re.compile(
+        r'^\s*(\d{1,4})\s+(\d{2}\.\d{2}\.\d{4})\s+(?:\d+\s+)?([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s*$'
+    )
+    # Skip lines
+    SKIP = re.compile(r'S\s*No\.|Transaction|Withdrawal|Deposit|Balance|Statement of|AJAY KUMAR|ICICI BANK|WEST BENGAL|BALLYGUNGE|ASHUTOSH', re.IGNORECASE)
 
-        # Detect header row
-        if not header_found:
-            joined = ' '.join(cells).upper()
-            if 'DATE' in joined and ('WITHDRAWAL' in joined or 'DEBIT' in joined or 'DR' in joined):
-                header_found = True
-                for i, c in enumerate(cells):
-                    cu = c.upper()
-                    if 'DATE' in cu and 'VALUE' not in cu and 'col_date' not in col_map:
-                        col_map['date'] = i
-                    elif 'REMARK' in cu or 'NARRATION' in cu or 'DESCRIPTION' in cu or 'PARTICULARS' in cu:
-                        col_map['narration'] = i
-                    elif 'WITHDRAWAL' in cu or ('DR' in cu and 'CREDIT' not in cu):
-                        col_map['debit'] = i
-                    elif 'DEPOSIT' in cu or ('CR' in cu and 'DEBIT' not in cu):
-                        col_map['credit'] = i
-                continue
+    prev_balance = None
+    prev_line    = ''
 
-        if not header_found: continue
-        if len(cells) < 4: continue
+    for i, line in enumerate(lines):
+        line = line.strip()
+        m = TXN_LINE.match(line)
+        if not m:
+            prev_line = line
+            continue
 
-        date_str  = cells[col_map.get('date', 0)]
-        narration = cells[col_map.get('narration', 1)]
-        debit_str = cells[col_map.get('debit', 4)] if 'debit' in col_map else ''
-        cred_str  = cells[col_map.get('credit', 5)] if 'credit' in col_map else ''
+        date_str    = m.group(2)          # DD.MM.YYYY
+        amount      = clean_amount(m.group(3))
+        balance     = clean_amount(m.group(4))
 
-        dt = parse_date(date_str)
-        if not dt: continue
+        # Convert DD.MM.YYYY → date
+        dt = None
+        try:
+            dt = datetime.strptime(date_str, '%d.%m.%Y').date()
+        except:
+            prev_line = line
+            continue
 
-        debit  = clean_amount(debit_str)
-        credit = clean_amount(cred_str)
-        amount = debit if debit else credit
-        dr_cr  = 'Dr' if debit else 'Cr'
+        # Dr or Cr based on balance movement
+        if prev_balance is not None:
+            dr_cr = 'Cr' if balance > prev_balance else 'Dr'
+        else:
+            dr_cr = 'Dr'  # fallback
+
+        # Narration = party name (line before) + detail lines after
+        party = prev_line if prev_line and not SKIP.search(prev_line) else ''
+        # Grab next 1-2 lines as detail
+        detail_parts = []
+        for j in range(i+1, min(i+3, len(lines))):
+            nxt = lines[j].strip()
+            if TXN_LINE.match(nxt): break
+            if nxt and not SKIP.search(nxt) and not nxt.lower() in ('debit trxn','fund transfer','debit transaction'):
+                detail_parts.append(nxt)
+        narration = party + (' / ' if party and detail_parts else '') + ' '.join(detail_parts[:1])
+        narration = narration.strip()[:100]
+
+        prev_balance = balance
+        prev_line    = line
 
         if amount == 0: continue
-        txns.append({'date': dt, 'narration': narration, 'amount': amount,
-                     'dr_cr': dr_cr, 'source': 'bank'})
+        txns.append({'date': dt, 'narration': narration or date_str,
+                     'amount': amount, 'dr_cr': dr_cr, 'source': 'bank'})
     return txns
 
 
