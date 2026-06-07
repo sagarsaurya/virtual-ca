@@ -611,29 +611,27 @@ def reconcile(bank_txns: List[Dict], tally_txns: List[Dict],
     tally_only = []
     duplicates = []
 
-    # Detect duplicates ONLY in bank statement.
-    # Tally is NOT checked for duplicates — Tally uses voucher numbers to track
-    # entries, so two receipts from same party on same day for same amount are
-    # perfectly valid (e.g. two separate payments from Aakash on 1-May).
-    # Checking Tally for duplicates causes false positives and drops real entries.
-    def narr_key(n):
-        return str(n or '')[:15].upper().strip()
+    # Bank statement: NO duplicate detection — every bank line is a real unique
+    # transaction. Same party, same amount, same date = two real payments.
+    bank_clean = bank_txns
 
-    def find_bank_dupes(txns):
+    # Tally ledger: detect duplicates using EXACT full narration match.
+    # Only flag if date + amount + FULL narration are all identical — meaning
+    # someone accidentally entered the exact same voucher twice in Tally.
+    def find_tally_dupes(txns):
         seen = {}
         dupes = []
         for t in txns:
-            key = (t['date'], round(t['amount'], 2), narr_key(t['narration']))
+            key = (t['date'], round(t['amount'], 2), str(t['narration']).upper().strip())
             if key in seen:
-                dupes.append({**t, 'duplicate_of': seen[key]['narration'], 'in': 'Bank'})
+                dupes.append({**t, 'duplicate_of': seen[key]['narration'], 'in': 'Tally'})
             else:
                 seen[key] = t
-        dupe_keys = {(d['date'], round(d['amount'],2), narr_key(d['narration'])) for d in dupes}
-        return dupes, [t for t in txns if (t['date'], round(t['amount'],2), narr_key(t['narration'])) not in dupe_keys]
+        dupe_keys = {(d['date'], round(d['amount'], 2), str(d['narration']).upper().strip()) for d in dupes}
+        return dupes, [t for t in txns if (t['date'], round(t['amount'], 2), str(t['narration']).upper().strip()) not in dupe_keys]
 
-    bank_dupes, bank_clean = find_bank_dupes(bank_txns)
-    tally_clean = tally_txns          # use all Tally entries as-is
-    duplicates  = bank_dupes          # only bank-side duplicates reported
+    tally_dupes, tally_clean = find_tally_dupes(tally_txns)
+    duplicates = tally_dupes
 
     # Match bank vs tally (date ±1 day, amount within Rs.1)
     tally_used = [False] * len(tally_clean)
