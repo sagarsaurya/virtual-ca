@@ -580,16 +580,22 @@ def reconcile(bank_txns: List[Dict], tally_txns: List[Dict]) -> Dict:
     duplicates = []
 
     # Detect duplicates within each list
+    # Only flag as duplicate if date + amount + narration prefix are all same
+    def narr_key(n):
+        # Use first 15 chars of narration (ignores ref numbers)
+        return str(n or '')[:15].upper().strip()
+
     def find_dupes(txns, label):
         seen = {}
         dupes = []
         for t in txns:
-            key = (t['date'], round(t['amount'], 2))
+            key = (t['date'], round(t['amount'], 2), narr_key(t['narration']))
             if key in seen:
                 dupes.append({**t, 'duplicate_of': seen[key]['narration'], 'in': label})
             else:
                 seen[key] = t
-        return dupes, [t for t in txns if (t['date'], round(t['amount'],2)) not in {(d['date'], round(d['amount'],2)) for d in dupes}]
+        dupe_keys = {(d['date'], round(d['amount'],2), narr_key(d['narration'])) for d in dupes}
+        return dupes, [t for t in txns if (t['date'], round(t['amount'],2), narr_key(t['narration'])) not in dupe_keys]
 
     bank_dupes,  bank_clean  = find_dupes(bank_txns,  'Bank')
     tally_dupes, tally_clean = find_dupes(tally_txns, 'Tally')
