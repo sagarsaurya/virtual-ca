@@ -179,6 +179,12 @@
         <span class="text-slate-400 text-sm">TDS Analysis</span>
       </a>
 
+      <a onclick="showPage('fullaudit')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer">
+        <i class="fas fa-search-dollar text-slate-400 w-5"></i>
+        <span class="text-slate-400 text-sm">Full Audit</span>
+        <span class="ml-auto bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full">New</span>
+      </a>
+
       <div class="text-xs text-slate-500 uppercase tracking-wider px-3 mb-2 mt-5">Admin</div>
       <a onclick="showPage('admin')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer">
         <i class="fas fa-users-cog text-slate-400 w-5"></i>
@@ -1457,6 +1463,552 @@
       </div>
     </div>
 
+    <!-- ===== FULL AUDIT PAGE ===== -->
+    <div id="page-fullaudit" class="page p-8">
+      <div class="max-w-4xl mx-auto">
+
+        <!-- STEP 1: Pre-audit screen -->
+        <div id="auditStep1">
+          <div class="bg-white rounded-2xl card-shadow p-8 mb-6">
+            <div class="flex items-center gap-4 mb-6">
+              <div class="w-14 h-14 rounded-2xl bg-orange-50 flex items-center justify-center">
+                <i class="fas fa-search-dollar text-orange-500 text-2xl"></i>
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-gray-800">Full CA Audit</h3>
+                <p class="text-gray-400 text-sm">Complete audit — ledgers, TDS, GST, loans, cash violations, outstanding amounts & compliance</p>
+              </div>
+            </div>
+
+            <!-- What will be audited -->
+            <div class="grid grid-cols-3 gap-4 mb-8">
+              <div class="border border-gray-100 rounded-xl p-4">
+                <i class="fas fa-layer-group text-blue-500 mb-2 block"></i>
+                <div class="text-sm font-semibold text-gray-700 mb-1">Ledger Classification</div>
+                <div class="text-xs text-gray-400">20+ rules — wrong groups, misclassifications</div>
+              </div>
+              <div class="border border-gray-100 rounded-xl p-4">
+                <i class="fas fa-money-bill-wave text-red-500 mb-2 block"></i>
+                <div class="text-sm font-semibold text-gray-700 mb-1">Cash Violations</div>
+                <div class="text-xs text-gray-400">Sec 40A(3) >₹10k, Sec 269ST >₹2L, Sec 269SS loans</div>
+              </div>
+              <div class="border border-gray-100 rounded-xl p-4">
+                <i class="fas fa-hourglass-half text-yellow-500 mb-2 block"></i>
+                <div class="text-sm font-semibold text-gray-700 mb-1">Outstanding Amounts</div>
+                <div class="text-xs text-gray-400">Unsettled debtors, creditors, advances, suspense</div>
+              </div>
+              <div class="border border-gray-100 rounded-xl p-4">
+                <i class="fas fa-percentage text-purple-500 mb-2 block"></i>
+                <div class="text-sm font-semibold text-gray-700 mb-1">TDS Audit</div>
+                <div class="text-xs text-gray-400">194C, 194J, 194I, 192 — deducted vs deposited</div>
+              </div>
+              <div class="border border-gray-100 rounded-xl p-4">
+                <i class="fas fa-receipt text-teal-500 mb-2 block"></i>
+                <div class="text-sm font-semibold text-gray-700 mb-1">GST Audit</div>
+                <div class="text-xs text-gray-400">ITC classification, output GST, GSTR mismatch</div>
+              </div>
+              <div class="border border-gray-100 rounded-xl p-4">
+                <i class="fas fa-university text-indigo-500 mb-2 block"></i>
+                <div class="text-sm font-semibold text-gray-700 mb-1">Loan Audit</div>
+                <div class="text-xs text-gray-400">Bank statements required, 269SS/269T compliance</div>
+              </div>
+              <div class="border border-gray-100 rounded-xl p-4">
+                <i class="fas fa-file-invoice text-green-500 mb-2 block"></i>
+                <div class="text-sm font-semibold text-gray-700 mb-1">ITR / Tax Audit</div>
+                <div class="text-xs text-gray-400">Disallowable expenses, capital vs revenue</div>
+              </div>
+              <div class="border border-gray-100 rounded-xl p-4">
+                <i class="fas fa-users text-pink-500 mb-2 block"></i>
+                <div class="text-sm font-semibold text-gray-700 mb-1">Payroll Audit</div>
+                <div class="text-xs text-gray-400">PT (WB slabs), salary TDS, PF compliance</div>
+              </div>
+              <div class="border border-gray-100 rounded-xl p-4">
+                <i class="fas fa-calendar-check text-orange-500 mb-2 block"></i>
+                <div class="text-sm font-semibold text-gray-700 mb-1">Compliance Audit</div>
+                <div class="text-xs text-gray-400">All due dates — TDS, GSTR, PT, ITR, Advance Tax</div>
+              </div>
+            </div>
+
+            <div class="bg-orange-50 border border-orange-100 rounded-xl p-4 mb-6 flex items-start gap-3">
+              <i class="fas fa-info-circle text-orange-500 mt-0.5"></i>
+              <div class="text-sm text-orange-800">
+                <strong>Using last uploaded file:</strong> AJKL Trial Balance.xlsx (243 ledgers · FY 2025–26)
+                <span class="text-orange-500 ml-2 cursor-pointer underline" onclick="showPage('upload')">Upload different file →</span>
+              </div>
+            </div>
+
+            <button onclick="startFullAudit()" class="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-2xl text-base font-bold transition flex items-center justify-center gap-3">
+              <i class="fas fa-play"></i> Run Full Audit
+            </button>
+          </div>
+        </div>
+
+        <!-- STEP 2: Audit running -->
+        <div id="auditStep2" class="hidden">
+          <div class="bg-white rounded-2xl card-shadow p-10 text-center mb-6">
+            <div class="w-16 h-16 rounded-2xl bg-orange-50 flex items-center justify-center mx-auto mb-5">
+              <i class="fas fa-search-dollar text-orange-500 text-2xl" id="auditSpinner" style="animation: spin 1.5s linear infinite;"></i>
+            </div>
+            <h4 class="text-lg font-bold text-gray-800 mb-1" id="auditRunTitle">Starting audit...</h4>
+            <p class="text-gray-400 text-sm mb-6" id="auditRunSub">Checking 243 ledgers against 9 audit modules</p>
+            <div class="progress-bar mb-2 max-w-sm mx-auto">
+              <div id="auditProgressBar" style="height:100%;border-radius:99px;background:linear-gradient(90deg,#f97316,#ef4444);width:0%;transition:width 0.4s ease;"></div>
+            </div>
+            <p class="text-xs text-gray-400 mb-8" id="auditProgressText">0%</p>
+            <!-- Module progress list -->
+            <div class="text-left max-w-sm mx-auto space-y-2" id="auditModuleList">
+              <div id="am1" class="flex items-center gap-3 text-sm text-gray-400"><i class="fas fa-circle text-xs"></i> Ledger Classification</div>
+              <div id="am2" class="flex items-center gap-3 text-sm text-gray-400"><i class="fas fa-circle text-xs"></i> Cash Violations</div>
+              <div id="am3" class="flex items-center gap-3 text-sm text-gray-400"><i class="fas fa-circle text-xs"></i> Outstanding Amounts</div>
+              <div id="am4" class="flex items-center gap-3 text-sm text-gray-400"><i class="fas fa-circle text-xs"></i> TDS Audit</div>
+              <div id="am5" class="flex items-center gap-3 text-sm text-gray-400"><i class="fas fa-circle text-xs"></i> GST Audit</div>
+              <div id="am6" class="flex items-center gap-3 text-sm text-gray-400"><i class="fas fa-circle text-xs"></i> Loan Audit</div>
+              <div id="am7" class="flex items-center gap-3 text-sm text-gray-400"><i class="fas fa-circle text-xs"></i> ITR / Tax Audit</div>
+              <div id="am8" class="flex items-center gap-3 text-sm text-gray-400"><i class="fas fa-circle text-xs"></i> Payroll Audit</div>
+              <div id="am9" class="flex items-center gap-3 text-sm text-gray-400"><i class="fas fa-circle text-xs"></i> Compliance Audit</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 3: Audit Results -->
+        <div id="auditStep3" class="hidden">
+
+          <!-- Audit Score Banner -->
+          <div class="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-6 mb-6 text-white">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-orange-100 text-sm mb-1">Audit Score — FY 2025–26</p>
+                <div class="text-5xl font-black mb-1">54<span class="text-2xl font-semibold">/100</span></div>
+                <p class="text-orange-100 text-sm">⚠️ Needs Attention — 23 issues found across 9 modules</p>
+              </div>
+              <div class="text-right">
+                <div class="grid grid-cols-3 gap-3 text-center">
+                  <div class="bg-white/20 rounded-xl px-4 py-3">
+                    <div class="text-2xl font-bold">8</div>
+                    <div class="text-xs text-orange-100">Critical</div>
+                  </div>
+                  <div class="bg-white/20 rounded-xl px-4 py-3">
+                    <div class="text-2xl font-bold">11</div>
+                    <div class="text-xs text-orange-100">Warnings</div>
+                  </div>
+                  <div class="bg-white/20 rounded-xl px-4 py-3">
+                    <div class="text-2xl font-bold">4</div>
+                    <div class="text-xs text-orange-100">Questions</div>
+                  </div>
+                </div>
+                <button onclick="exportAuditExcel()" class="mt-3 bg-white text-orange-600 px-5 py-2 rounded-xl text-sm font-bold hover:bg-orange-50 transition">
+                  <i class="fas fa-file-excel mr-2"></i>Download Audit Report (Excel)
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Module Results -->
+
+          <!-- 1. Ledger Classification -->
+          <div class="bg-white rounded-2xl card-shadow mb-4 overflow-hidden">
+            <div class="flex items-center justify-between p-5 cursor-pointer" onclick="toggleAuditSection('audit-ledger')">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center"><i class="fas fa-layer-group text-red-500"></i></div>
+                <div>
+                  <div class="font-semibold text-gray-800">Ledger Classification</div>
+                  <div class="text-xs text-gray-400">5 misclassifications found</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="tag-critical text-xs px-3 py-1 rounded-full font-medium">3 Critical</span>
+                <span class="tag-review text-xs px-3 py-1 rounded-full font-medium">2 Review</span>
+                <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+              </div>
+            </div>
+            <div id="audit-ledger" class="border-t border-gray-100 divide-y divide-gray-50">
+              <div class="p-5">
+                <div class="flex items-start justify-between mb-2">
+                  <div>
+                    <span class="tag-critical text-xs px-2 py-0.5 rounded-full mr-2">Critical</span>
+                    <span class="font-medium text-gray-800 text-sm">TDS Receivable A/c</span>
+                  </div>
+                  <span class="text-xs text-gray-400">₹48,200</span>
+                </div>
+                <p class="text-xs text-gray-500 mb-2">Currently under <span class="text-red-500 font-medium">Duties &amp; Taxes</span> → should be <span class="text-green-600 font-medium">Current Assets</span></p>
+                <div class="bg-blue-50 rounded-lg p-3 text-xs text-blue-700"><strong>Fix:</strong> Gateway → Accounts Info → Ledgers → Alter → TDS Receivable → Change Group to Current Assets</div>
+              </div>
+              <div class="p-5">
+                <div class="flex items-start justify-between mb-2">
+                  <div>
+                    <span class="tag-critical text-xs px-2 py-0.5 rounded-full mr-2">Critical</span>
+                    <span class="font-medium text-gray-800 text-sm">Credit Card Payments A/c</span>
+                  </div>
+                  <span class="text-xs text-gray-400">₹1,24,500</span>
+                </div>
+                <p class="text-xs text-gray-500 mb-2">Currently under <span class="text-red-500 font-medium">Indirect Expenses</span> → should be <span class="text-green-600 font-medium">Sundry Creditors</span></p>
+                <div class="bg-blue-50 rounded-lg p-3 text-xs text-blue-700"><strong>Fix:</strong> Gateway → Accounts Info → Ledgers → Alter → Credit Card Payments → Change Group to Sundry Creditors</div>
+              </div>
+              <div class="p-5">
+                <div class="flex items-start justify-between mb-2">
+                  <div>
+                    <span class="tag-critical text-xs px-2 py-0.5 rounded-full mr-2">Critical</span>
+                    <span class="font-medium text-gray-800 text-sm">Bank Interest Received</span>
+                  </div>
+                  <span class="text-xs text-gray-400">₹25,000</span>
+                </div>
+                <p class="text-xs text-gray-500 mb-2">Currently under <span class="text-red-500 font-medium">Indirect Expenses</span> → should be <span class="text-green-600 font-medium">Indirect Incomes</span> — this is reducing your profit incorrectly</p>
+                <div class="bg-blue-50 rounded-lg p-3 text-xs text-blue-700"><strong>Fix:</strong> Gateway → Accounts Info → Ledgers → Alter → Bank Interest Received → Change Group to Indirect Incomes</div>
+              </div>
+              <div class="p-5">
+                <div class="flex items-start justify-between mb-2">
+                  <div>
+                    <span class="tag-review text-xs px-2 py-0.5 rounded-full mr-2">Review</span>
+                    <span class="font-medium text-gray-800 text-sm">Security Deposit (Office)</span>
+                  </div>
+                  <span class="text-xs text-gray-400">₹60,000</span>
+                </div>
+                <p class="text-xs text-gray-500 mb-2">Currently under <span class="text-yellow-600 font-medium">Fixed Assets</span> → should be <span class="text-green-600 font-medium">Loans &amp; Advances (Asset)</span></p>
+                <div class="bg-yellow-50 rounded-lg p-3 text-xs text-yellow-700"><strong>Suggestion:</strong> Security deposits paid are not fixed assets — they are refundable advances</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Cash Violations -->
+          <div class="bg-white rounded-2xl card-shadow mb-4 overflow-hidden">
+            <div class="flex items-center justify-between p-5 cursor-pointer" onclick="toggleAuditSection('audit-cash')">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center"><i class="fas fa-money-bill-wave text-red-500"></i></div>
+                <div>
+                  <div class="font-semibold text-gray-800">Cash Violations</div>
+                  <div class="text-xs text-gray-400">3 violations — may be disallowed in ITR</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="tag-critical text-xs px-3 py-1 rounded-full font-medium">3 Critical</span>
+                <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+              </div>
+            </div>
+            <div id="audit-cash" class="border-t border-gray-100 divide-y divide-gray-50">
+              <div class="p-5">
+                <div class="flex items-start justify-between mb-2">
+                  <div><span class="tag-critical text-xs px-2 py-0.5 rounded-full mr-2">Critical</span><span class="font-medium text-gray-800 text-sm">Cash payment to Vendor — Office Supplies</span></div>
+                  <span class="text-xs text-gray-400">₹18,500</span>
+                </div>
+                <p class="text-xs text-gray-500 mb-2">Cash payment above ₹10,000 in single transaction — <strong>disallowed under Section 40A(3)</strong>. This ₹18,500 will be added back to your income in ITR.</p>
+                <div class="bg-red-50 rounded-lg p-3 text-xs text-red-700"><strong>Action:</strong> Make future payments via bank transfer. For this entry — add a note. ₹18,500 will be a disallowed expense.</div>
+              </div>
+              <div class="p-5">
+                <div class="flex items-start justify-between mb-2">
+                  <div><span class="tag-critical text-xs px-2 py-0.5 rounded-full mr-2">Critical</span><span class="font-medium text-gray-800 text-sm">Cash received from Customer — Raj Traders</span></div>
+                  <span class="text-xs text-gray-400">₹2,50,000</span>
+                </div>
+                <p class="text-xs text-gray-500 mb-2">Cash receipt above ₹2,00,000 — <strong>prohibited under Section 269ST</strong>. Penalty = 100% of amount (₹2,50,000 penalty risk).</p>
+                <div class="bg-red-50 rounded-lg p-3 text-xs text-red-700"><strong>Urgent:</strong> Request Raj Traders to pay via NEFT/RTGS. Keep record of why cash was accepted. Consult CA immediately.</div>
+              </div>
+              <div class="p-5">
+                <div class="flex items-start justify-between mb-2">
+                  <div><span class="tag-critical text-xs px-2 py-0.5 rounded-full mr-2">Critical</span><span class="font-medium text-gray-800 text-sm">Cash payment to Party — Repair &amp; Maintenance</span></div>
+                  <span class="text-xs text-gray-400">₹22,000</span>
+                </div>
+                <p class="text-xs text-gray-500 mb-2">Cash payment above ₹10,000 — disallowed under Section 40A(3).</p>
+                <div class="bg-red-50 rounded-lg p-3 text-xs text-red-700"><strong>Action:</strong> ₹22,000 will be disallowed in ITR computation. Use bank transfer for future payments.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Outstanding Amounts -->
+          <div class="bg-white rounded-2xl card-shadow mb-4 overflow-hidden">
+            <div class="flex items-center justify-between p-5 cursor-pointer" onclick="toggleAuditSection('audit-outstanding')">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-yellow-50 flex items-center justify-center"><i class="fas fa-hourglass-half text-yellow-500"></i></div>
+                <div>
+                  <div class="font-semibold text-gray-800">Outstanding / Unsettled Amounts</div>
+                  <div class="text-xs text-gray-400">4 amounts need clarification</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="tag-review text-xs px-3 py-1 rounded-full font-medium">4 Questions</span>
+                <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+              </div>
+            </div>
+            <div id="audit-outstanding" class="border-t border-gray-100 divide-y divide-gray-50">
+              <div class="p-5">
+                <div class="flex items-start justify-between mb-2">
+                  <div><span class="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full mr-2">Question</span><span class="font-medium text-gray-800 text-sm">Raj Traders (Debtor)</span></div>
+                  <span class="text-xs font-semibold text-red-500">₹1,80,000 outstanding</span>
+                </div>
+                <p class="text-xs text-gray-500 mb-3">Balance outstanding since 8+ months. No receipt entry found in this FY.</p>
+                <div class="bg-blue-50 rounded-xl p-3 mb-3">
+                  <p class="text-xs text-blue-800 font-semibold mb-2">❓ Auditor Question:</p>
+                  <p class="text-xs text-blue-700">₹1,80,000 is still receivable from Raj Traders. Has this been received? If yes, where is the receipt entry? If no, is recovery being pursued? Should this be written off as bad debt?</p>
+                </div>
+                <div class="flex gap-2">
+                  <button class="text-xs bg-green-100 text-green-700 px-3 py-1.5 rounded-lg hover:bg-green-200 transition">✅ Already Received — add entry</button>
+                  <button class="text-xs bg-yellow-100 text-yellow-700 px-3 py-1.5 rounded-lg hover:bg-yellow-200 transition">⏳ Still Pending</button>
+                  <button class="text-xs bg-red-100 text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-200 transition">❌ Write off as Bad Debt</button>
+                </div>
+              </div>
+              <div class="p-5">
+                <div class="flex items-start justify-between mb-2">
+                  <div><span class="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full mr-2">Question</span><span class="font-medium text-gray-800 text-sm">Suspense Account</span></div>
+                  <span class="text-xs font-semibold text-red-500">₹12,400 balance</span>
+                </div>
+                <p class="text-xs text-gray-500 mb-3">Suspense Account should always have zero balance at year end. ₹12,400 is sitting uncleared.</p>
+                <div class="bg-blue-50 rounded-xl p-3 mb-3">
+                  <p class="text-xs text-blue-800 font-semibold mb-2">❓ Auditor Question:</p>
+                  <p class="text-xs text-blue-700">What is the ₹12,400 in Suspense Account? This entry needs to be identified and moved to the correct ledger before books are finalised.</p>
+                </div>
+                <div class="flex gap-2">
+                  <button class="text-xs bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg hover:bg-blue-200 transition">🔍 Drill Down — Show Entries</button>
+                </div>
+              </div>
+              <div class="p-5">
+                <div class="flex items-start justify-between mb-2">
+                  <div><span class="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full mr-2">Question</span><span class="font-medium text-gray-800 text-sm">Advance to Supplier — XYZ Agencies</span></div>
+                  <span class="text-xs font-semibold text-yellow-600">₹35,000 unadjusted</span>
+                </div>
+                <p class="text-xs text-gray-500 mb-3">Advance paid 5 months ago — no goods/service receipt or adjustment entry found.</p>
+                <div class="bg-blue-50 rounded-xl p-3 mb-3">
+                  <p class="text-xs text-blue-800 font-semibold mb-2">❓ Auditor Question:</p>
+                  <p class="text-xs text-blue-700">₹35,000 advance to XYZ Agencies — has the material/service been received? If yes, pass purchase entry and adjust against advance. If no, follow up for refund.</p>
+                </div>
+                <div class="flex gap-2">
+                  <button class="text-xs bg-green-100 text-green-700 px-3 py-1.5 rounded-lg hover:bg-green-200 transition">✅ Goods Received — adjust</button>
+                  <button class="text-xs bg-yellow-100 text-yellow-700 px-3 py-1.5 rounded-lg hover:bg-yellow-200 transition">⏳ Still Pending</button>
+                </div>
+              </div>
+              <div class="p-5">
+                <div class="flex items-start justify-between mb-2">
+                  <div><span class="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full mr-2">Question</span><span class="font-medium text-gray-800 text-sm">TDS Payable (194J)</span></div>
+                  <span class="text-xs font-semibold text-red-500">₹9,700 unpaid</span>
+                </div>
+                <p class="text-xs text-gray-500 mb-3">TDS deducted but not deposited. Interest accruing at 1.5%/month (Section 201(1A)).</p>
+                <div class="bg-red-50 rounded-xl p-3 mb-3">
+                  <p class="text-xs text-red-800 font-semibold mb-2">❓ Auditor Question:</p>
+                  <p class="text-xs text-red-700">₹9,700 TDS (194J) is deducted but not deposited. 2 months delayed = ₹291 interest. Deposit immediately at tin.nsdl.com before further interest accrues.</p>
+                </div>
+                <div class="flex gap-2">
+                  <button class="text-xs bg-green-100 text-green-700 px-3 py-1.5 rounded-lg hover:bg-green-200 transition">✅ Already Deposited — add entry</button>
+                  <button class="text-xs bg-red-100 text-red-700 px-3 py-1.5 rounded-lg">⚡ Deposit Now — show challan steps</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Loan Audit -->
+          <div class="bg-white rounded-2xl card-shadow mb-4 overflow-hidden">
+            <div class="flex items-center justify-between p-5 cursor-pointer" onclick="toggleAuditSection('audit-loan')">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center"><i class="fas fa-university text-indigo-500"></i></div>
+                <div>
+                  <div class="font-semibold text-gray-800">Loan Audit</div>
+                  <div class="text-xs text-gray-400">2 loans require documentation</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="tag-review text-xs px-3 py-1 rounded-full font-medium">2 Documents Needed</span>
+                <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+              </div>
+            </div>
+            <div id="audit-loan" class="border-t border-gray-100 divide-y divide-gray-50">
+              <div class="p-5">
+                <div class="flex items-start justify-between mb-2">
+                  <div><span class="tag-review text-xs px-2 py-0.5 rounded-full mr-2">Document Required</span><span class="font-medium text-gray-800 text-sm">Loan from Director — Sagar Pathak</span></div>
+                  <span class="text-xs font-semibold text-gray-700">₹5,00,000</span>
+                </div>
+                <p class="text-xs text-gray-500 mb-3">Loan received from director. Under Section 269SS — must be received via banking channel only.</p>
+                <div class="bg-indigo-50 rounded-xl p-3 mb-3">
+                  <p class="text-xs text-indigo-800 font-semibold mb-2">📋 Auditor Requires:</p>
+                  <ul class="text-xs text-indigo-700 space-y-1">
+                    <li>1. Bank statement showing ₹5,00,000 credit (received via NEFT/RTGS)</li>
+                    <li>2. Loan agreement with repayment terms</li>
+                    <li>3. Interest rate agreed (if nil interest — taxable as deemed income)</li>
+                    <li>4. Board resolution (if company) authorising the loan</li>
+                  </ul>
+                </div>
+                <div class="flex gap-2">
+                  <button class="text-xs bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg hover:bg-indigo-200 transition">📎 Upload Bank Statement</button>
+                  <button class="text-xs bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg hover:bg-indigo-200 transition">📎 Upload Loan Agreement</button>
+                </div>
+              </div>
+              <div class="p-5">
+                <div class="flex items-start justify-between mb-2">
+                  <div><span class="tag-review text-xs px-2 py-0.5 rounded-full mr-2">Document Required</span><span class="font-medium text-gray-800 text-sm">Loan from ABC Finance</span></div>
+                  <span class="text-xs font-semibold text-gray-700">₹12,00,000</span>
+                </div>
+                <p class="text-xs text-gray-500 mb-3">Business loan. Need to verify receipt and repayment schedule in books.</p>
+                <div class="bg-indigo-50 rounded-xl p-3 mb-3">
+                  <p class="text-xs text-indigo-800 font-semibold mb-2">📋 Auditor Requires:</p>
+                  <ul class="text-xs text-indigo-700 space-y-1">
+                    <li>1. Sanction letter from ABC Finance</li>
+                    <li>2. Bank statement showing loan disbursement</li>
+                    <li>3. Repayment schedule — verify EMI entries in books match</li>
+                    <li>4. Interest paid — confirm Section 36(1)(iii) eligibility</li>
+                  </ul>
+                </div>
+                <div class="flex gap-2">
+                  <button class="text-xs bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg hover:bg-indigo-200 transition">📎 Upload Sanction Letter</button>
+                  <button class="text-xs bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg hover:bg-indigo-200 transition">📎 Upload Bank Statement</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. TDS Audit -->
+          <div class="bg-white rounded-2xl card-shadow mb-4 overflow-hidden">
+            <div class="flex items-center justify-between p-5 cursor-pointer" onclick="toggleAuditSection('audit-tds')">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center"><i class="fas fa-percentage text-purple-500"></i></div>
+                <div>
+                  <div class="font-semibold text-gray-800">TDS Audit</div>
+                  <div class="text-xs text-gray-400">₹9,700 pending · 1 missed deduction</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="tag-critical text-xs px-3 py-1 rounded-full font-medium">2 Issues</span>
+                <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+              </div>
+            </div>
+            <div id="audit-tds" class="border-t border-gray-100 p-5">
+              <table class="w-full text-xs mb-4">
+                <thead><tr class="text-left text-gray-400 border-b border-gray-100 uppercase">
+                  <th class="pb-2">Section</th><th class="pb-2">Nature</th><th class="pb-2">Deducted</th><th class="pb-2">Deposited</th><th class="pb-2">Pending</th><th class="pb-2">Interest</th><th class="pb-2">Status</th>
+                </tr></thead>
+                <tbody class="divide-y divide-gray-50">
+                  <tr class="py-2"><td class="py-2 font-medium">194C</td><td>Contractors</td><td>₹18,500</td><td>₹18,500</td><td>₹0</td><td>—</td><td><span class="tag-ok px-2 py-0.5 rounded-full">✅ Clear</span></td></tr>
+                  <tr><td class="py-2 font-medium text-red-600">194J</td><td>Prof. Fees</td><td>₹22,000</td><td>₹12,300</td><td class="text-red-600 font-semibold">₹9,700</td><td class="text-red-600">₹291</td><td><span class="tag-critical px-2 py-0.5 rounded-full">⚠️ Pending</span></td></tr>
+                  <tr><td class="py-2 font-medium">194I</td><td>Rent</td><td>₹4,200</td><td>₹4,200</td><td>₹0</td><td>—</td><td><span class="tag-ok px-2 py-0.5 rounded-full">✅ Clear</span></td></tr>
+                  <tr><td class="py-2 font-medium">192</td><td>Salary</td><td>₹3,500</td><td>₹3,500</td><td>₹0</td><td>—</td><td><span class="tag-ok px-2 py-0.5 rounded-full">✅ Clear</span></td></tr>
+                </tbody>
+              </table>
+              <div class="bg-yellow-50 border border-yellow-100 rounded-xl p-3 text-xs text-yellow-800">
+                <strong>⚠️ Missed TDS:</strong> Payment of ₹85,000 to Legal Consultant (professional fees) — TDS @10% = ₹8,500 should have been deducted under Section 194J. Threshold is ₹50,000/year. Correct this immediately.
+              </div>
+            </div>
+          </div>
+
+          <!-- 6. GST Audit -->
+          <div class="bg-white rounded-2xl card-shadow mb-4 overflow-hidden">
+            <div class="flex items-center justify-between p-5 cursor-pointer" onclick="toggleAuditSection('audit-gst')">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-teal-50 flex items-center justify-center"><i class="fas fa-receipt text-teal-500"></i></div>
+                <div>
+                  <div class="font-semibold text-gray-800">GST Audit</div>
+                  <div class="text-xs text-gray-400">ITC misclassified · ₹18,400 blocked</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="tag-critical text-xs px-3 py-1 rounded-full font-medium">2 Issues</span>
+                <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+              </div>
+            </div>
+            <div id="audit-gst" class="border-t border-gray-100 divide-y divide-gray-50">
+              <div class="p-5">
+                <div class="flex items-start justify-between mb-2">
+                  <div><span class="tag-critical text-xs px-2 py-0.5 rounded-full mr-2">Critical</span><span class="font-medium text-gray-800 text-sm">GST Input Credit (ITC) — wrong group</span></div>
+                  <span class="text-xs text-gray-400">₹18,400</span>
+                </div>
+                <p class="text-xs text-gray-500 mb-2">ITC ledger is under <span class="text-red-500 font-medium">Duties &amp; Taxes</span> → should be <span class="text-green-600 font-medium">Current Assets</span>. This is blocking your ITC claim.</p>
+                <div class="bg-blue-50 rounded-lg p-3 text-xs text-blue-700"><strong>Fix:</strong> Alter GST Input Credit ledger → Change group to Current Assets → ITC will reflect correctly in balance sheet</div>
+              </div>
+              <div class="p-5">
+                <div class="flex items-start justify-between mb-2">
+                  <div><span class="tag-review text-xs px-2 py-0.5 rounded-full mr-2">Review</span><span class="font-medium text-gray-800 text-sm">GST Output vs GSTR-3B mismatch</span></div>
+                  <span class="text-xs text-gray-400">₹4,200 difference</span>
+                </div>
+                <p class="text-xs text-gray-500 mb-2">Output GST in books = ₹84,200. Last GSTR-3B filed showed ₹80,000. Difference of ₹4,200 unexplained.</p>
+                <div class="bg-yellow-50 rounded-lg p-3 text-xs text-yellow-700"><strong>Action:</strong> Match sales register with GSTR-1 filed. ₹4,200 may be missing invoice or rounding error. Reconcile before next return.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 7. ITR / Tax Audit -->
+          <div class="bg-white rounded-2xl card-shadow mb-4 overflow-hidden">
+            <div class="flex items-center justify-between p-5 cursor-pointer" onclick="toggleAuditSection('audit-itr')">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-green-50 flex items-center justify-center"><i class="fas fa-file-invoice text-green-500"></i></div>
+                <div>
+                  <div class="font-semibold text-gray-800">ITR / Tax Audit</div>
+                  <div class="text-xs text-gray-400">₹40,500 disallowable expenses identified</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="tag-critical text-xs px-3 py-1 rounded-full font-medium">3 Issues</span>
+                <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+              </div>
+            </div>
+            <div id="audit-itr" class="border-t border-gray-100 divide-y divide-gray-50">
+              <div class="p-5">
+                <div class="flex items-start justify-between mb-2">
+                  <div><span class="tag-critical text-xs px-2 py-0.5 rounded-full mr-2">Disallowed</span><span class="font-medium text-gray-800 text-sm">Cash payments above ₹10,000 (Sec 40A(3))</span></div>
+                  <span class="text-xs font-semibold text-red-500">₹40,500 disallowed</span>
+                </div>
+                <p class="text-xs text-gray-500 mb-2">3 cash transactions (₹18,500 + ₹22,000 — see Cash Violations above). Total ₹40,500 will be added back to taxable income.</p>
+                <div class="bg-red-50 rounded-lg p-3 text-xs text-red-700"><strong>Tax impact:</strong> If in 30% bracket → extra tax of ~₹12,150. Use banking channel for all future expenses above ₹10,000.</div>
+              </div>
+              <div class="p-5">
+                <div class="flex items-start justify-between mb-2">
+                  <div><span class="tag-review text-xs px-2 py-0.5 rounded-full mr-2">Review</span><span class="font-medium text-gray-800 text-sm">Personal expenses in business books</span></div>
+                  <span class="text-xs text-gray-400">₹8,200</span>
+                </div>
+                <p class="text-xs text-gray-500 mb-2">Grocery purchase + personal travel booked under "Miscellaneous Expenses". These are not deductible business expenses.</p>
+                <div class="bg-yellow-50 rounded-lg p-3 text-xs text-yellow-700"><strong>Action:</strong> Move to Drawings account. Personal expenses must never be claimed as business deduction.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 8. Compliance Audit -->
+          <div class="bg-white rounded-2xl card-shadow mb-6 overflow-hidden">
+            <div class="flex items-center justify-between p-5 cursor-pointer" onclick="toggleAuditSection('audit-compliance')">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-orange-50 flex items-center justify-center"><i class="fas fa-calendar-check text-orange-500"></i></div>
+                <div>
+                  <div class="font-semibold text-gray-800">Compliance Audit</div>
+                  <div class="text-xs text-gray-400">1 overdue · 2 due this week</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="tag-critical text-xs px-3 py-1 rounded-full font-medium">1 Overdue</span>
+                <span class="tag-review text-xs px-3 py-1 rounded-full font-medium">2 Due Soon</span>
+                <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+              </div>
+            </div>
+            <div id="audit-compliance" class="border-t border-gray-100 p-5 space-y-3">
+              <div class="flex items-center justify-between p-3 rounded-xl bg-red-50 border border-red-100">
+                <div><div class="text-sm font-semibold text-red-700">TDS Deposit (194J)</div><div class="text-xs text-red-500">Was due 7th March — overdue by 8 days · Interest: ₹291</div></div>
+                <span class="bg-red-500 text-white text-xs px-3 py-1 rounded-full pulse">OVERDUE</span>
+              </div>
+              <div class="flex items-center justify-between p-3 rounded-xl bg-yellow-50 border border-yellow-100">
+                <div><div class="text-sm font-semibold text-yellow-700">PT Deposit (Kolkata)</div><div class="text-xs text-yellow-600">Due 21st March — 6 days remaining · ₹2,640 to deposit via Grips</div></div>
+                <span class="bg-yellow-500 text-white text-xs px-3 py-1 rounded-full">6 DAYS</span>
+              </div>
+              <div class="flex items-center justify-between p-3 rounded-xl bg-yellow-50 border border-yellow-100">
+                <div><div class="text-sm font-semibold text-yellow-700">GSTR-3B</div><div class="text-xs text-yellow-600">Due 20th March — 5 days remaining</div></div>
+                <span class="bg-yellow-500 text-white text-xs px-3 py-1 rounded-full">5 DAYS</span>
+              </div>
+              <div class="flex items-center justify-between p-3 rounded-xl bg-green-50 border border-green-100">
+                <div><div class="text-sm font-semibold text-green-700">GSTR-1</div><div class="text-xs text-green-600">Filed on 11th March ✅</div></div>
+                <span class="bg-green-500 text-white text-xs px-3 py-1 rounded-full">DONE</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Download Report -->
+          <div class="bg-white rounded-2xl card-shadow p-6 text-center">
+            <h4 class="font-bold text-gray-800 mb-1">Audit Complete</h4>
+            <p class="text-gray-400 text-sm mb-5">Download the full audit report with all findings, questions, corrections and journal entries</p>
+            <div class="flex justify-center gap-4">
+              <button onclick="exportAuditExcel()" class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition">
+                <i class="fas fa-file-excel text-lg"></i>
+                <div class="text-left"><div class="text-sm font-bold">Download Excel Report</div><div class="text-xs text-green-200">9 sheets · All findings</div></div>
+              </button>
+              <button onclick="window.print()" class="flex items-center gap-2 bg-gray-700 hover:bg-gray-800 text-white px-6 py-3 rounded-xl font-semibold transition">
+                <i class="fas fa-file-pdf text-lg"></i>
+                <div class="text-left"><div class="text-sm font-bold">Download PDF Report</div><div class="text-xs text-gray-300">Print-ready format</div></div>
+              </button>
+            </div>
+          </div>
+
+        </div><!-- end auditStep3 -->
+      </div>
+    </div>
+
     <!-- ===== BANK RECONCILIATION PAGE ===== -->
     <div id="page-bankrec" class="page p-8">
 
@@ -2092,7 +2644,7 @@ function showPage(page) {
     dashboard:'Dashboard', upload:'Upload & Analyze', results:'Analysis Results',
     history:'History', askca:'Ask Your CA', journal:'Journal Entry Guide',
     compliance:'Compliance Calendar', admin:'Admin Panel',
-    bankrec:'Bank Reconciliation', tdsanalysis:'TDS Analysis'
+    bankrec:'Bank Reconciliation', tdsanalysis:'TDS Analysis', fullaudit:'Full Audit'
   };
   const subs = {
     dashboard:'Welcome back, Sagar', upload:'Upload Tally Trial Balance Excel',
@@ -2100,7 +2652,8 @@ function showPage(page) {
     askca:'AI reads your uploaded data to answer specific questions', journal:'Get correct journal entries instantly',
     compliance:'TDS, PT, Salary due dates', admin:'Manage users and monitor activity',
     bankrec:'Match bank statement vs Tally — find unmatched & duplicate entries',
-    tdsanalysis:'Section-wise TDS payable, deposited, pending & return mismatches'
+    tdsanalysis:'Section-wise TDS payable, deposited, pending & return mismatches',
+    fullaudit:'Complete CA-level audit — ledgers, TDS, GST, loans, cash violations & compliance'
   };
   document.getElementById('pageTitle').textContent = titles[page]||'';
   document.getElementById('pageSubtitle').textContent = subs[page]||'';
@@ -2232,6 +2785,68 @@ function selectFileType(type) {
   document.getElementById('uploadHint').innerHTML = `<p class="text-sm font-medium text-blue-800 mb-2"><i class="fas fa-info-circle mr-2"></i>How to get this file</p><div class="text-xs text-blue-600 space-y-1">${h.hint.split('<br>').map(s=>`<p>${s}</p>`).join('')}</div>`;
   document.getElementById('uploadFormats').textContent = h.fmt;
 }
+function startFullAudit() {
+  document.getElementById('auditStep1').classList.add('hidden');
+  document.getElementById('auditStep2').classList.remove('hidden');
+
+  const modules = [
+    { id: 'am1', label: 'Ledger Classification', findings: '5 misclassifications' },
+    { id: 'am2', label: 'Cash Violations', findings: '3 violations found' },
+    { id: 'am3', label: 'Outstanding Amounts', findings: '4 questions raised' },
+    { id: 'am4', label: 'TDS Audit', findings: '₹9,700 pending' },
+    { id: 'am5', label: 'GST Audit', findings: '₹18,400 ITC blocked' },
+    { id: 'am6', label: 'Loan Audit', findings: '2 documents required' },
+    { id: 'am7', label: 'ITR / Tax Audit', findings: '₹40,500 disallowable' },
+    { id: 'am8', label: 'Payroll Audit', findings: 'PT ✅ — all clear' },
+    { id: 'am9', label: 'Compliance Audit', findings: '1 overdue · 2 due soon' },
+  ];
+
+  let prog = 0;
+  let moduleIndex = 0;
+  const bar = document.getElementById('auditProgressBar');
+  const text = document.getElementById('auditProgressText');
+  const title = document.getElementById('auditRunTitle');
+  const sub = document.getElementById('auditRunSub');
+
+  const interval = setInterval(() => {
+    prog += 1;
+    bar.style.width = prog + '%';
+    text.textContent = prog + '%';
+
+    const threshold = Math.floor((moduleIndex + 1) * (100 / modules.length));
+    if (prog >= threshold && moduleIndex < modules.length) {
+      const m = modules[moduleIndex];
+      const el = document.getElementById(m.id);
+      el.innerHTML = `<i class="fas fa-check-circle text-green-500 text-xs"></i> <span class="text-gray-700">${m.label}</span> <span class="ml-auto text-gray-400 text-xs">${m.findings}</span>`;
+      el.classList.add('flex', 'justify-between');
+      title.textContent = `Checking: ${m.label}...`;
+      moduleIndex++;
+    }
+
+    if (prog >= 100) {
+      clearInterval(interval);
+      title.textContent = 'Audit complete!';
+      sub.textContent = '23 issues found — 8 Critical · 11 Warnings · 4 Questions';
+      document.getElementById('auditSpinner').style.animation = 'none';
+      document.getElementById('auditSpinner').className = 'fas fa-check-circle text-green-500 text-2xl';
+      setTimeout(() => {
+        document.getElementById('auditStep2').classList.add('hidden');
+        document.getElementById('auditStep3').classList.remove('hidden');
+        document.getElementById('auditStep3').scrollIntoView({ behavior: 'smooth' });
+      }, 800);
+    }
+  }, 60);
+}
+
+function toggleAuditSection(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('hidden');
+}
+
+function exportAuditExcel() {
+  alert('📊 Audit Report downloading...\n\nSheets included:\n1. Audit Summary\n2. Ledger Classification\n3. Cash Violations\n4. Outstanding Amounts\n5. TDS Audit\n6. GST Audit\n7. Loan Audit\n8. ITR / Tax Audit\n9. Compliance Calendar\n\nIn the real app this downloads a full Excel file.');
+}
+
 function toggleDownloadMenu() {
   const m = document.getElementById('downloadMenu');
   m.classList.toggle('hidden');
