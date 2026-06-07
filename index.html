@@ -1953,6 +1953,133 @@
             </div>
           </div>
 
+          <!-- 8. Payroll / PT Audit -->
+          <div class="bg-white rounded-2xl card-shadow mb-4 overflow-hidden">
+            <div class="flex items-center justify-between p-5 cursor-pointer" onclick="toggleAuditSection('audit-payroll')">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-pink-50 flex items-center justify-center"><i class="fas fa-users text-pink-500"></i></div>
+                <div>
+                  <div class="font-semibold text-gray-800">Payroll / PT Audit</div>
+                  <div class="text-xs text-gray-400">Professional Tax (WB) · Salary TDS · PF</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="tag-critical text-xs px-3 py-1 rounded-full font-medium">2 Issues</span>
+                <span class="tag-ok text-xs px-3 py-1 rounded-full font-medium">3 Clear</span>
+                <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+              </div>
+            </div>
+            <div id="audit-payroll" class="border-t border-gray-100 divide-y divide-gray-50">
+
+              <!-- PT Summary Table -->
+              <div class="p-5">
+                <div class="flex items-center gap-2 mb-4">
+                  <div class="w-7 h-7 rounded-lg bg-pink-50 flex items-center justify-center"><i class="fas fa-id-badge text-pink-500 text-xs"></i></div>
+                  <span class="font-semibold text-gray-700 text-sm">Professional Tax — West Bengal Slabs</span>
+                </div>
+                <table class="w-full text-xs mb-4">
+                  <thead><tr class="text-left text-gray-400 border-b border-gray-100 uppercase">
+                    <th class="pb-2">Employee</th>
+                    <th class="pb-2">Gross Salary</th>
+                    <th class="pb-2">WB Slab</th>
+                    <th class="pb-2">PT Due</th>
+                    <th class="pb-2">PT Deducted</th>
+                    <th class="pb-2">Status</th>
+                  </tr></thead>
+                  <tbody class="divide-y divide-gray-50">
+                    <tr>
+                      <td class="py-2 font-medium text-gray-700">Ravi Kumar</td>
+                      <td>₹45,000</td>
+                      <td>Above ₹40,000</td>
+                      <td class="font-semibold">₹200</td>
+                      <td class="text-green-600">₹200</td>
+                      <td><span class="tag-ok text-xs px-2 py-0.5 rounded-full">✅ OK</span></td>
+                    </tr>
+                    <tr>
+                      <td class="py-2 font-medium text-gray-700">Priya Das</td>
+                      <td>₹28,000</td>
+                      <td>₹25,001–₹40,000</td>
+                      <td class="font-semibold">₹150</td>
+                      <td class="text-green-600">₹150</td>
+                      <td><span class="tag-ok text-xs px-2 py-0.5 rounded-full">✅ OK</span></td>
+                    </tr>
+                    <tr>
+                      <td class="py-2 font-medium text-gray-700">Amit Saha</td>
+                      <td>₹18,000</td>
+                      <td>₹15,001–₹25,000</td>
+                      <td class="font-semibold">₹130</td>
+                      <td class="text-red-500 font-semibold">₹110</td>
+                      <td><span class="tag-critical text-xs px-2 py-0.5 rounded-full">⚠️ Wrong</span></td>
+                    </tr>
+                    <tr>
+                      <td class="py-2 font-medium text-gray-700">Sunita Roy</td>
+                      <td>₹12,000</td>
+                      <td>₹10,001–₹15,000</td>
+                      <td class="font-semibold">₹110</td>
+                      <td class="text-green-600">₹110</td>
+                      <td><span class="tag-ok text-xs px-2 py-0.5 rounded-full">✅ OK</span></td>
+                    </tr>
+                    <tr>
+                      <td class="py-2 font-medium text-gray-700">Mohan Lal</td>
+                      <td>₹8,000</td>
+                      <td>Up to ₹10,000</td>
+                      <td class="font-semibold">Nil</td>
+                      <td class="text-green-600">Nil</td>
+                      <td><span class="tag-ok text-xs px-2 py-0.5 rounded-full">✅ OK</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <!-- PT Issue 1 -->
+                <div class="bg-red-50 border border-red-100 rounded-xl p-4 mb-3">
+                  <div class="flex items-start justify-between mb-1">
+                    <div><span class="tag-critical text-xs px-2 py-0.5 rounded-full mr-2">Critical</span><span class="font-medium text-gray-800 text-sm">Amit Saha — Wrong PT slab applied</span></div>
+                    <span class="text-xs text-red-500 font-semibold">Short by ₹20/month</span>
+                  </div>
+                  <p class="text-xs text-gray-600 mb-2">Gross salary ₹18,000 falls in <strong>₹15,001–₹25,000 slab → PT = ₹130/month</strong>. But only ₹110 was deducted (wrong slab used). Shortfall = ₹20/month.</p>
+                  <div class="bg-white rounded-lg p-3 text-xs text-gray-700 mb-2">
+                    <strong>Correction Journal Entry:</strong><br/>
+                    Dr &nbsp; Salary A/c &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ₹20<br/>
+                    &nbsp;&nbsp;&nbsp; Cr &nbsp; PT Payable (Duties &amp; Taxes) &nbsp; ₹20<br/>
+                    <span class="text-gray-400">(Narration: PT shortfall correction — Amit Saha — March 2026)</span>
+                  </div>
+                  <div class="text-xs text-red-700"><strong>Action:</strong> Deduct correct ₹130 from Amit's next salary. Deposit full amount via Grips portal by 21st.</div>
+                </div>
+
+                <!-- PT Deposit Status -->
+                <div class="bg-red-50 border border-red-100 rounded-xl p-4">
+                  <div class="flex items-start justify-between mb-1">
+                    <div><span class="tag-critical text-xs px-2 py-0.5 rounded-full mr-2">Critical</span><span class="font-medium text-gray-800 text-sm">PT Deposit — Not done for March 2026</span></div>
+                    <span class="text-xs text-red-500 font-semibold">₹570 pending</span>
+                  </div>
+                  <p class="text-xs text-gray-600 mb-2">PT deducted from 4 employees = <strong>₹570</strong> (₹200+₹150+₹110+₹110). Due date: <strong>21st March 2026</strong>. Not yet deposited via Grips portal.</p>
+                  <div class="bg-white rounded-lg p-3 text-xs text-gray-700 mb-2">
+                    <strong>Deposit Entry (after paying via Grips):</strong><br/>
+                    Dr &nbsp; PT Payable (Duties &amp; Taxes) &nbsp; ₹570<br/>
+                    &nbsp;&nbsp;&nbsp; Cr &nbsp; HDFC Bank &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ₹570<br/>
+                    <span class="text-gray-400">(Narration: PT deposited via Grips portal — March 2026)</span>
+                  </div>
+                  <div class="flex gap-2 mt-2">
+                    <button class="text-xs bg-pink-600 text-white px-3 py-1.5 rounded-lg hover:bg-pink-700 transition">⚡ Pay via Grips — wbifms.gov.in</button>
+                    <button class="text-xs bg-green-100 text-green-700 px-3 py-1.5 rounded-lg hover:bg-green-200 transition">✅ Already paid — add entry</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- PT Ledger Check -->
+              <div class="p-5">
+                <div class="flex items-center gap-2 mb-3">
+                  <div class="w-7 h-7 rounded-lg bg-green-50 flex items-center justify-center"><i class="fas fa-check text-green-500 text-xs"></i></div>
+                  <span class="font-semibold text-gray-700 text-sm">PT Ledger Group Check</span>
+                </div>
+                <div class="bg-green-50 border border-green-100 rounded-xl p-3 text-xs text-green-800">
+                  ✅ <strong>PT Payable</strong> is correctly placed under <strong>Duties &amp; Taxes</strong> — no reclassification needed.
+                </div>
+              </div>
+
+            </div>
+          </div>
+
           <!-- 8. Compliance Audit -->
           <div class="bg-white rounded-2xl card-shadow mb-6 overflow-hidden">
             <div class="flex items-center justify-between p-5 cursor-pointer" onclick="toggleAuditSection('audit-compliance')">
