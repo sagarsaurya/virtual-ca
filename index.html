@@ -2535,7 +2535,6 @@ function buildCAQueries(data) {
   let id = 1;
 
   // 1. Ledger classification issues
-  // Fields: severity, ledger, current_group, correct_group, balance, rule, fix
   (data.ledger_classification || []).forEach(item => {
     const sev = item.severity === 'Critical' ? 'critical' : 'important';
     const bal = item.balance ? `₹${Number(item.balance).toLocaleString('en-IN')}` : '';
@@ -2548,56 +2547,84 @@ function buildCAQueries(data) {
     });
   });
 
-  // 2. Cash violations
-  // Fields: severity, date, party, amount, type, section, issue, impact
-  (data.cash_violations || []).slice(0, 5).forEach(v => {
-    const amt = `₹${Number(v.amount).toLocaleString('en-IN')}`;
-    const sev = v.severity === 'Critical' ? 'critical' : 'important';
-    queries.push({
-      id: id++, severity: sev, category: `SEC ${v.section || '40A(3)'}`,
-      title: `${v.party} — ${amt} ${v.type === 'cash_receipt' ? 'received' : 'paid'} in cash`,
-      detail: `Date: ${v.date}. ${v.issue || ''}`,
-      alert: v.impact || null,
-      status: 'pending', reply: '', aiReply: ''
-    });
-  });
-
-  // 3. Outstanding / abnormal balances
-  // Fields: type, ledger, amount, question, severity
+  // 2. Outstanding / abnormal balances
   (data.outstanding || []).forEach(o => {
     const sev = o.severity === 'Critical' ? 'critical' : 'important';
-    const amt = o.amount ? `₹${Number(o.amount).toLocaleString('en-IN')}` : '';
     queries.push({
       id: id++, severity: sev, category: 'BALANCE',
       title: `${o.ledger} — ${o.type ? o.type.replace(/_/g,' ') : 'Abnormal balance'}`,
-      detail: (o.question || `Balance: ${amt}`),
+      detail: o.question || '',
       alert: null,
       status: 'pending', reply: '', aiReply: ''
     });
   });
 
-  // 4. Large expenses
-  // Fields: date, party, amount, question
-  (data.large_expenses || []).slice(0, 6).forEach(e => {
-    const amt = `₹${Number(e.amount).toLocaleString('en-IN')}`;
+  // 3. ITR / Personal expense flags
+  // Fields: ledger, amount, issue, action
+  (data.itr || []).forEach(item => {
+    if (!item.ledger || item.ledger === 'Cash Payments (Sec 40A(3))') return; // skip cash summary line
+    const amt = item.amount ? `₹${Number(item.amount).toLocaleString('en-IN')}` : '';
+    queries.push({
+      id: id++, severity: 'critical', category: 'PERSONAL · ITR',
+      title: `${item.ledger} — ${amt} — possible personal expense`,
+      detail: item.issue || '',
+      alert: item.action || 'If personal: move to Drawings account. Cannot be claimed as business deduction.',
+      status: 'pending', reply: '', aiReply: ''
+    });
+  });
+
+  // 4. Large expenses — grouped by party (show one card per unique party)
+  const expByParty = {};
+  (data.large_expenses || []).forEach(e => {
+    const p = e.party;
+    if (!expByParty[p]) expByParty[p] = { total: 0, count: 0, dates: [], amount: 0 };
+    expByParty[p].total  += e.amount;
+    expByParty[p].count  += 1;
+    expByParty[p].dates.push(e.date);
+    expByParty[p].amount  = e.amount; // last amount (for single entries)
+  });
+  Object.entries(expByParty).forEach(([party, info]) => {
+    const total = `₹${Number(info.total).toLocaleString('en-IN')}`;
+    const multi = info.count > 1 ? `${info.count} payments totalling ${total}` : `${total} on ${info.dates[0]}`;
     queries.push({
       id: id++, severity: 'important', category: 'TDS · BILL',
-      title: `${e.party} — ${amt} paid. Bill & TDS check needed`,
-      detail: e.question || `Date: ${e.date}. Large payment — verify bill/invoice exists and TDS deducted if applicable.`,
-      alert: `Check: 194C (contractor), 194J (professional), 194I (rent), 194H (commission)`,
+      title: `${party} — ${multi}. Bill & TDS check needed`,
+      detail: `Large payment(s) above ₹1L — verify: (1) supporting bill/invoice exists, (2) TDS deducted if applicable.`,
+      alert: `TDS sections to check: 194C (contractor 1%), 194J (professional 10%), 194I (rent 10%), 194H (commission 5%)`,
       status: 'pending', reply: '', aiReply: ''
     });
   });
 
   // 5. Loans
-  // Fields: ledger, group, balance, documents_required, question
   (data.loans || []).forEach(l => {
     const bal = `₹${Number(l.balance || 0).toLocaleString('en-IN')}`;
     queries.push({
       id: id++, severity: 'important', category: 'LOAN',
       title: `${l.ledger} — ${bal} balance`,
-      detail: l.question || `Loan account needs documentation — agreement, interest terms, repayment schedule.`,
+      detail: l.question || 'Loan account needs documentation — agreement, interest terms, repayment schedule.',
       alert: null,
+      status: 'pending', reply: '', aiReply: ''
+    });
+  });
+
+  // 6. Cash violations — grouped by party to avoid 158 individual cards
+  const cashByParty = {};
+  (data.cash_violations || []).forEach(v => {
+    const key = `${v.party}__${v.type}`;
+    if (!cashByParty[key]) cashByParty[key] = { party: v.party, type: v.type, section: v.section, total: 0, count: 0, dates: [] };
+    cashByParty[key].total += v.amount;
+    cashByParty[key].count += 1;
+    cashByParty[key].dates.push(v.date);
+  });
+  Object.values(cashByParty).forEach(g => {
+    const total = `₹${Number(g.total).toLocaleString('en-IN')}`;
+    const verb  = g.type === 'cash_receipt' ? 'received' : 'paid';
+    const multi = g.count > 1 ? `${g.count} transactions totalling ${total}` : total;
+    queries.push({
+      id: id++, severity: 'critical', category: `SEC ${g.section || '40A(3)'}`,
+      title: `${g.party} — ${multi} ${verb}. Verify: cash or bank?`,
+      detail: `Dates: ${g.dates.slice(0,3).join(', ')}${g.count > 3 ? ` + ${g.count-3} more` : ''}. ${g.type === 'cash_receipt' ? 'Sec 269ST: cash receipts above ₹2L are prohibited.' : 'Sec 40A(3): cash payments above ₹10,000 are disallowed.'}`,
+      alert: `If paid via Bank/IMPS/NEFT: reply "paid via bank" to dismiss. If actual cash: ${g.type === 'cash_receipt' ? 'penalty = 100% of amount' : `₹${Number(g.total).toLocaleString('en-IN')} will be disallowed in ITR`}.`,
       status: 'pending', reply: '', aiReply: ''
     });
   });
@@ -2757,6 +2784,14 @@ function showCAGreeting(data) {
   const warn = s.warnings || 0;
   const score = s.score != null ? s.score : '—';
 
+  // Build breakdown for greeting
+  const ledgerCount = (data.ledger_classification || []).length;
+  const cashCount   = (data.cash_violations || []).length;
+  const expCount    = (data.large_expenses || []).length;
+  const loanCount   = (data.loans || []).length;
+  const itrCount    = (data.itr || []).filter(x => x.ledger && x.ledger !== 'Cash Payments (Sec 40A(3))').length;
+  const outCount    = (data.outstanding || []).length;
+
   chat.innerHTML = `<div class="flex gap-2 items-start">
     <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
       <i class="fas fa-robot text-white" style="font-size:11px"></i>
@@ -2764,9 +2799,15 @@ function showCAGreeting(data) {
     <div>
       <div class="bg-white border border-gray-200 rounded-2xl rounded-tl-sm p-4 max-w-xs text-sm text-gray-700 leading-relaxed">
         <div class="font-bold text-gray-800 mb-1">Hello Sagar! 👋</div>
-        I've analysed <strong>${escapeHtml(company)}</strong> for <strong>${escapeHtml(s.period || 'FY 2025-26')}</strong>.<br><br>
-        Found <strong class="text-red-600">${crit} critical issues</strong> and <strong class="text-yellow-600">${warn} warnings</strong>. Compliance score: <strong>${score}/100</strong>.<br><br>
-        I've raised <strong>${caQueries.length} queries</strong> on the left — reply to them or ask me anything here. 👈
+        I've analysed <strong>${escapeHtml(company)}</strong> for <strong>${escapeHtml(s.period || 'FY 2025-26')}</strong>. Score: <strong>${score}/100</strong>.<br><br>
+        Here's what I found:<br>
+        ${ledgerCount ? `• <strong class="text-red-600">${ledgerCount} ledger mis-classifications</strong><br>` : ''}
+        ${outCount    ? `• <strong class="text-red-600">${outCount} abnormal balances</strong><br>` : ''}
+        ${itrCount    ? `• <strong class="text-red-600">${itrCount} possible personal expenses in books</strong><br>` : ''}
+        ${expCount    ? `• <strong class="text-yellow-600">${expCount} large payments need bill + TDS check</strong><br>` : ''}
+        ${loanCount   ? `• <strong class="text-yellow-600">${loanCount} loan accounts need documents</strong><br>` : ''}
+        ${cashCount   ? `• <strong class="text-orange-600">${cashCount} payments flagged — verify cash or bank</strong><br>` : ''}
+        <br>I've raised <strong>${caQueries.length} queries</strong> on the left (grouped by party). Reply to them or ask me anything here. 👈
       </div>
       <div class="text-xs text-gray-400 mt-1 ml-1">Just now</div>
     </div>
