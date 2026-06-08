@@ -67,30 +67,30 @@
   .card-shadow { box-shadow: 0 1px 3px rgba(26,36,56,0.06), 0 4px 16px rgba(26,36,56,0.06); }
   .card-gold-border { border: 1px solid var(--border); border-top: 2px solid var(--gold-500); }
   .stat-card {
-    background: white; border-radius: 14px; padding: 24px;
-    border: 1px solid var(--border-light);
-    box-shadow: 0 1px 3px rgba(26,36,56,0.05), 0 4px 16px rgba(26,36,56,0.05);
+    background: var(--navy-800); border-radius: 14px; padding: 24px;
+    border: 1px solid var(--navy-600);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
   }
 
   /* ── BADGES ──────────────────────────────────────────────────── */
-  .tag-critical { background: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA; font-size:11px; }
-  .tag-review   { background: #FFFBEB; color: #B45309; border: 1px solid #FDE68A; font-size:11px; }
-  .tag-ok       { background: #F0FDF4; color: #15803D; border: 1px solid #BBF7D0; font-size:11px; }
-  .tag-gold     { background: rgba(201,168,76,0.1); color: var(--gold-500); border: 1px solid rgba(201,168,76,0.3); font-size:11px; }
-  .tag-navy     { background: var(--navy-800); color: var(--gold-400); border: 1px solid var(--navy-600); font-size:11px; }
+  .tag-critical { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); font-size:11px; }
+  .tag-review   { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); font-size:11px; }
+  .tag-ok       { background: rgba(52,211,153,0.12); color: #34d399; border: 1px solid rgba(52,211,153,0.3); font-size:11px; }
+  .tag-gold     { background: rgba(201,168,76,0.1); color: var(--gold-400); border: 1px solid rgba(201,168,76,0.3); font-size:11px; }
+  .tag-navy     { background: var(--navy-700); color: var(--gold-400); border: 1px solid var(--navy-500); font-size:11px; }
 
   /* ── COMPLIANCE CARDS ────────────────────────────────────────── */
   .compliance-card { border-left: 3px solid; border-radius: 10px; }
-  .overdue  { border-color: #DC2626; background: #FEF2F2; }
-  .upcoming { border-color: #D97706; background: #FFFBEB; }
-  .done     { border-color: #15803D; background: #F0FDF4; }
+  .overdue  { border-color: #f87171; background: rgba(239,68,68,0.1); }
+  .upcoming { border-color: #fbbf24; background: rgba(245,158,11,0.1); }
+  .done     { border-color: #34d399; background: rgba(52,211,153,0.08); }
 
   /* ── CHAT ────────────────────────────────────────────────────── */
   .chat-bubble-ai   {
-    background: white;
-    border: 1px solid var(--border-light);
+    background: var(--navy-700);
+    border: 1px solid var(--navy-600);
     border-radius: 2px 14px 14px 14px;
-    box-shadow: 0 1px 4px rgba(26,36,56,0.06);
+    color: #e2e8f0;
   }
   .chat-bubble-user {
     background: var(--navy-700);
@@ -103,9 +103,10 @@
 
   /* ── UPLOAD ──────────────────────────────────────────────────── */
   .upload-zone {
-    border: 2px dashed var(--border);
-    background: white;
+    border: 2px dashed var(--navy-500);
+    background: var(--navy-800);
     transition: all 0.25s;
+    color: #94a3b8;
   }
   .upload-zone:hover {
     border-color: var(--gold-500);
@@ -154,20 +155,20 @@
   @keyframes typing { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-7px)} }
   @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 
-  .entry-card { background: white; border-radius: 10px; border: 1px solid var(--border-light); }
+  .entry-card { background: var(--navy-800); border-radius: 10px; border: 1px solid var(--navy-600); color: #e2e8f0; }
   .debit-tag  { background: rgba(30,58,95,0.08); color: var(--navy-500); padding: 2px 10px; border-radius: 99px; font-size: 11.5px; }
   .credit-tag { background: rgba(201,168,76,0.1); color: #8B6914; padding: 2px 10px; border-radius: 99px; font-size: 11.5px; }
 
   /* Drill-down modal */
   .modal-overlay { position:fixed; inset:0; background:rgba(7,14,26,0.7); backdrop-filter:blur(4px); z-index:1000; display:flex; align-items:center; justify-content:center; padding:20px; }
-  .modal-box { background:white; border-radius:16px; width:100%; max-width:760px; max-height:88vh; overflow-y:auto; box-shadow:0 32px 80px rgba(7,14,26,0.3); border: 1px solid var(--border); }
+  .modal-box { background:var(--navy-800); border-radius:16px; width:100%; max-width:760px; max-height:88vh; overflow-y:auto; box-shadow:0 32px 80px rgba(7,14,26,0.8); border: 1px solid var(--navy-600); color:#e2e8f0; }
   .modal-hidden { display:none; }
 
   .je-row { display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:8px; background:var(--navy-800); border: 1px solid var(--navy-600); margin-bottom:6px; }
   .je-row:last-child { margin-bottom:0; }
 
-  .export-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:16px 20px; border-radius:12px; border:1.5px solid var(--border); background:white; cursor:pointer; transition:all 0.2s; min-width:130px; }
-  .export-btn:hover { border-color:var(--gold-500); background:rgba(201,168,76,0.04); }
+  .export-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:16px 20px; border-radius:12px; border:1.5px solid var(--navy-600); background:var(--navy-700); cursor:pointer; transition:all 0.2s; min-width:130px; color:#e2e8f0; }
+  .export-btn:hover { border-color:var(--gold-500); background:rgba(201,168,76,0.08); }
 
   .explain-panel { background:var(--navy-800); border:1px solid var(--navy-600); border-radius:10px; padding:14px 16px; margin-bottom:12px; }
   .drill-section { border-top:1px solid var(--border-light); padding-top:12px; margin-top:12px; }
@@ -179,9 +180,9 @@
 
   /* Header */
   .app-header {
-    background: white;
-    border-bottom: 1px solid var(--border-light);
-    box-shadow: 0 1px 0 var(--border-light);
+    background: var(--navy-800);
+    border-bottom: 1px solid var(--navy-600);
+    box-shadow: 0 1px 0 var(--navy-600);
   }
 </style>
 </head>
@@ -365,8 +366,8 @@
               <i class="fas fa-file-lines text-xs" style="color:var(--gold-400);"></i>
             </div>
           </div>
-          <div class="text-3xl font-bold" style="color:var(--ink);" id="dash-total">0</div>
-          <div class="text-xs mt-1.5" style="color:var(--ink-muted);">Upload to begin</div>
+          <div class="text-3xl font-bold" style="color:#f1f5f9;" id="dash-total">0</div>
+          <div class="text-xs mt-1.5" style="color:#94a3b8;">Upload to begin</div>
         </div>
 
         <div class="stat-card" style="border-top:2px solid #DC2626;">
@@ -2002,7 +2003,7 @@
       <div id="tds-summary-cards" class="grid grid-cols-4 gap-5 mb-6">
         <div class="stat-card" style="border-top:2px solid var(--navy-500);">
           <div class="text-xs font-semibold uppercase tracking-wider mb-3" style="color:var(--ink-muted);">TDS Applicable (FY)</div>
-          <div class="text-3xl font-bold" style="color:var(--ink);" id="tds-total-expected">—</div>
+          <div class="text-3xl font-bold" style="color:#f1f5f9;" id="tds-total-expected">—</div>
           <div class="text-xs mt-1" style="color:var(--ink-muted);">From your daybook</div>
         </div>
         <div class="stat-card" style="border-top:2px solid #DC2626;">
@@ -2017,15 +2018,15 @@
         </div>
         <div class="stat-card" style="border-top:2px solid var(--gold-500);">
           <div class="text-xs font-semibold uppercase tracking-wider mb-3" style="color:var(--ink-muted);">Total Paid to Parties</div>
-          <div class="text-3xl font-bold" style="color:var(--ink);" id="tds-total-paid">—</div>
+          <div class="text-3xl font-bold" style="color:#f1f5f9;" id="tds-total-paid">—</div>
           <div class="text-xs mt-1" style="color:var(--ink-muted);">Payments analysed</div>
         </div>
       </div>
 
       <!-- Real section-wise breakdown — filled by JS -->
       <div class="grid grid-cols-3 gap-5 mb-5">
-        <div class="col-span-2 bg-white rounded-2xl card-shadow p-6" style="border:1px solid var(--border-light);">
-          <h3 class="text-sm font-semibold mb-5" style="color:var(--ink);">Party-wise TDS Obligations</h3>
+        <div class="col-span-2 rounded-2xl p-6" style="background:var(--navy-800);border:1px solid var(--navy-600);">
+          <h3 class="text-sm font-semibold mb-5" style="color:#f1f5f9;">Party-wise TDS Obligations</h3>
           <div id="tds-party-table">
             <div class="flex flex-col items-center py-10 text-center">
               <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style="background:var(--navy-700);">
@@ -2039,8 +2040,8 @@
         </div>
 
         <!-- Interest panel -->
-        <div class="bg-white rounded-2xl card-shadow p-6" style="border:1px solid var(--border-light);">
-          <h3 class="text-sm font-semibold mb-4" style="color:var(--ink);">Interest Exposure</h3>
+        <div class="rounded-2xl p-6" style="background:var(--navy-800);border:1px solid var(--navy-600);">
+          <h3 class="text-sm font-semibold mb-4" style="color:#f1f5f9;">Interest Exposure</h3>
           <div id="tds-interest-panel">
             <div class="text-xs text-center py-8" style="color:var(--ink-muted);">Run audit to calculate</div>
           </div>
@@ -2091,79 +2092,38 @@
         <div class="grid grid-cols-2 gap-6">
 
           <!-- WB PT Slabs -->
-          <div class="bg-white rounded-2xl card-shadow p-6" style="border:1px solid var(--border-light);">
-            <h4 class="font-semibold text-gray-800 mb-1">West Bengal PT Slabs (Per Month)</h4>
-            <p class="text-xs text-gray-400 mb-4">As per WB PT Act — applicable to all salaried employees in Kolkata</p>
+          <div class="rounded-2xl p-6" style="background:var(--navy-800);border:1px solid var(--navy-600);">
+            <h4 class="font-semibold mb-1" style="color:#f1f5f9;">West Bengal PT Slabs (Per Month)</h4>
+            <p class="text-xs mb-4" style="color:#64748b;">As per WB PT Act — applicable to all salaried employees in Kolkata</p>
             <table class="w-full text-sm">
-              <thead><tr class="text-left text-gray-400 border-b border-gray-100 text-xs uppercase">
+              <thead><tr class="text-left text-xs uppercase" style="color:#64748b;border-bottom:1px solid var(--navy-600);">
                 <th class="pb-2 font-medium">Gross Monthly Salary</th>
                 <th class="pb-2 font-medium">PT Per Month</th>
               </tr></thead>
-              <tbody class="divide-y divide-gray-50 text-xs">
-                <tr><td class="py-2.5 text-gray-700">Up to ₹10,000</td><td class="text-green-600 font-semibold">Nil</td></tr>
-                <tr><td class="py-2.5 text-gray-700">₹10,001 – ₹15,000</td><td class="text-gray-800 font-semibold">₹110</td></tr>
-                <tr><td class="py-2.5 text-gray-700">₹15,001 – ₹25,000</td><td class="text-gray-800 font-semibold">₹130</td></tr>
-                <tr><td class="py-2.5 text-gray-700">₹25,001 – ₹40,000</td><td class="text-gray-800 font-semibold">₹150</td></tr>
-                <tr class="bg-blue-50"><td class="py-2.5 text-gray-700 font-medium">Above ₹40,000</td><td class="text-blue-700 font-bold">₹200</td></tr>
+              <tbody class="text-xs" style="divide-color:var(--navy-600);">
+                <tr style="border-bottom:1px solid var(--navy-700);"><td class="py-2.5" style="color:#e2e8f0;">Up to ₹10,000</td><td class="text-green-400 font-semibold">Nil</td></tr>
+                <tr style="border-bottom:1px solid var(--navy-700);"><td class="py-2.5" style="color:#e2e8f0;">₹10,001 – ₹15,000</td><td class="font-semibold" style="color:#f1f5f9;">₹110</td></tr>
+                <tr style="border-bottom:1px solid var(--navy-700);"><td class="py-2.5" style="color:#e2e8f0;">₹15,001 – ₹25,000</td><td class="font-semibold" style="color:#f1f5f9;">₹130</td></tr>
+                <tr style="border-bottom:1px solid var(--navy-700);"><td class="py-2.5" style="color:#e2e8f0;">₹25,001 – ₹40,000</td><td class="font-semibold" style="color:#f1f5f9;">₹150</td></tr>
+                <tr style="background:rgba(96,165,250,0.08);"><td class="py-2.5 font-medium" style="color:#93c5fd;">Above ₹40,000</td><td class="font-bold" style="color:#60a5fa;">₹200</td></tr>
               </tbody>
             </table>
-            <div class="mt-4 bg-teal-50 rounded-xl p-3">
-              <p class="text-xs text-teal-700"><i class="fas fa-info-circle mr-1"></i><strong>Note:</strong> PT is deducted from employee salary each month and deposited to KMC / WB Govt via the Grips portal by the <strong>21st of the following month</strong>. Employer is liable if not deposited.</p>
+            <div class="mt-4 rounded-xl p-3" style="background:rgba(20,184,166,0.1);border:1px solid rgba(20,184,166,0.25);">
+              <p class="text-xs" style="color:#5eead4;"><i class="fas fa-info-circle mr-1"></i><strong>Note:</strong> PT is deducted from employee salary each month and deposited to KMC / WB Govt via the Grips portal by the <strong>21st of the following month</strong>. Employer is liable if not deposited.</p>
             </div>
           </div>
 
-          <!-- Employee-wise PT -->
-          <div class="bg-white rounded-2xl card-shadow p-6" style="border:1px solid var(--border-light);">
-            <h4 class="font-semibold text-gray-800 mb-4">Employee-wise PT — March 2026</h4>
-            <table class="w-full text-sm">
-              <thead><tr class="text-left text-gray-400 border-b border-gray-100 text-xs uppercase">
-                <th class="pb-2 font-medium">Employee</th>
-                <th class="pb-2 font-medium">Gross Salary</th>
-                <th class="pb-2 font-medium">Slab</th>
-                <th class="pb-2 font-medium">PT Due</th>
-              </tr></thead>
-              <tbody class="divide-y divide-gray-50 text-xs">
-                <tr>
-                  <td class="py-2.5 text-gray-700 font-medium">Rahul Sharma</td>
-                  <td class="text-gray-500">₹55,000</td>
-                  <td class="text-gray-400">Above ₹40K</td>
-                  <td class="font-semibold text-gray-800">₹200</td>
-                </tr>
-                <tr>
-                  <td class="py-2.5 text-gray-700 font-medium">Priya Mehta</td>
-                  <td class="text-gray-500">₹38,000</td>
-                  <td class="text-gray-400">₹25K–₹40K</td>
-                  <td class="font-semibold text-gray-800">₹150</td>
-                </tr>
-                <tr>
-                  <td class="py-2.5 text-gray-700 font-medium">Amit Das</td>
-                  <td class="text-gray-500">₹22,000</td>
-                  <td class="text-gray-400">₹15K–₹25K</td>
-                  <td class="font-semibold text-gray-800">₹130</td>
-                </tr>
-                <tr>
-                  <td class="py-2.5 text-gray-700 font-medium">Sunita Roy</td>
-                  <td class="text-gray-500">₹13,500</td>
-                  <td class="text-gray-400">₹10K–₹15K</td>
-                  <td class="font-semibold text-gray-800">₹110</td>
-                </tr>
-                <tr>
-                  <td class="py-2.5 text-gray-700 font-medium">Vikram Ghosh</td>
-                  <td class="text-gray-500">₹48,000</td>
-                  <td class="text-gray-400">Above ₹40K</td>
-                  <td class="font-semibold text-gray-800">₹200</td>
-                </tr>
-                <tr class="bg-blue-50">
-                  <td class="py-2.5 font-bold text-gray-800" colspan="3">Total (5 of 12 shown)</td>
-                  <td class="text-blue-700 font-bold">₹790</td>
-                </tr>
-              </tbody>
-            </table>
+          <!-- Employee-wise PT — real data from audit -->
+          <div class="rounded-2xl p-6" style="background:var(--navy-800);border:1px solid var(--navy-600);">
+            <h4 class="font-semibold mb-4" style="color:#f1f5f9;">Employee-wise PT — from your books</h4>
+            <div id="pt-employee-table">
+              <div class="text-sm py-4" style="color:#94a3b8;">Run Full Audit to see employee PT data</div>
+            </div>
           </div>
         </div>
 
         <!-- PT Journal Entries -->
-        <div class="mt-5 bg-white rounded-2xl card-shadow p-6">
+        <div class="mt-5 rounded-2xl p-6" style="background:var(--navy-800);border:1px solid var(--navy-600);">
           <h4 class="font-semibold text-gray-800 mb-1">Tally Journal Entries for PT — March 2026</h4>
           <p class="text-xs text-gray-400 mb-4">Pass both entries in Tally for correct salary and PT accounting</p>
           <div class="grid grid-cols-2 gap-5">
@@ -3673,6 +3633,37 @@ function renderBankAccounts(accounts) {
 function renderSalaryCompliance(items) {
   const el = document.getElementById('audit-salary-real');
   const badge = document.getElementById('audit-salary-badge');
+
+  // Also populate PT employee table on TDS Analysis page from salary items
+  const ptEl = document.getElementById('pt-employee-table');
+  if (ptEl) {
+    const ptItems = (items||[]).filter(s => s.employee && s.salary);
+    if (ptItems.length) {
+      const totalPT = ptItems.reduce((sum, s) => sum + (s.pt||0), 0);
+      ptEl.innerHTML = `<table class="w-full text-xs">
+        <thead><tr style="border-bottom:1px solid var(--navy-600);color:#64748b;">
+          <th class="pb-2 text-left font-medium">Employee</th>
+          <th class="pb-2 text-left font-medium">Gross Salary</th>
+          <th class="pb-2 text-left font-medium">Slab</th>
+          <th class="pb-2 text-left font-medium">PT Due</th>
+        </tr></thead>
+        <tbody>${ptItems.slice(0,10).map(s=>`
+          <tr style="border-bottom:1px solid var(--navy-700);">
+            <td class="py-2.5 font-medium" style="color:#e2e8f0;">${escapeHtml(s.employee)}</td>
+            <td style="color:#94a3b8;">₹${Number(s.salary).toLocaleString('en-IN')}</td>
+            <td style="color:#64748b;">${escapeHtml(s.slab||'—')}</td>
+            <td class="font-semibold" style="color:#f1f5f9;">₹${s.pt||0}</td>
+          </tr>`).join('')}
+          <tr style="background:rgba(96,165,250,0.08);">
+            <td colspan="3" class="py-2.5 font-bold" style="color:#93c5fd;">${ptItems.length > 10 ? `Top 10 of ${ptItems.length} shown` : `Total (${ptItems.length} employees)`}</td>
+            <td class="font-bold" style="color:#60a5fa;">₹${totalPT.toLocaleString('en-IN')}</td>
+          </tr>
+        </tbody></table>`;
+    } else {
+      ptEl.innerHTML = `<div class="text-sm py-4" style="color:#94a3b8;">No employee salary data found in books — upload daybook with salary entries</div>`;
+    }
+  }
+
   if (!items || !items.length) { if(el) el.innerHTML = _aEmpty('No salary compliance issues'); return; }
   if (badge) badge.textContent = items.length + ' issues';
   const rows = items.map(s => {
