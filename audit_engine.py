@@ -184,41 +184,108 @@ def audit_outstanding(ledgers):
 
 # ── MODULE 3: CASH VIOLATIONS ────────────────────────────────────────────────
 def audit_cash_violations(daybook):
+    """
+    Correctly identifies CASH payments/receipts by checking the actual
+    account used in each voucher — not just the party name.
+
+    Logic:
+    1. Assign a voucher_id to every row (continuation rows inherit from header row)
+    2. For each Payment/Receipt voucher, collect ALL account names across its rows
+    3. If ANY account is a bank/digital account → it's a bank transaction → SKIP
+    4. Only flag vouchers where all accounts are cash/unknown → true cash transaction
+    """
+    if daybook.empty:
+        return []
+
+    BANK_ACCOUNT_KEYWORDS = [
+        'hdfc', 'icici', 'sbi', 'axis', 'kotak', 'yes bank', 'rbl', 'indusind',
+        'federal bank', 'bank of baroda', 'bank of india', 'union bank', 'canara',
+        'pnb', 'punjab national', 'current a/c', 'savings a/c', 'bank account',
+        'zerodha', 'anand rathi', 'tapinvest', 'icici prudential', 'mutual fund',
+        'nps', 'ppf', 'epf', 'neft', 'rtgs', 'upi', 'imps', 'online transfer',
+    ]
+
+    # ── Step 1: assign voucher_id to every row (continuation rows get same id) ──
+    db = daybook.copy().reset_index(drop=True)
+    db['_vid']   = None   # voucher id (running counter)
+    db['_vtype'] = None   # voucher type for this group
+
+    vid = 0
+    current_type = None
+    for idx, row in db.iterrows():
+        vtype = str(row['VchType']).strip() if pd.notna(row['VchType']) else ''
+        vno   = str(row['VchNo']).strip()   if pd.notna(row['VchNo'])   else ''
+
+        is_header = vtype in ['Payment', 'Receipt', 'Journal', 'Contra', 'Sales', 'Purchase']
+        if is_header:
+            vid += 1
+            current_type = vtype
+
+        db.at[idx, '_vid']   = vid
+        db.at[idx, '_vtype'] = current_type
+
+    # ── Step 2: for each Payment/Receipt voucher, collect all account names ──
+    pay_rcpt = db[db['_vtype'].isin(['Payment', 'Receipt'])]
+
+    # Map vid → set of lowercase account names in that voucher
+    vch_accounts = {}
+    for _, row in db[db['_vid'].isin(pay_rcpt['_vid'].unique())].iterrows():
+        v = row['_vid']
+        name = str(row['Particulars']).strip().lower()
+        if v not in vch_accounts:
+            vch_accounts[v] = {'type': row['_vtype'], 'accounts': set()}
+        if name and name != 'nan':
+            vch_accounts[v]['accounts'].add(name)
+
+    # ── Step 3: identify vouchers that use a bank account ──
+    bank_vids = set()
+    for v, info in vch_accounts.items():
+        for acc in info['accounts']:
+            if any(kw in acc for kw in BANK_ACCOUNT_KEYWORDS):
+                bank_vids.add(v)
+                break
+
+    # ── Step 4: flag only true cash vouchers ──
     findings = []
-    bank_keywords = ['hdfc','icici','sbi','axis','kotak','bank','neft','rtgs','upi','imps',
-                     'zerodha','loan','emi','investment','mutual fund','ppf','nps','laddha',
-                     'education','anjali','mridula','arun','manoj','milapchand','sanjay',
-                     'anand rathi','tapinvest','niraj','am mobile','silver spring','anil gupta',
-                     'aikigai','rishikesh','e-biz','icici prudential']
-    cash_vouchers = daybook[daybook['VchType'].isin(['Payment','Receipt'])].copy()
-    cash_vouchers = cash_vouchers[~cash_vouchers['Particulars'].str.lower().str.contains(
-        '|'.join(bank_keywords), na=False
-    )]
-    for _, row in cash_vouchers.iterrows():
-        # Large cash expense (Sec 40A(3))
+    seen = set()  # avoid duplicate flags for same voucher
+
+    for _, row in pay_rcpt.iterrows():
+        v = row['_vid']
+        if v in bank_vids:
+            continue          # bank payment — not a cash violation
+        if v in seen:
+            continue          # already flagged this voucher
+        seen.add(v)
+
+        party  = str(row['Particulars']).strip()
+        date   = str(row['Date'].date()) if pd.notna(row['Date']) else ''
+
+        # Sec 40A(3) — payment > ₹10,000 (verify if cash or bank)
         if row['Debit'] > CASH_EXPENSE_LIMIT:
             findings.append({
                 'severity': 'Critical',
-                'date': str(row['Date'].date()) if pd.notna(row['Date']) else '',
-                'party': row['Particulars'],
+                'date': date,
+                'party': party,
                 'amount': row['Debit'],
                 'type': 'cash_expense',
                 'section': '40A(3)',
-                'issue': f"Cash payment of Rs.{row['Debit']:,.0f} to {row['Particulars']} exceeds Rs.10,000 limit",
-                'impact': f"Rs.{row['Debit']:,.0f} will be disallowed in ITR computation"
+                'issue': f"Payment of Rs.{row['Debit']:,.0f} to {party} — verify payment mode (cash or bank)",
+                'impact': f"If paid in CASH: Rs.{row['Debit']:,.0f} will be disallowed. If paid via Bank/IMPS/NEFT: no violation — reply to dismiss."
             })
-        # Large cash receipt (Sec 269ST)
+
+        # Sec 269ST — receipt > ₹2,00,000 (verify if cash)
         if row['Credit'] > CASH_RECEIPT_LIMIT:
             findings.append({
                 'severity': 'Critical',
-                'date': str(row['Date'].date()) if pd.notna(row['Date']) else '',
-                'party': row['Particulars'],
+                'date': date,
+                'party': party,
                 'amount': row['Credit'],
                 'type': 'cash_receipt',
                 'section': '269ST',
-                'issue': f"Cash receipt of Rs.{row['Credit']:,.0f} from {row['Particulars']} exceeds Rs.2,00,000 limit",
-                'impact': f"Penalty risk = 100% of amount = Rs.{row['Credit']:,.0f}"
+                'issue': f"Receipt of Rs.{row['Credit']:,.0f} from {party} — verify if received in cash",
+                'impact': f"If received in CASH: penalty = 100% of amount = Rs.{row['Credit']:,.0f}. If via bank: no violation — reply to dismiss."
             })
+
     return findings
 
 # ── MODULE 4: LOAN AUDIT ──────────────────────────────────────────────────────
@@ -269,12 +336,9 @@ def audit_itr(ledgers, daybook):
                 'issue': f"'{ledger['name']}' (Rs.{ledger['debit']:,.0f}) may be a personal expense — not deductible as business expense",
                 'action': "Verify — if personal, move to Drawings account"
             })
-    # Disallowed cash payments from Module 3
-    cash_disallowed = sum(
-        r['Debit'] for _, r in daybook[
-            (daybook['VchType']=='Payment') & (daybook['Debit'] > CASH_EXPENSE_LIMIT)
-        ].iterrows()
-    )
+    # Disallowed cash payments — reuse cash_violations to get accurate list
+    cash_violations = audit_cash_violations(daybook)
+    cash_disallowed = sum(v['amount'] for v in cash_violations if v['type'] == 'cash_expense')
     if cash_disallowed > 0:
         findings.append({
             'ledger': 'Cash Payments (Sec 40A(3))',
