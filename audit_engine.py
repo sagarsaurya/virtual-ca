@@ -454,14 +454,14 @@ def audit_bank_accounts(ledgers, transactions=None):
             _add(ledger['name'], bal, 'Dr' if bal >= 0 else 'Cr',
                  ledger['group'], f' [under: {ledger["group"]}]')
 
-    # Pass 3 — Daybook scan: collect unique ledger names from Payment/Receipt vouchers
+    # Pass 3 — Daybook scan: collect unique ledger names from Payment/Receipt/Contra vouchers
     if transactions:
         for txn in transactions:
-            vtype = str(txn.get('voucher_type', '')).lower()
+            vtype = str(txn.get('VchType', '')).strip().lower()
             if vtype not in ('payment', 'receipt', 'contra'):
                 continue
-            party = str(txn.get('party', '') or '').strip()
-            if not party or party in seen:
+            party = str(txn.get('Particulars', '') or '').strip()
+            if not party or party in seen or party.lower() in ('nan', ''):
                 continue
             n = party.lower()
             if _is_real_bank(n):
@@ -472,7 +472,7 @@ def audit_bank_accounts(ledgers, transactions=None):
                     _add(party, bal, 'Dr' if bal >= 0 else 'Cr',
                          tb.get('group',''), ' (from daybook)')
                 else:
-                    _add(party, 0, 'Dr', '', ' (found in daybook — not in TB)')
+                    _add(party, 0, 'Dr', '', ' (found in daybook)')
 
     return findings
 
@@ -790,7 +790,9 @@ def run_full_audit(tb_path, db_path=None):
     results['itr'] = audit_itr(ledgers, daybook)
 
     print("Module 7: Bank Account Detection...")
-    results['bank_accounts'] = audit_bank_accounts(ledgers, transactions)
+    # Convert daybook DataFrame to list of dicts for bank scanning
+    txn_list = daybook.to_dict('records') if not daybook.empty else []
+    results['bank_accounts'] = audit_bank_accounts(ledgers, txn_list)
 
     print("Module 8: TDS Compliance...")
     results['tds_compliance'] = audit_tds_compliance(ledgers, daybook)
