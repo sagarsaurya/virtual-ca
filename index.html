@@ -210,14 +210,19 @@
         <h2 id="pageTitle" class="text-lg font-semibold text-gray-800">Dashboard</h2>
         <p id="pageSubtitle" class="text-xs text-gray-500">Welcome back, Sagar</p>
       </div>
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-3">
+        <!-- Global files status pill — shown when files are saved -->
+        <div id="headerFilesStatus" class="hidden items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-1.5 cursor-pointer hover:bg-green-100 transition" onclick="showPage('upload')" title="Click to manage files">
+          <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+          <span class="text-xs font-semibold text-green-700" id="headerFilesLabel">Files loaded</span>
+        </div>
         <button class="relative p-2 rounded-xl hover:bg-gray-100">
           <i class="fas fa-bell text-gray-500"></i>
           <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
         </button>
         <div class="text-sm text-gray-500">FY 2025–26</div>
         <button onclick="showPage('upload')" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-blue-700 transition">
-          <i class="fas fa-plus mr-2"></i>New Analysis
+          <i class="fas fa-plus mr-2"></i>Upload Files
         </button>
       </div>
     </div>
@@ -322,31 +327,65 @@
 
     <!-- ===== UPLOAD PAGE ===== -->
     <div id="page-upload" class="page p-8">
-      <div class="max-w-2xl mx-auto">
+      <div class="max-w-3xl mx-auto">
 
-        <!-- STEP 1: Main upload zone (always visible first) -->
+        <!-- Global Files Status Bar -->
+        <div id="globalFilesBar" class="hidden mb-6 bg-green-50 border border-green-200 rounded-2xl px-5 py-4">
+          <div class="flex items-center justify-between flex-wrap gap-3">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                <i class="fas fa-check text-white text-xs"></i>
+              </div>
+              <div>
+                <div class="text-sm font-bold text-green-800">Files Loaded — Ready to Analyse</div>
+                <div class="text-xs text-green-600 mt-0.5" id="globalFilesDetail">—</div>
+              </div>
+            </div>
+            <button onclick="runSavedAudit()" class="bg-green-600 hover:bg-green-700 text-white text-sm font-bold px-5 py-2 rounded-xl transition">
+              <i class="fas fa-play mr-1.5"></i>Run Full Audit
+            </button>
+          </div>
+        </div>
+
         <div id="uploadStep1" class="bg-white rounded-2xl card-shadow p-8">
 
           <!-- Header -->
           <div class="mb-6">
-            <h3 class="text-xl font-bold text-gray-800 mb-1">Upload Trial Balance</h3>
-            <p class="text-gray-400 text-sm">Upload your Tally export — we'll audit all ledgers and flag errors in seconds.</p>
+            <h3 class="text-xl font-bold text-gray-800 mb-1">Upload Your Files</h3>
+            <p class="text-gray-400 text-sm">Upload once — both files are saved and used automatically across all features (Full Audit, Ask Your CA, Bank Rec, TDS Analysis).</p>
           </div>
 
-          <!-- Drop zone -->
-          <label class="upload-zone rounded-2xl p-12 text-center cursor-pointer mb-5 block" for="uploadFileInput">
-            <div class="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-4">
-              <i class="fas fa-file-excel text-green-500 text-3xl"></i>
-            </div>
-            <p class="text-gray-800 font-semibold text-base mb-1">Drop your Trial Balance here</p>
-            <p class="text-gray-400 text-sm mb-2" id="uploadFileName">or click to browse from your computer</p>
-            <input type="file" id="uploadFileInput" accept=".xlsx,.xls" class="hidden"
-              onchange="document.getElementById('uploadFileName').textContent = this.files[0]?.name || 'or click to browse'; document.getElementById('uploadRunBtn').classList.remove('hidden');">
-            <span class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition">Choose File</span>
-            <p class="text-xs text-gray-400 mt-4">Trial Balance .xlsx from Tally &nbsp;·&nbsp; Max 10MB</p>
-          </label>
-          <button id="uploadRunBtn" onclick="simulateUpload()" class="hidden w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-2xl text-sm font-bold transition mb-5">
-            <i class="fas fa-play mr-2"></i>Run Audit on this file
+          <!-- Two drop zones -->
+          <div class="grid grid-cols-2 gap-4 mb-5">
+            <!-- Trial Balance zone -->
+            <label class="upload-zone rounded-2xl p-6 text-center cursor-pointer block relative" for="uploadFileInput">
+              <div id="tbSavedBadge" class="hidden absolute top-2 right-2 bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">✓ Saved</div>
+              <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mx-auto mb-3">
+                <i class="fas fa-file-excel text-green-500 text-2xl"></i>
+              </div>
+              <p class="text-gray-800 font-semibold text-sm mb-1">Trial Balance</p>
+              <p class="text-gray-400 text-xs mb-3" id="uploadFileName">Click to browse</p>
+              <input type="file" id="uploadFileInput" accept=".xlsx,.xls" class="hidden" onchange="onTBSelected(this)">
+              <span class="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold">Choose File</span>
+              <p class="text-xs text-gray-400 mt-3">Tally TB .xlsx</p>
+            </label>
+            <!-- Daybook zone -->
+            <label class="upload-zone rounded-2xl p-6 text-center cursor-pointer block relative" for="uploadDbInput">
+              <div id="dbSavedBadge" class="hidden absolute top-2 right-2 bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">✓ Saved</div>
+              <div class="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center mx-auto mb-3">
+                <i class="fas fa-book text-orange-500 text-2xl"></i>
+              </div>
+              <p class="text-gray-800 font-semibold text-sm mb-1">Daybook</p>
+              <p class="text-gray-400 text-xs mb-3" id="uploadDbName">Click to browse</p>
+              <input type="file" id="uploadDbInput" accept=".xlsx,.xls" class="hidden" onchange="onDBSelected(this)">
+              <span class="bg-orange-500 text-white px-4 py-1.5 rounded-lg text-xs font-semibold">Choose File</span>
+              <p class="text-xs text-gray-400 mt-3">Tally Daybook .xlsx (Alt+F5)</p>
+            </label>
+          </div>
+
+          <!-- Save & Run button -->
+          <button id="uploadRunBtn" onclick="saveAndRunAudit()" class="hidden w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-2xl text-sm font-bold transition mb-5">
+            <i class="fas fa-play mr-2"></i>Save Files &amp; Run Full Audit
           </button>
 
           <!-- How to export from Tally — collapsible -->
@@ -2426,6 +2465,156 @@ function switchTab(tab) {
     active.className='px-5 py-2.5 rounded-xl text-sm font-medium transition '+colors[tab];
   }
 }
+// ── Global file status ────────────────────────────────────────────────────────
+let savedTBFile = null;   // File object selected by user (not yet saved)
+let savedDBFile = null;
+
+function onTBSelected(input) {
+  const f = input.files[0];
+  if (!f) return;
+  savedTBFile = f;
+  document.getElementById('uploadFileName').textContent = f.name;
+  document.getElementById('uploadRunBtn').classList.remove('hidden');
+}
+
+function onDBSelected(input) {
+  const f = input.files[0];
+  if (!f) return;
+  savedDBFile = f;
+  document.getElementById('uploadDbName').textContent = f.name;
+  document.getElementById('uploadRunBtn').classList.remove('hidden');
+}
+
+async function loadFilesStatus() {
+  try {
+    const resp = await fetch(API_BASE + '/api/files/status');
+    if (!resp.ok) return;
+    const meta = await resp.json();
+
+    const tbBar  = document.getElementById('globalFilesBar');
+    const hdr    = document.getElementById('headerFilesStatus');
+    const lbl    = document.getElementById('headerFilesLabel');
+    const tbBadge = document.getElementById('tbSavedBadge');
+    const dbBadge = document.getElementById('dbSavedBadge');
+    const detail = document.getElementById('globalFilesDetail');
+
+    const tbOk = meta.tb_exists && meta.tb;
+    const dbOk = meta.db_exists && meta.db;
+
+    if (tbOk) {
+      tbBadge && tbBadge.classList.remove('hidden');
+      document.getElementById('uploadFileName').textContent = meta.tb.filename;
+    }
+    if (dbOk) {
+      dbBadge && dbBadge.classList.remove('hidden');
+      document.getElementById('uploadDbName').textContent = meta.db.filename;
+    }
+
+    if (tbOk || dbOk) {
+      const parts = [];
+      if (tbOk) parts.push('TB: ' + meta.tb.filename);
+      if (dbOk) parts.push('DB: ' + meta.db.filename);
+      const detailText = parts.join('  ·  ');
+
+      // Show global bar on upload page
+      if (tbBar) { tbBar.classList.remove('hidden'); }
+      if (detail) detail.textContent = detailText;
+
+      // Show header pill everywhere
+      if (hdr) { hdr.classList.remove('hidden'); hdr.style.display = 'flex'; }
+      const count = (tbOk ? 1 : 0) + (dbOk ? 1 : 0);
+      if (lbl) lbl.textContent = count === 2 ? 'TB + DB loaded' : (tbOk ? 'TB loaded' : 'DB loaded');
+
+      // Show Run button if TB loaded
+      if (tbOk) document.getElementById('uploadRunBtn')?.classList.remove('hidden');
+    }
+  } catch(e) { /* ignore */ }
+}
+
+async function runSavedAudit() {
+  // Run audit using already-saved files (no new upload)
+  await runAuditWithFiles(null, null);
+}
+
+async function saveAndRunAudit() {
+  await runAuditWithFiles(savedTBFile, savedDBFile);
+}
+
+async function runAuditWithFiles(tbFile, dbFile) {
+  // Switch to processing screen
+  document.getElementById('uploadStep1').classList.add('hidden');
+  document.getElementById('uploadStep2').classList.remove('hidden');
+
+  const bar      = document.getElementById('progressBar');
+  const text     = document.getElementById('progressText');
+  const title    = document.getElementById('processingTitle');
+  const subtitle = document.getElementById('processingSubtitle');
+  const s1 = document.getElementById('step1');
+  const s2 = document.getElementById('step2');
+  const s3 = document.getElementById('step3');
+
+  s1.classList.remove('opacity-30');
+  s1.querySelector('div').className = 'w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center mx-auto mb-2';
+  s1.querySelector('i').className = 'fas fa-upload text-blue-500';
+
+  let prog = 0;
+  const fakeInterval = setInterval(() => {
+    if (prog < 60) { prog++; bar.style.width = prog + '%'; text.textContent = prog + '%'; }
+    if (prog === 30) {
+      title.textContent = 'Reading ledgers...';
+      subtitle.textContent = 'Running all 9 audit modules';
+      s2.classList.remove('opacity-30');
+      s2.querySelector('div').className = 'w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center mx-auto mb-2';
+      s2.querySelector('i').className = 'fas fa-search text-blue-500';
+    }
+  }, 40);
+
+  try {
+    const fd = new FormData();
+    if (tbFile) fd.append('trial_balance', tbFile);
+    if (dbFile) fd.append('daybook', dbFile);
+    // If no files sent, backend uses saved files automatically
+
+    const resp = await fetch(API_BASE + '/api/audit', { method: 'POST', body: fd });
+    clearInterval(fakeInterval);
+    if (!resp.ok) { throw new Error((await resp.json()).error || await resp.text()); }
+    const data = await resp.json();
+
+    prog = 60;
+    const finishInterval = setInterval(() => {
+      prog += 2; bar.style.width = prog + '%'; text.textContent = prog + '%';
+      if (prog >= 100) {
+        clearInterval(finishInterval);
+        s3.classList.remove('opacity-30');
+        s3.querySelector('div').className = 'w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center mx-auto mb-2';
+        s3.querySelector('i').className = 'fas fa-check text-green-500';
+        title.textContent = 'Audit complete!';
+        const issues = (data.summary?.critical || 0) + (data.summary?.warnings || 0);
+        subtitle.textContent = `Score ${data.summary?.score}/100 — ${issues} issues found`;
+        document.getElementById('processingIcon').style.animation = 'none';
+        document.getElementById('processingIcon').className = 'fas fa-check-circle text-green-500 text-2xl';
+        auditData = data;
+        updateCABanner(data);
+        loadFilesStatus();   // refresh header pill
+        setTimeout(() => {
+          document.getElementById('uploadStep2').classList.add('hidden');
+          showPage('fullaudit');
+          renderAuditResults(data);
+          document.getElementById('auditStep1')?.classList.add('hidden');
+          document.getElementById('auditStep3')?.classList.remove('hidden');
+        }, 800);
+      }
+    }, 20);
+
+  } catch(e) {
+    clearInterval(fakeInterval);
+    document.getElementById('uploadStep2').classList.add('hidden');
+    document.getElementById('uploadStep1').classList.remove('hidden');
+    alert('Audit failed: ' + e.message);
+  }
+}
+
+// Keep old name as alias so any other callers don't break
 async function simulateUpload() {
   const fileInput = document.getElementById('uploadFileInput');
   if (!fileInput || !fileInput.files[0]) {
@@ -3004,6 +3193,7 @@ function clearCAChat() {
 window.addEventListener('load', async () => {
   loadDashboard();
   loadCompliance();
+  loadFilesStatus();   // show saved files status in header + upload page
   // Try to load last audit for CA chat context banner
   try {
     const r = await fetch(API_BASE + '/api/audit/last');

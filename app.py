@@ -20,6 +20,9 @@ os.makedirs(DATA_DIR, exist_ok=True)
 PERSONAL_FILE  = os.path.join(DATA_DIR, 'personal_marks.json')
 HISTORY_FILE   = os.path.join(DATA_DIR, 'audit_history.json')
 RESULT_FILE    = os.path.join(DATA_DIR, 'audit_result.json')
+FILES_META     = os.path.join(DATA_DIR, 'uploaded_files.json')   # tracks what's saved
+CURRENT_TB     = os.path.join(DATA_DIR, 'current_tb.xlsx')       # persistent trial balance
+CURRENT_DB     = os.path.join(DATA_DIR, 'current_db.xlsx')       # persistent daybook
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 def load_personal():
@@ -37,6 +40,14 @@ def load_history():
 
 def save_history(h):
     with open(HISTORY_FILE, 'w') as f: json.dump(h, f, indent=2, default=str)
+
+def load_files_meta():
+    if os.path.exists(FILES_META):
+        with open(FILES_META) as f: return json.load(f)
+    return {}
+
+def save_files_meta(m):
+    with open(FILES_META, 'w') as f: json.dump(m, f, indent=2)
 
 def compute_score(results):
     critical = (
@@ -57,23 +68,93 @@ def compute_score(results):
 def index():
     return send_from_directory('.', 'index.html')
 
+# ── POST /api/upload/files ────────────────────────────────────────────────────
+@app.route('/api/upload/files', methods=['POST'])
+def upload_files():
+    """
+    Saves Trial Balance and/or Daybook permanently on the server.
+    Either or both files can be sent in a single request.
+    Returns current file status after saving.
+    """
+    meta = load_files_meta()
+    saved = []
+
+    tb_file = request.files.get('trial_balance')
+    if tb_file and tb_file.filename:
+        tb_file.save(CURRENT_TB)
+        meta['tb'] = {
+            'filename':    tb_file.filename,
+            'uploaded_at': datetime.datetime.now().isoformat(),
+            'size':        os.path.getsize(CURRENT_TB),
+        }
+        saved.append('trial_balance')
+
+    db_file = request.files.get('daybook')
+    if db_file and db_file.filename:
+        db_file.save(CURRENT_DB)
+        meta['db'] = {
+            'filename':    db_file.filename,
+            'uploaded_at': datetime.datetime.now().isoformat(),
+            'size':        os.path.getsize(CURRENT_DB),
+        }
+        saved.append('daybook')
+
+    if not saved:
+        return jsonify({'error': 'No files received'}), 400
+
+    save_files_meta(meta)
+    return jsonify({'saved': saved, 'status': meta})
+
+
+# ── GET /api/files/status ─────────────────────────────────────────────────────
+@app.route('/api/files/status', methods=['GET'])
+def files_status():
+    """Returns what files are currently saved on the server."""
+    meta = load_files_meta()
+    meta['tb_exists'] = os.path.exists(CURRENT_TB)
+    meta['db_exists'] = os.path.exists(CURRENT_DB)
+    return jsonify(meta)
+
+
 # ── POST /api/audit ───────────────────────────────────────────────────────────
 @app.route('/api/audit', methods=['POST'])
 def run_audit():
-    if 'trial_balance' not in request.files:
-        return jsonify({'error': 'trial_balance file required'}), 400
+    tb_file = request.files.get('trial_balance')
+    db_file = request.files.get('daybook')
 
-    tb_file  = request.files['trial_balance']
-    db_file  = request.files.get('daybook')
-    tb_name  = tb_file.filename
+    # ── use newly uploaded files, or fall back to saved files ──
+    tb_path  = None
+    db_path  = None
+    tb_name  = ''
+    tmp_tb   = None
+    tmp_db   = None
 
-    with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as tmp:
-        tb_path = tmp.name; tb_file.save(tb_path)
+    if tb_file and tb_file.filename:
+        # new file sent — save permanently AND use for this audit
+        tb_file.save(CURRENT_TB)
+        meta = load_files_meta()
+        meta['tb'] = {'filename': tb_file.filename,
+                      'uploaded_at': datetime.datetime.now().isoformat(),
+                      'size': os.path.getsize(CURRENT_TB)}
+        save_files_meta(meta)
+        tb_path = CURRENT_TB
+        tb_name = tb_file.filename
+    elif os.path.exists(CURRENT_TB):
+        tb_path = CURRENT_TB
+        tb_name = load_files_meta().get('tb', {}).get('filename', 'trial_balance.xlsx')
+    else:
+        return jsonify({'error': 'No Trial Balance uploaded. Please upload a file first.'}), 400
 
-    db_path = None
-    if db_file:
-        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as tmp:
-            db_path = tmp.name; db_file.save(db_path)
+    if db_file and db_file.filename:
+        db_file.save(CURRENT_DB)
+        meta = load_files_meta()
+        meta['db'] = {'filename': db_file.filename,
+                      'uploaded_at': datetime.datetime.now().isoformat(),
+                      'size': os.path.getsize(CURRENT_DB)}
+        save_files_meta(meta)
+        db_path = CURRENT_DB
+    elif os.path.exists(CURRENT_DB):
+        db_path = CURRENT_DB
 
     try:
         results = run_full_audit(tb_path, db_path)
@@ -122,9 +203,6 @@ def run_audit():
     except Exception as e:
         import traceback; traceback.print_exc()
         return jsonify({'error': str(e)}), 500
-    finally:
-        os.unlink(tb_path)
-        if db_path: os.unlink(db_path)
 
 # ── GET /api/audit/last ───────────────────────────────────────────────────────
 @app.route('/api/audit/last', methods=['GET'])
@@ -267,19 +345,33 @@ def get_personal_marks():
 # ── POST /api/bankrec ─────────────────────────────────────────────────────────
 @app.route('/api/bankrec', methods=['POST'])
 def bank_reconciliation():
-    if 'bank_statement' not in request.files or 'tally_ledger' not in request.files:
-        return jsonify({'error': 'Both bank_statement and tally_ledger files are required'}), 400
+    bs_file = request.files.get('bank_statement')
+    tl_file = request.files.get('tally_ledger')
 
-    bs_file = request.files['bank_statement']
-    tl_file = request.files['tally_ledger']
+    if not bs_file or not bs_file.filename:
+        return jsonify({'error': 'bank_statement file is required'}), 400
 
+    # tally_ledger: use uploaded file OR fall back to saved daybook
     bs_ext = os.path.splitext(bs_file.filename)[1] or '.pdf'
-    tl_ext = os.path.splitext(tl_file.filename)[1] or '.xlsx'
-
     with tempfile.NamedTemporaryFile(suffix=bs_ext, delete=False) as tmp:
         bs_path = tmp.name; bs_file.save(bs_path)
-    with tempfile.NamedTemporaryFile(suffix=tl_ext, delete=False) as tmp:
-        tl_path = tmp.name; tl_file.save(tl_path)
+
+    tl_path     = None
+    tmp_tl      = None
+    tl_filename = ''
+
+    if tl_file and tl_file.filename:
+        tl_ext = os.path.splitext(tl_file.filename)[1] or '.xlsx'
+        with tempfile.NamedTemporaryFile(suffix=tl_ext, delete=False) as tmp:
+            tl_path = tmp.name; tl_file.save(tl_path)
+            tmp_tl  = tl_path
+        tl_filename = tl_file.filename
+    elif os.path.exists(CURRENT_DB):
+        tl_path     = CURRENT_DB
+        tl_filename = load_files_meta().get('db', {}).get('filename', 'daybook.xlsx')
+    else:
+        os.unlink(bs_path)
+        return jsonify({'error': 'No Daybook uploaded. Upload it here or via the Upload page first.'}), 400
 
     try:
         result = run_bankrec(bs_path, tl_path, bs_file.filename)
@@ -289,7 +381,7 @@ def bank_reconciliation():
         return jsonify({'error': str(e)}), 500
     finally:
         os.unlink(bs_path)
-        os.unlink(tl_path)
+        if tmp_tl and os.path.exists(tmp_tl): os.unlink(tmp_tl)
 
 # ── POST /api/ca-chat ─────────────────────────────────────────────────────────
 @app.route('/api/ca-chat', methods=['POST'])
