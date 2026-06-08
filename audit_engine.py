@@ -682,18 +682,22 @@ def run_full_audit(tb_path, db_path=None):
     # Score
     critical = (
         sum(1 for f in results['ledger_classification'] if f['severity']=='Critical') +
-        len(results['cash_violations']) +
         sum(1 for f in results['outstanding'] if f['severity']=='Critical')
     )
+    # Cash violations are UNVERIFIED — count as warnings, not critical
+    cash_violations_count = len(results['cash_violations'])
     warnings = (
         sum(1 for f in results['ledger_classification'] if f['severity']=='Review') +
-        sum(1 for f in results['outstanding'] if f['severity']=='Review')
+        sum(1 for f in results['outstanding'] if f['severity']=='Review') +
+        cash_violations_count
     )
     tds_critical  = sum(1 for t in results['tds_compliance'] if t.get('severity') == 'Critical')
     salary_issues = sum(1 for s in results['salary_compliance'] if s.get('severity') in ('Critical','Important'))
     questions = len(results['loans']) + len(results['large_expenses']) + len(results['bank_accounts'])
-    score = max(0, 100 - (critical * 8) - (warnings * 3) - (questions * 2)
-                      - (tds_critical * 6) - (salary_issues * 3))
+    # Cash violations: cap penalty at 20 pts (unverified — could be bank payments)
+    cash_penalty = min(20, cash_violations_count)
+    score = max(0, 100 - (critical * 8) - (warnings * 1) - (questions * 2)
+                      - (tds_critical * 6) - (salary_issues * 3) - cash_penalty)
 
     results['summary'] = {
         'company': 'AJAY KUMAR LADDHA',
@@ -703,6 +707,7 @@ def run_full_audit(tb_path, db_path=None):
         'critical': critical,
         'warnings': warnings,
         'questions': questions,
+        'cash_violations_count': cash_violations_count,
         'score': score,
         'generated_at': datetime.now().strftime('%d-%b-%Y %H:%M')
     }
