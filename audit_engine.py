@@ -384,6 +384,10 @@ NOT_A_BANK = [
     'capital', 'salary', 'payable', 'receivable', 'creditor', 'debtor',
     'expense', 'income', 'profit', 'loss', 'reserve', 'drawings',
     'insurance', 'rent', 'interest payable',
+    # Bank-related expenses — NOT actual bank accounts
+    'bank interest', 'bank charges', 'bank od interest', 'bank commission',
+    'bank fee', 'bank penalty', 'bank processing', 'interest received',
+    'interest paid', 'charges', 'processing fee',
 ]
 
 def _is_real_bank(name_lower):
