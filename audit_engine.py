@@ -390,59 +390,89 @@ NOT_A_BANK = [
     'interest paid', 'charges', 'processing fee',
 ]
 
+BANK_NAME_PATTERNS = [
+    'hdfc', 'icici', 'sbi', 'axis bank', 'kotak', 'pnb', 'canara', 'bob',
+    'union bank', 'idbi', 'yes bank', 'indusind', 'rbl', 'federal bank',
+    'current a/c', 'savings a/c', 'current account', 'savings account',
+    'cash credit', 'cc a/c', 'od account', 'overdraft a/c',
+]
+
 def _is_real_bank(name_lower):
-    """
-    Returns True if name looks like an actual bank account.
-    Must contain 'bank' AND not contain disqualifying words.
-    OR must be in a known bank account group (handled separately).
-    """
+    """Returns True if name looks like an actual bank account."""
     if any(bad in name_lower for bad in NOT_A_BANK):
         return False
-    return 'bank' in name_lower
+    # Must contain 'bank' OR a known bank name pattern
+    return 'bank' in name_lower or any(p in name_lower for p in BANK_NAME_PATTERNS)
 
-def audit_bank_accounts(ledgers):
+def audit_bank_accounts(ledgers, transactions=None):
     """
-    Detects bank accounts:
-    1. Ledgers in 'Bank Accounts' or 'Bank OD A/c' group that don't look like non-bank items
-    2. Ledgers in any other group whose name clearly says 'bank' with no disqualifying words
+    Detects bank accounts from THREE sources:
+    1. TB ledgers in 'Bank Accounts' or 'Bank OD A/c' group
+    2. TB ledgers in any group whose name matches bank patterns
+    3. Daybook transactions — unique party/ledger names that look like bank accounts
+       (Payment/Receipt vouchers credit/debit the bank account)
     """
     seen     = set()
     findings = []
 
-    def _add(ledger, note=''):
-        if ledger['name'] in seen:
+    # Build a balance lookup from TB for daybook-discovered banks
+    tb_balance = {l['name']: l for l in ledgers}
+
+    def _add(name, balance=0, dr_cr='Dr', group='', note=''):
+        if name in seen:
             return
-        seen.add(ledger['name'])
-        bal     = ledger['balance']
-        bal_abs = abs(bal)
-        dr_cr   = 'Dr' if bal > 0 else 'Cr'
+        seen.add(name)
+        bal_abs = abs(balance)
         findings.append({
-            'ledger':   ledger['name'],
+            'ledger':   name,
             'balance':  bal_abs,
             'dr_cr':    dr_cr,
-            'debit':    ledger.get('debit', 0),
-            'credit':   ledger.get('credit', 0),
-            'group':    ledger['group'],
+            'debit':    0,
+            'credit':   0,
+            'group':    group,
             'question': (
-                f"Bank account '{ledger['name']}'{note} shows closing balance of "
-                f"Rs.{bal_abs:,.0f} ({dr_cr}) in your books. "
+                f"Bank account '{name}'{note} — balance ₹{bal_abs:,.0f} ({dr_cr}). "
                 f"Please reconcile with the bank statement."
             ),
         })
 
+    # Pass 1 — TB group-based
     for ledger in ledgers:
         n   = ledger['name'].lower()
         grp = ledger['group']
-
         if grp in BANK_GROUPS:
-            # In bank group — include only if it doesn't look like a non-bank item
             if not any(bad in n for bad in NOT_A_BANK):
                 od = ' (OD Account)' if grp == 'Bank OD A/c' else ''
-                _add(ledger, od)
-        else:
-            # In other group — include only if name clearly indicates a bank account
+                bal = ledger['balance']
+                _add(ledger['name'], bal, 'Dr' if bal >= 0 else 'Cr', grp, od)
+
+    # Pass 2 — TB name-based (any group)
+    for ledger in ledgers:
+        n = ledger['name'].lower()
+        if ledger['group'] not in BANK_GROUPS and _is_real_bank(n):
+            bal = ledger['balance']
+            _add(ledger['name'], bal, 'Dr' if bal >= 0 else 'Cr',
+                 ledger['group'], f' [under: {ledger["group"]}]')
+
+    # Pass 3 — Daybook scan: collect unique ledger names from Payment/Receipt vouchers
+    if transactions:
+        for txn in transactions:
+            vtype = str(txn.get('voucher_type', '')).lower()
+            if vtype not in ('payment', 'receipt', 'contra'):
+                continue
+            party = str(txn.get('party', '') or '').strip()
+            if not party or party in seen:
+                continue
+            n = party.lower()
             if _is_real_bank(n):
-                _add(ledger, f' [filed under: {grp}]')
+                # Try to get balance from TB; if not found show 0 with note
+                tb = tb_balance.get(party)
+                if tb:
+                    bal = tb['balance']
+                    _add(party, bal, 'Dr' if bal >= 0 else 'Cr',
+                         tb.get('group',''), ' (from daybook)')
+                else:
+                    _add(party, 0, 'Dr', '', ' (found in daybook — not in TB)')
 
     return findings
 
@@ -760,7 +790,7 @@ def run_full_audit(tb_path, db_path=None):
     results['itr'] = audit_itr(ledgers, daybook)
 
     print("Module 7: Bank Account Detection...")
-    results['bank_accounts'] = audit_bank_accounts(ledgers)
+    results['bank_accounts'] = audit_bank_accounts(ledgers, transactions)
 
     print("Module 8: TDS Compliance...")
     results['tds_compliance'] = audit_tds_compliance(ledgers, daybook)
