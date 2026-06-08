@@ -399,16 +399,16 @@
               <i class="fas fa-shield-halved text-xs" style="color:var(--gold-500);"></i>
             </div>
           </div>
-          <div class="text-3xl font-bold" style="color:var(--ink);" id="dash-score">—</div>
+          <div class="text-3xl font-bold" style="color:#f1f5f9;" id="dash-score">—</div>
           <div class="progress-bar mt-3"><div class="progress-fill" id="dash-score-bar" style="width:0%"></div></div>
         </div>
       </div>
 
       <div class="grid grid-cols-3 gap-5">
         <!-- Recent Analyses -->
-        <div class="col-span-2 bg-white rounded-2xl p-6 card-shadow" style="border:1px solid var(--border-light);">
+        <div class="col-span-2 rounded-2xl p-6" style="background:var(--navy-800);border:1px solid var(--navy-600);">
           <div class="flex items-center justify-between mb-5">
-            <h3 class="text-sm font-semibold" style="color:var(--ink);">Recent Analyses</h3>
+            <h3 class="text-sm font-semibold" style="color:#f1f5f9;">Recent Analyses</h3>
             <button onclick="showPage('history')" class="text-xs font-medium transition" style="color:var(--gold-500);">View all →</button>
           </div>
           <div id="dash-recent-list">
@@ -426,16 +426,16 @@
         </div>
 
         <!-- Compliance -->
-        <div class="bg-white rounded-2xl p-6 card-shadow" style="border:1px solid var(--border-light);">
+        <div class="rounded-2xl p-6" style="background:var(--navy-800);border:1px solid var(--navy-600);">
           <div class="flex items-center justify-between mb-5">
-            <h3 class="text-sm font-semibold" style="color:var(--ink);">Compliance</h3>
+            <h3 class="text-sm font-semibold" style="color:#f1f5f9;">Compliance</h3>
             <span class="text-xs px-2 py-0.5 rounded-full" style="background:var(--navy-700); color:#94a3b8;">0 Due</span>
           </div>
           <div class="flex flex-col items-center justify-center py-8 text-center">
             <i class="fas fa-calendar-check text-2xl mb-2" style="color:var(--cream-200);"></i>
             <div class="text-xs" style="color:var(--ink-muted);">No upcoming deadlines</div>
           </div>
-          <button onclick="showPage('compliance')" class="w-full mt-4 text-xs font-medium py-2 rounded-xl transition" style="border:1px solid var(--border); color:var(--ink-light);">
+          <button onclick="showPage('compliance')" class="w-full mt-4 text-xs font-medium py-2 rounded-xl transition" style="border:1px solid var(--navy-600); color:#94a3b8;">
             View Calendar →
           </button>
         </div>
@@ -1197,21 +1197,21 @@
     <div id="page-askca" class="page" style="height:calc(100vh - 64px); display:none; flex-direction:column; overflow:hidden;">
 
       <!-- Header -->
-      <div class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between flex-shrink-0">
+      <div class="px-6 py-3 flex items-center justify-between flex-shrink-0" style="background:var(--navy-800);border-bottom:1px solid var(--navy-600);">
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,#3b82f6,#7c3aed);">
             <i class="fas fa-robot text-white text-sm"></i>
           </div>
           <div>
-            <div class="font-bold text-gray-800">Ask Your CA <span class="ml-1 text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full font-semibold">AI</span></div>
-            <div id="caHeaderSub" class="text-xs text-gray-400">Upload a Trial Balance to get started</div>
+            <div class="font-bold" style="color:#f1f5f9;">Ask Your CA <span class="ml-1 text-xs px-2 py-0.5 rounded-full font-semibold" style="background:rgba(96,165,250,0.2);color:#60a5fa;">AI</span></div>
+            <div id="caHeaderSub" class="text-xs" style="color:#64748b;">Upload a Trial Balance to get started</div>
           </div>
         </div>
         <div class="flex gap-2">
-          <button onclick="rerunCAQueries()" class="bg-blue-50 text-blue-600 text-xs font-medium px-4 py-2 rounded-xl border border-blue-200 hover:bg-blue-100 transition">
+          <button onclick="rerunCAQueries()" class="text-xs font-medium px-4 py-2 rounded-xl transition" style="background:rgba(96,165,250,0.15);color:#60a5fa;border:1px solid rgba(96,165,250,0.3);">
             <i class="fas fa-sync-alt mr-1"></i>Re-analyse
           </button>
-          <button onclick="showPage('fullaudit')" class="bg-gray-800 text-white text-xs font-medium px-4 py-2 rounded-xl hover:bg-gray-700 transition">
+          <button onclick="showPage('fullaudit')" class="text-xs font-medium px-4 py-2 rounded-xl transition" style="background:var(--navy-700);color:#f1f5f9;border:1px solid var(--navy-500);">
             <i class="fas fa-upload mr-1"></i>Upload Data
           </button>
         </div>
@@ -1221,58 +1221,58 @@
       <div class="flex flex-1 overflow-hidden">
 
         <!-- LEFT: Queries Panel -->
-        <div class="flex flex-col border-r border-gray-200 bg-white" style="width:55%; min-width:0;">
+        <div class="flex flex-col" style="width:55%;min-width:0;border-right:1px solid var(--navy-600);background:var(--navy-900);">
 
           <!-- Summary + filter bar -->
-          <div class="px-4 py-2.5 border-b border-gray-100 bg-gray-50 flex items-center gap-3 flex-shrink-0 flex-wrap">
-            <div id="ca-count-critical" class="flex items-center gap-1.5 bg-red-50 border border-red-200 rounded-lg px-3 py-1.5">
+          <div class="px-4 py-2.5 flex items-center gap-3 flex-shrink-0 flex-wrap" style="border-bottom:1px solid var(--navy-600);background:var(--navy-800);">
+            <div id="ca-count-critical" class="flex items-center gap-1.5 rounded-lg px-3 py-1.5" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);">
               <span class="w-2 h-2 bg-red-500 rounded-full pulse"></span>
-              <span class="text-red-700 font-bold text-xs">0 Critical</span>
+              <span class="font-bold text-xs" style="color:#f87171;">0 Critical</span>
             </div>
-            <div id="ca-count-important" class="flex items-center gap-1.5 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-1.5">
+            <div id="ca-count-important" class="flex items-center gap-1.5 rounded-lg px-3 py-1.5" style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.25);">
               <span class="w-2 h-2 bg-yellow-500 rounded-full"></span>
-              <span class="text-yellow-700 font-bold text-xs">0 Important</span>
+              <span class="font-bold text-xs" style="color:#fbbf24;">0 Important</span>
             </div>
-            <div id="ca-count-info" class="flex items-center gap-1.5 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5">
+            <div id="ca-count-info" class="flex items-center gap-1.5 rounded-lg px-3 py-1.5" style="background:rgba(96,165,250,0.12);border:1px solid rgba(96,165,250,0.25);">
               <span class="w-2 h-2 bg-blue-400 rounded-full"></span>
-              <span class="text-blue-700 font-bold text-xs">0 Info</span>
+              <span class="font-bold text-xs" style="color:#60a5fa;">0 Info</span>
             </div>
             <div class="ml-auto flex gap-1.5">
-              <button onclick="filterCAQueries('all')" id="cafilter-all" class="text-xs bg-blue-600 text-white px-3 py-1 rounded-lg font-medium">All</button>
-              <button onclick="filterCAQueries('critical')" id="cafilter-critical" class="text-xs text-gray-500 bg-white border border-gray-200 px-3 py-1 rounded-lg">🔴 Critical</button>
-              <button onclick="filterCAQueries('pending')" id="cafilter-pending" class="text-xs text-gray-500 bg-white border border-gray-200 px-3 py-1 rounded-lg">⏳ Pending</button>
-              <button onclick="filterCAQueries('resolved')" id="cafilter-resolved" class="text-xs text-gray-500 bg-white border border-gray-200 px-3 py-1 rounded-lg">✅ Done</button>
+              <button onclick="filterCAQueries('all')" id="cafilter-all" class="text-xs px-3 py-1 rounded-lg font-medium" style="background:#3b82f6;color:white;">All</button>
+              <button onclick="filterCAQueries('critical')" id="cafilter-critical" class="text-xs px-3 py-1 rounded-lg" style="color:#94a3b8;background:var(--navy-700);border:1px solid var(--navy-500);">🔴 Critical</button>
+              <button onclick="filterCAQueries('pending')" id="cafilter-pending" class="text-xs px-3 py-1 rounded-lg" style="color:#94a3b8;background:var(--navy-700);border:1px solid var(--navy-500);">⏳ Pending</button>
+              <button onclick="filterCAQueries('resolved')" id="cafilter-resolved" class="text-xs px-3 py-1 rounded-lg" style="color:#94a3b8;background:var(--navy-700);border:1px solid var(--navy-500);">✅ Done</button>
             </div>
           </div>
 
           <!-- Query list -->
           <div id="caQueryList" class="flex-1 overflow-y-auto px-4 py-3 space-y-3">
             <!-- populated by JS -->
-            <div class="flex flex-col items-center justify-center py-16 text-center text-gray-400">
-              <i class="fas fa-robot text-4xl mb-3 text-gray-200"></i>
-              <div class="text-sm font-medium">No queries yet</div>
-              <div class="text-xs mt-1">Upload a Trial Balance or Daybook to generate queries</div>
-              <button onclick="showPage('fullaudit')" class="mt-4 bg-blue-600 text-white text-xs px-4 py-2 rounded-xl">Upload Now</button>
+            <div class="flex flex-col items-center justify-center py-16 text-center">
+              <i class="fas fa-robot text-4xl mb-3" style="color:#1e3a5f;"></i>
+              <div class="text-sm font-medium" style="color:#64748b;">No queries yet</div>
+              <div class="text-xs mt-1" style="color:#475569;">Upload a Trial Balance or Daybook to generate queries</div>
+              <button onclick="showPage('fullaudit')" class="btn-gold mt-4 text-xs px-4 py-2 rounded-xl">Upload Now</button>
             </div>
           </div>
         </div>
 
         <!-- RIGHT: Chat Panel -->
-        <div class="flex flex-col bg-gray-50" style="width:45%; min-width:0;">
+        <div class="flex flex-col" style="width:45%;min-width:0;background:var(--navy-900);">
 
           <!-- Chat header -->
-          <div class="px-4 py-3 bg-white border-b border-gray-200 flex items-center gap-3 flex-shrink-0">
-            <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+          <div class="px-4 py-3 flex items-center gap-3 flex-shrink-0" style="background:var(--navy-800);border-bottom:1px solid var(--navy-600);">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background:linear-gradient(135deg,#3b82f6,#7c3aed);">
               <i class="fas fa-robot text-white text-xs"></i>
             </div>
             <div class="flex-1">
-              <div class="text-sm font-bold text-gray-800">Chat with Your CA</div>
+              <div class="text-sm font-bold" style="color:#f1f5f9;">Chat with Your CA</div>
               <div class="flex items-center gap-1">
                 <span class="w-2 h-2 bg-green-400 rounded-full pulse"></span>
-                <span class="text-xs text-gray-400">Online · Powered by Groq AI</span>
+                <span class="text-xs" style="color:#64748b;">Online · Powered by Groq AI</span>
               </div>
             </div>
-            <button onclick="clearCAChat()" class="text-xs text-gray-400 hover:text-gray-600 transition"><i class="fas fa-trash-alt"></i></button>
+            <button onclick="clearCAChat()" class="text-xs transition" style="color:#475569;"><i class="fas fa-trash-alt"></i></button>
           </div>
 
           <!-- Chat messages -->
@@ -1281,18 +1281,18 @@
           </div>
 
           <!-- Quick chips + input -->
-          <div class="px-4 pb-4 flex-shrink-0 bg-gray-50">
+          <div class="px-4 pb-4 flex-shrink-0" style="background:var(--navy-900);">
             <div class="flex flex-wrap gap-1.5 mb-2">
-              <button onclick="quickAsk('What are my top 3 errors to fix first?')" class="text-xs bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full hover:border-blue-300 hover:text-blue-600 transition">Top 3 errors?</button>
-              <button onclick="quickAsk('How much TDS is pending and what is the interest liability?')" class="text-xs bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full hover:border-blue-300 hover:text-blue-600 transition">TDS pending?</button>
-              <button onclick="quickAsk('Am I ready to file ITR?')" class="text-xs bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full hover:border-blue-300 hover:text-blue-600 transition">Ready to file ITR?</button>
-              <button onclick="quickAsk('Give me all journal entries needed to fix the errors')" class="text-xs bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full hover:border-blue-300 hover:text-blue-600 transition">Fix journal entries?</button>
+              <button onclick="quickAsk('What are my top 3 errors to fix first?')" class="text-xs px-3 py-1.5 rounded-full transition" style="background:var(--navy-700);border:1px solid var(--navy-500);color:#94a3b8;">Top 3 errors?</button>
+              <button onclick="quickAsk('How much TDS is pending and what is the interest liability?')" class="text-xs px-3 py-1.5 rounded-full transition" style="background:var(--navy-700);border:1px solid var(--navy-500);color:#94a3b8;">TDS pending?</button>
+              <button onclick="quickAsk('Am I ready to file ITR?')" class="text-xs px-3 py-1.5 rounded-full transition" style="background:var(--navy-700);border:1px solid var(--navy-500);color:#94a3b8;">Ready to file ITR?</button>
+              <button onclick="quickAsk('Give me all journal entries needed to fix the errors')" class="text-xs px-3 py-1.5 rounded-full transition" style="background:var(--navy-700);border:1px solid var(--navy-500);color:#94a3b8;">Fix journal entries?</button>
             </div>
-            <div class="bg-white rounded-2xl border border-gray-200 p-3 flex items-end gap-3 card-shadow">
+            <div class="rounded-2xl p-3 flex items-end gap-3" style="background:var(--navy-800);border:1px solid var(--navy-600);">
               <textarea id="chatInput" rows="2" placeholder="Ask anything about your books..."
-                class="flex-1 resize-none text-sm text-gray-700 placeholder-gray-400 focus:outline-none"
+                class="flex-1 resize-none text-sm focus:outline-none" style="background:transparent;color:#e2e8f0;"
                 onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
-              <button onclick="sendChat()" class="bg-blue-600 hover:bg-blue-700 text-white w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition">
+              <button onclick="sendChat()" class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition" style="background:#3b82f6;color:white;">
                 <i class="fas fa-paper-plane text-sm"></i>
               </button>
             </div>
@@ -2359,12 +2359,12 @@ async function loadDashboard() {
     const list = document.getElementById('dash-recent-list');
     if (!d.recent || d.recent.length === 0) {
       list.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-center">
-        <div class="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center mb-3">
-          <i class="fas fa-folder-open text-gray-300 text-2xl"></i>
+        <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-3" style="background:var(--navy-700);">
+          <i class="fas fa-folder-open text-2xl" style="color:#475569;"></i>
         </div>
-        <div class="text-sm font-medium text-gray-400">No audits yet</div>
-        <div class="text-xs text-gray-300 mt-1">Run Full Audit to see results here</div>
-        <button onclick="showPage('fullaudit')" class="mt-4 bg-orange-500 text-white text-xs px-4 py-2 rounded-xl font-semibold hover:bg-orange-600 transition">Run Full Audit</button>
+        <div class="text-sm font-medium" style="color:#94a3b8;">No audits yet</div>
+        <div class="text-xs mt-1" style="color:#475569;">Run Full Audit to see results here</div>
+        <button onclick="showPage('fullaudit')" class="btn-gold mt-4 text-xs px-4 py-2 rounded-xl font-semibold">Run Full Audit</button>
       </div>`;
       return;
     }
@@ -2373,16 +2373,16 @@ async function loadDashboard() {
       const tag = a.critical > 0
         ? `<span class="tag-critical text-xs px-2.5 py-1 rounded-full font-medium">${a.critical} Critical</span>`
         : `<span class="tag-ok text-xs px-2.5 py-1 rounded-full font-medium">All Clear</span>`;
-      return `<div class="flex items-center gap-4 p-4 rounded-xl border border-gray-100 hover:border-orange-200 hover:bg-orange-50/30 cursor-pointer transition" onclick="showPage('fullaudit')">
-        <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0">
-          <i class="fas fa-file-excel text-orange-500"></i>
+      return `<div class="flex items-center gap-4 p-4 rounded-xl cursor-pointer transition" style="border:1px solid var(--navy-600);background:var(--navy-700);" onmouseover="this.style.borderColor='var(--gold-500)'" onmouseout="this.style.borderColor='var(--navy-600)'" onclick="showPage('fullaudit')">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(201,168,76,0.15);">
+          <i class="fas fa-file-excel" style="color:var(--gold-400);"></i>
         </div>
         <div class="flex-1">
-          <div class="font-medium text-gray-800 text-sm">${a.filename || 'Trial Balance'}</div>
-          <div class="text-xs text-gray-400 mt-0.5">${dt} ${a.period ? '• ' + a.period : ''}</div>
+          <div class="font-medium text-sm" style="color:#f1f5f9;">${a.filename || 'Trial Balance'}</div>
+          <div class="text-xs mt-0.5" style="color:#64748b;">${dt} ${a.period ? '• ' + a.period : ''}</div>
         </div>
         <div class="flex items-center gap-2">${tag}</div>
-        <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
+        <i class="fas fa-chevron-right text-sm" style="color:#475569;"></i>
       </div>`;
     }).join('') + '</div>';
   } catch(e) { /* backend not running */ }
