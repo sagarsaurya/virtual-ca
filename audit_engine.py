@@ -67,7 +67,7 @@ def parse_trial_balance(filepath):
         'Capital Account','Loans (Liability)','Current Liabilities','Duties & Taxes',
         'Sundry Creditors','Fixed Assets','Investments','Current Assets',
         'Deposits (Asset)','Loans & Advances (Asset)','Sundry Debtors',
-        'Cash-in-Hand','Bank Accounts','Direct Incomes','Direct Expenses',
+        'Cash-in-Hand','Bank Accounts','Bank OD A/c','Direct Incomes','Direct Expenses',
         'Indirect Incomes','Indirect Expenses','Suspense A/c','Suspense'
     ]
     for _, row in df.iterrows():
@@ -369,29 +369,62 @@ def audit_itr(ledgers, daybook):
     return findings
 
 # ── MODULE 7: BANK ACCOUNT DETECTION ─────────────────────────────────────────
+BANK_KEYWORDS = [
+    'hdfc', 'icici', 'sbi', 'axis', 'kotak', 'pnb', 'canara', 'bob', 'bank of baroda',
+    'union bank', 'idbi', 'yes bank', 'indusind', 'rbl', 'federal', 'karnataka bank',
+    'bank', 'current a/c', 'savings a/c', 'current account', 'savings account',
+    'od a/c', 'overdraft', 'cash credit', 'cc a/c',
+]
+
+NON_BANK_IN_BANK_GROUP = [
+    # keywords that indicate mis-classified ledgers placed under Bank Accounts
+    'tax', 'tds', 'gst', 'income tax', 'vat', 'duty', 'duties',
+    'investment', 'deposit', 'fd', 'fixed deposit', 'mutual fund', 'shares',
+    'loan', 'advance', 'receivable', 'payable', 'creditor', 'debtor',
+    'capital', 'reserve', 'profit', 'loss', 'salary', 'expense', 'income',
+    'redemption', 'interest receivable',
+]
+
 def audit_bank_accounts(ledgers):
     """
     Detects all bank accounts from the trial balance.
-    Returns one item per bank account asking user to upload statement.
+    Includes both 'Bank Accounts' and 'Bank OD A/c' groups.
+    Skips ledgers that look mis-classified (e.g. TDS, investments placed under Bank Accounts).
     """
     findings = []
     for ledger in ledgers:
-        if ledger['group'] == 'Bank Accounts':
-            bal     = ledger['balance']
-            bal_abs = abs(bal)
-            dr_cr   = 'Dr' if bal > 0 else 'Cr'
-            findings.append({
-                'ledger':   ledger['name'],
-                'balance':  bal_abs,
-                'dr_cr':    dr_cr,
-                'debit':    ledger['debit'],
-                'credit':   ledger['credit'],
-                'question': (
-                    f"Bank account '{ledger['name']}' shows closing balance of "
-                    f"Rs.{bal_abs:,.0f} ({dr_cr}) in your books. "
-                    f"Please upload the bank statement to reconcile and verify this balance."
-                ),
-            })
+        grp = ledger['group']
+        if grp not in ('Bank Accounts', 'Bank OD A/c'):
+            continue
+
+        name_lower = ledger['name'].lower()
+
+        # Skip clearly mis-classified ledgers (tax, investments etc. placed in bank group)
+        looks_wrong = any(kw in name_lower for kw in NON_BANK_IN_BANK_GROUP)
+        # But keep if it also has a bank keyword (e.g. "Bank Tax Savings A/c" is still a bank)
+        looks_bank  = any(kw in name_lower for kw in BANK_KEYWORDS)
+
+        if looks_wrong and not looks_bank:
+            # Flag as misclassification instead — don't show as bank account
+            continue
+
+        bal     = ledger['balance']
+        bal_abs = abs(bal)
+        dr_cr   = 'Dr' if bal > 0 else 'Cr'
+        od_note = ' (OD Account)' if grp == 'Bank OD A/c' else ''
+        findings.append({
+            'ledger':   ledger['name'],
+            'balance':  bal_abs,
+            'dr_cr':    dr_cr,
+            'debit':    ledger['debit'],
+            'credit':   ledger['credit'],
+            'group':    grp,
+            'question': (
+                f"Bank account '{ledger['name']}'{od_note} shows closing balance of "
+                f"Rs.{bal_abs:,.0f} ({dr_cr}) in your books. "
+                f"Please upload the bank statement to reconcile and verify this balance."
+            ),
+        })
     return findings
 
 
