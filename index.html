@@ -33,13 +33,13 @@
   .font-display { font-family: 'Playfair Display', serif; }
 
   /* ── LAYOUT ──────────────────────────────────────────────────── */
-  body { background: var(--cream-50); }
+  body { background: var(--navy-900); }
   .sidebar {
     width: 256px; min-height: 100vh;
     background: var(--navy-800);
     border-right: 1px solid var(--navy-600);
   }
-  .main-content { flex: 1; background: var(--cream-50); min-height: 100vh; }
+  .main-content { flex: 1; background: var(--navy-900); min-height: 100vh; }
   .page { display: none; }
   .page.active { display: block; }
 
@@ -126,13 +126,13 @@
   .btn-gold:hover { background: var(--gold-400); }
 
   /* ── PROGRESS ────────────────────────────────────────────────── */
-  .progress-bar { height: 5px; background: var(--cream-200); border-radius: 99px; overflow: hidden; }
+  .progress-bar { height: 5px; background: var(--navy-700); border-radius: 99px; overflow: hidden; }
   .progress-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--gold-500), var(--gold-300)); }
 
   /* ── SCROLLBAR ───────────────────────────────────────────────── */
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--cream-200); border-radius: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--navy-600); border-radius: 10px; }
 
   /* ── LOGIN ───────────────────────────────────────────────────── */
   .login-page {
@@ -163,13 +163,13 @@
   .modal-box { background:white; border-radius:16px; width:100%; max-width:760px; max-height:88vh; overflow-y:auto; box-shadow:0 32px 80px rgba(7,14,26,0.3); border: 1px solid var(--border); }
   .modal-hidden { display:none; }
 
-  .je-row { display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:8px; background:var(--cream-50); border: 1px solid var(--border-light); margin-bottom:6px; }
+  .je-row { display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:8px; background:var(--navy-800); border: 1px solid var(--navy-600); margin-bottom:6px; }
   .je-row:last-child { margin-bottom:0; }
 
   .export-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:16px 20px; border-radius:12px; border:1.5px solid var(--border); background:white; cursor:pointer; transition:all 0.2s; min-width:130px; }
   .export-btn:hover { border-color:var(--gold-500); background:rgba(201,168,76,0.04); }
 
-  .explain-panel { background:var(--cream-50); border:1px solid var(--border-light); border-radius:10px; padding:14px 16px; margin-bottom:12px; }
+  .explain-panel { background:var(--navy-800); border:1px solid var(--navy-600); border-radius:10px; padding:14px 16px; margin-bottom:12px; }
   .drill-section { border-top:1px solid var(--border-light); padding-top:12px; margin-top:12px; }
 
   /* Score ring colors */
@@ -185,7 +185,7 @@
   }
 </style>
 </head>
-<body class="bg-gray-100">
+<body>
 
 <!-- ======================== LOGIN PAGE ======================== -->
 <div id="loginPage" class="login-page min-h-screen flex items-center justify-center p-4">
@@ -345,7 +345,7 @@
           <i class="fas fa-bell text-sm" style="color:var(--ink-muted);"></i>
           <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
         </button>
-        <div class="text-xs font-medium px-3 py-1.5 rounded-lg" style="background:var(--cream-100); color:var(--ink-light); border:1px solid var(--border);">FY 2025–26</div>
+        <div class="text-xs font-medium px-3 py-1.5 rounded-lg" style="background:var(--navy-700); color:#94a3b8; border:1px solid var(--navy-600);">FY 2025–26</div>
         <button onclick="showPage('fullaudit')" class="btn-gold px-4 py-2 rounded-xl text-sm">
           <i class="fas fa-arrow-up-from-bracket mr-2"></i>Upload Files
         </button>
@@ -412,7 +412,7 @@
           </div>
           <div id="dash-recent-list">
             <div class="flex flex-col items-center justify-center py-12 text-center">
-              <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style="background:var(--cream-100);">
+              <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style="background:var(--navy-700);">
                 <i class="fas fa-folder-open text-sm" style="color:var(--ink-muted);"></i>
               </div>
               <div class="text-sm font-medium" style="color:var(--ink-light);">No audits yet</div>
@@ -428,7 +428,7 @@
         <div class="bg-white rounded-2xl p-6 card-shadow" style="border:1px solid var(--border-light);">
           <div class="flex items-center justify-between mb-5">
             <h3 class="text-sm font-semibold" style="color:var(--ink);">Compliance</h3>
-            <span class="text-xs px-2 py-0.5 rounded-full" style="background:var(--cream-100); color:var(--ink-muted);">0 Due</span>
+            <span class="text-xs px-2 py-0.5 rounded-full" style="background:var(--navy-700); color:#94a3b8;">0 Due</span>
           </div>
           <div class="flex flex-col items-center justify-center py-8 text-center">
             <i class="fas fa-calendar-check text-2xl mb-2" style="color:var(--cream-200);"></i>
@@ -2028,7 +2028,7 @@
           <h3 class="text-sm font-semibold mb-5" style="color:var(--ink);">Party-wise TDS Obligations</h3>
           <div id="tds-party-table">
             <div class="flex flex-col items-center py-10 text-center">
-              <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style="background:var(--cream-100);">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style="background:var(--navy-700);">
                 <i class="fas fa-file-invoice text-sm" style="color:var(--ink-muted);"></i>
               </div>
               <div class="text-sm font-medium" style="color:var(--ink-light);">No audit data yet</div>
@@ -2044,7 +2044,7 @@
           <div id="tds-interest-panel">
             <div class="text-xs text-center py-8" style="color:var(--ink-muted);">Run audit to calculate</div>
           </div>
-          <div class="mt-4 rounded-xl p-3 text-xs" style="background:var(--cream-50); border:1px solid var(--border-light); color:var(--ink-muted);">
+          <div class="mt-4 rounded-xl p-3 text-xs" style="background:var(--navy-800); border:1px solid var(--navy-600); color:#94a3b8;">
             Rate: 1% for non-deduction · 1.5%/month for non-deposit
           </div>
         </div>
