@@ -507,6 +507,43 @@ def audit_tds_compliance(ledgers, daybook):
                         })
                     break   # matched one rule — don't double-flag
 
+    # ── A2. Trial Balance expense ledger scan ────────────────────────────────
+    # Party-name scan above only catches if party name contains keywords.
+    # This scan catches expense ledger names (e.g., "Office Rent Paid", "Professional Charges")
+    already_flagged = set(f['party'] for f in findings)
+    for ledger in ledgers:
+        n    = ledger['name'].lower()
+        bal  = abs(ledger.get('debit', 0) or ledger.get('balance', 0))
+        name = ledger['name']
+        if name in already_flagged:
+            continue
+        for rule in TDS_RULES_CONFIG:
+            if any(kw in n for kw in rule['keywords']):
+                if bal > rule['annual_limit']:
+                    tds_expected = round(bal * rule['rate'] / 100, 0)
+                    interest     = round(tds_expected * 0.015 * 12, 0)
+                    findings.append({
+                        'party':        name,
+                        'section':      rule['section'],
+                        'description':  rule['description'],
+                        'total_paid':   bal,
+                        'rate':         rule['rate'],
+                        'tds_expected': tds_expected,
+                        'interest_est': interest,
+                        'type':         'payment_check',
+                        'severity':     'Critical',
+                        'issue': (
+                            f"Expense ledger '{name}' = Rs.{bal:,.0f}. "
+                            f"TDS under Sec {rule['section']} ({rule['description']}) @ "
+                            f"{rule['rate']}% — TDS should be Rs.{tds_expected:,.0f}."
+                        ),
+                        'impact': (
+                            f"Verify TDS was deducted at source. If not: interest @ 1.5%/month. "
+                            f"Estimated exposure = Rs.{interest:,.0f}."
+                        ),
+                    })
+                    break
+
     # ── B. TDS ledger balance check ──────────────────────────────────────────
     # Find total professional + contractor payments
     tds_bal = 0
