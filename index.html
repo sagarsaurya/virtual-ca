@@ -2591,12 +2591,13 @@ function renderCAQueries() {
         <i class="fas fa-check-circle mr-1"></i>${escapeHtml(q.aiReply || 'Marked resolved.')}
       </div>` : `
       <div class="mt-3 flex gap-2">
-        <input type="text" id="qreply-${q.id}" placeholder="Reply to this query..."
+        <input type="text" id="qreply-${q.id}" placeholder="Confirm action taken (e.g. 'TDS paid, challan attached')..."
           class="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-400"
           onkeydown="if(event.key==='Enter') replyToQuery(${q.id})">
         <button onclick="replyToQuery(${q.id})" class="bg-blue-500 text-white text-xs px-3 py-2 rounded-lg font-medium hover:bg-blue-600 transition">Reply</button>
         <button onclick="askAboutQuery(${q.id})" class="bg-gray-100 text-gray-600 text-xs px-3 py-2 rounded-lg font-medium hover:bg-gray-200 transition" title="Ask CA about this"><i class="fas fa-comment-dots"></i></button>
-      </div>`;
+      </div>
+      <div class="text-xs text-gray-400 mt-1 ml-1">💡 Type a confirmation to mark Done · Type a question to send to chat</div>`;
 
     return `<div class="bg-white rounded-xl border border-gray-100 overflow-hidden ${opacity}" style="border-left:4px solid ${borderColor}; margin-bottom:10px;">
       <div class="px-4 py-3">
@@ -2651,6 +2652,15 @@ async function replyToQuery(id) {
   const reply = inp ? inp.value.trim() : '';
   if (!reply) return;
 
+  // If it looks like a question → send to chat instead of resolving
+  const isQuestion = reply.endsWith('?') || /^(what|how|why|when|who|where|can|is|are|do|should|will|does)\b/i.test(reply);
+  if (isQuestion) {
+    document.getElementById('chatInput').value = `About query #${id} (${q.title}): ${reply}`;
+    sendChat();
+    if (inp) inp.value = '';
+    return;
+  }
+
   q.reply = reply;
   q.status = 'resolved';
 
@@ -2660,7 +2670,7 @@ async function replyToQuery(id) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        message: `Query #${id}: "${q.title}" — User replied: "${reply}". Acknowledge in 1-2 sentences and confirm if resolved or if more info needed.`,
+        message: `Query #${id}: "${q.title}" — User confirmed: "${reply}". Acknowledge in 1-2 sentences. If they've resolved it, confirm. If they need to do something in Tally, tell them the exact step.`,
         history: []
       })
     });
