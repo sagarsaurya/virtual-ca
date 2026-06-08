@@ -274,10 +274,6 @@
         <i class="fas fa-th-large nav-icon w-4 text-sm"></i>
         <span class="nav-label">Dashboard</span>
       </a>
-      <a onclick="showPage('upload')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer mb-0.5">
-        <i class="fas fa-file-arrow-up nav-icon w-4 text-sm"></i>
-        <span class="nav-label">Upload & Analyse</span>
-      </a>
       <a onclick="showPage('history')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer mb-0.5">
         <i class="fas fa-clock-rotate-left nav-icon w-4 text-sm"></i>
         <span class="nav-label">History</span>
@@ -341,7 +337,7 @@
       </div>
       <div class="flex items-center gap-3">
         <!-- Files loaded pill -->
-        <div id="headerFilesStatus" class="hidden items-center gap-2 rounded-xl px-3 py-1.5 cursor-pointer transition" style="background:rgba(201,168,76,0.08); border:1px solid rgba(201,168,76,0.2);" onclick="showPage('upload')" title="Click to manage files">
+        <div id="headerFilesStatus" class="hidden items-center gap-2 rounded-xl px-3 py-1.5 cursor-pointer transition" style="background:rgba(201,168,76,0.08); border:1px solid rgba(201,168,76,0.2);" onclick="showPage('fullaudit')" title="Click to manage files">
           <span class="w-1.5 h-1.5 rounded-full" style="background:var(--gold-500);"></span>
           <span class="text-xs font-semibold" style="color:var(--gold-500);" id="headerFilesLabel">Files loaded</span>
         </div>
@@ -350,7 +346,7 @@
           <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
         </button>
         <div class="text-xs font-medium px-3 py-1.5 rounded-lg" style="background:var(--cream-100); color:var(--ink-light); border:1px solid var(--border);">FY 2025–26</div>
-        <button onclick="showPage('upload')" class="btn-gold px-4 py-2 rounded-xl text-sm">
+        <button onclick="showPage('fullaudit')" class="btn-gold px-4 py-2 rounded-xl text-sm">
           <i class="fas fa-arrow-up-from-bracket mr-2"></i>Upload Files
         </button>
       </div>
@@ -461,8 +457,8 @@
       </div>
     </div>
 
-    <!-- ===== UPLOAD PAGE ===== -->
-    <div id="page-upload" class="page p-8">
+    <!-- Upload page removed — merged into Full Audit page -->
+    <div id="page-upload" class="page p-8 hidden">
       <div class="max-w-3xl mx-auto">
 
         <!-- Global Files Status Bar -->
@@ -1527,152 +1523,89 @@
     <div id="page-fullaudit" class="page p-8">
       <div class="max-w-4xl mx-auto">
 
-        <!-- STEP 1: Pre-audit screen -->
+        <!-- STEP 1: Upload + Run (3 states managed by JS) -->
         <div id="auditStep1">
-          <div class="bg-white rounded-2xl card-shadow p-8 mb-6">
-            <div class="flex items-center gap-4 mb-6">
-              <div class="w-14 h-14 rounded-2xl bg-orange-50 flex items-center justify-center">
-                <i class="fas fa-search-dollar text-orange-500 text-2xl"></i>
+
+          <!-- STATE A: Files already saved (shown when TB+DB exist on server) -->
+          <div id="auditFilesLoaded" class="hidden rounded-2xl mb-4 p-4" style="background:var(--navy-800);border:1px solid var(--border-light);">
+            <div class="flex items-center justify-between flex-wrap gap-3">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.25);">
+                  <i class="fas fa-check text-xs" style="color:var(--gold-400);"></i>
+                </div>
+                <div>
+                  <div class="text-sm font-semibold" style="color:var(--ink);">Files ready</div>
+                  <div class="text-xs mt-0.5" style="color:var(--ink-muted);" id="auditFilesDetail">TB + DB loaded</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="auditShowChangeFiles()" class="text-xs px-3 py-1.5 rounded-lg font-semibold" style="background:var(--navy-700);color:var(--ink-muted);border:1px solid var(--border-light);">
+                  <i class="fas fa-sync-alt mr-1"></i>Change Files
+                </button>
+                <button onclick="runSavedAudit()" class="btn-gold text-sm font-bold px-5 py-2 rounded-xl">
+                  <i class="fas fa-play mr-1.5"></i>Run Full Audit
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- STATE B: Upload drop zones (shown when no saved files, or after "Change Files") -->
+          <div id="auditUploadZones" class="rounded-2xl mb-4 p-6" style="background:var(--navy-800);border:1px solid var(--border-light);">
+            <div class="flex items-center gap-3 mb-5">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(201,168,76,0.15);">
+                <i class="fas fa-file-upload" style="color:var(--gold-400);"></i>
               </div>
               <div>
-                <h3 class="text-xl font-bold text-gray-800">Full CA Audit</h3>
-                <p class="text-gray-400 text-sm">Complete audit — ledgers, TDS, GST, loans, cash violations, outstanding amounts & compliance</p>
+                <div class="font-semibold" style="color:var(--ink);">Upload your Tally files</div>
+                <div class="text-xs" style="color:var(--ink-muted);">Upload once — saved automatically for all features</div>
               </div>
             </div>
 
-            <!-- What will be audited -->
-            <div class="grid grid-cols-3 gap-4 mb-8">
-              <div class="border border-gray-100 rounded-xl p-4">
-                <i class="fas fa-layer-group text-blue-500 mb-2 block"></i>
-                <div class="text-sm font-semibold text-gray-700 mb-1">Ledger Classification</div>
-                <div class="text-xs text-gray-400">20+ rules — wrong groups, misclassifications</div>
-              </div>
-              <div class="border border-gray-100 rounded-xl p-4">
-                <i class="fas fa-money-bill-wave text-red-500 mb-2 block"></i>
-                <div class="text-sm font-semibold text-gray-700 mb-1">Cash Violations</div>
-                <div class="text-xs text-gray-400">Sec 40A(3) >₹10k, Sec 269ST >₹2L, Sec 269SS loans</div>
-              </div>
-              <div class="border border-gray-100 rounded-xl p-4">
-                <i class="fas fa-hourglass-half text-yellow-500 mb-2 block"></i>
-                <div class="text-sm font-semibold text-gray-700 mb-1">Outstanding Amounts</div>
-                <div class="text-xs text-gray-400">Unsettled debtors, creditors, advances, suspense</div>
-              </div>
-              <div class="border border-gray-100 rounded-xl p-4">
-                <i class="fas fa-percentage text-purple-500 mb-2 block"></i>
-                <div class="text-sm font-semibold text-gray-700 mb-1">TDS Audit</div>
-                <div class="text-xs text-gray-400">194C, 194J, 194I, 192 — deducted vs deposited</div>
-              </div>
-              <div class="border border-gray-100 rounded-xl p-4">
-                <i class="fas fa-receipt text-teal-500 mb-2 block"></i>
-                <div class="text-sm font-semibold text-gray-700 mb-1">GST Audit</div>
-                <div class="text-xs text-gray-400">ITC classification, output GST, GSTR mismatch</div>
-              </div>
-              <div class="border border-gray-100 rounded-xl p-4">
-                <i class="fas fa-university text-indigo-500 mb-2 block"></i>
-                <div class="text-sm font-semibold text-gray-700 mb-1">Loan Audit</div>
-                <div class="text-xs text-gray-400">Bank statements required, 269SS/269T compliance</div>
-              </div>
-              <div class="border border-gray-100 rounded-xl p-4">
-                <i class="fas fa-file-invoice text-green-500 mb-2 block"></i>
-                <div class="text-sm font-semibold text-gray-700 mb-1">ITR / Tax Audit</div>
-                <div class="text-xs text-gray-400">Disallowable expenses, capital vs revenue</div>
-              </div>
-              <div class="border border-gray-100 rounded-xl p-4">
-                <i class="fas fa-users text-pink-500 mb-2 block"></i>
-                <div class="text-sm font-semibold text-gray-700 mb-1">Payroll Audit</div>
-                <div class="text-xs text-gray-400">PT (WB slabs), salary TDS, PF compliance</div>
-              </div>
-              <div class="border border-gray-100 rounded-xl p-4">
-                <i class="fas fa-calendar-check text-orange-500 mb-2 block"></i>
-                <div class="text-sm font-semibold text-gray-700 mb-1">Compliance Audit</div>
-                <div class="text-xs text-gray-400">All due dates — TDS, GSTR, PT, ITR, Advance Tax</div>
-              </div>
-            </div>
-
-            <!-- File uploads -->
+            <!-- Two drop zones -->
             <div class="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1">Trial Balance <span class="text-red-500">*</span></label>
-                <label class="flex items-center gap-3 border-2 border-dashed border-gray-200 rounded-xl p-4 cursor-pointer hover:border-orange-400 transition group">
-                  <i class="fas fa-file-excel text-green-500 text-xl"></i>
-                  <div class="flex-1 min-w-0">
-                    <div class="text-sm font-medium text-gray-700 group-hover:text-orange-600" id="tbFileName">Choose file...</div>
-                    <div class="text-xs text-gray-400">Tally Trial Balance (.xlsx)</div>
-                  </div>
-                  <input type="file" accept=".xlsx,.xls" id="auditTBFile" class="hidden"
-                    onchange="document.getElementById('tbFileName').textContent = this.files[0]?.name || 'Choose file...'">
-                </label>
-              </div>
-              <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1">Day Book <span class="text-gray-400 font-normal">(optional but recommended)</span></label>
-                <label class="flex items-center gap-3 border-2 border-dashed border-gray-200 rounded-xl p-4 cursor-pointer hover:border-orange-400 transition group">
-                  <i class="fas fa-file-excel text-green-500 text-xl"></i>
-                  <div class="flex-1 min-w-0">
-                    <div class="text-sm font-medium text-gray-700 group-hover:text-orange-600" id="dbFileName">Choose file...</div>
-                    <div class="text-xs text-gray-400">Tally Day Book (.xlsx)</div>
-                  </div>
-                  <input type="file" accept=".xlsx,.xls" id="auditDBFile" class="hidden"
-                    onchange="document.getElementById('dbFileName').textContent = this.files[0]?.name || 'Choose file...'">
-                </label>
-              </div>
+              <!-- Trial Balance -->
+              <label class="rounded-xl p-5 text-center cursor-pointer block relative transition hover:brightness-110" style="border:2px dashed var(--border-light);background:var(--navy-700);" for="auditTBFile">
+                <i class="fas fa-file-excel text-2xl mb-2 block" style="color:#34d399;"></i>
+                <div class="font-semibold text-sm mb-1" style="color:var(--ink);">Trial Balance</div>
+                <div class="text-xs mb-3" style="color:var(--ink-muted);" id="tbFileName">Click to browse</div>
+                <input type="file" accept=".xlsx,.xls" id="auditTBFile" class="hidden"
+                  onchange="auditOnTBSelected(this)">
+                <span class="text-xs font-semibold px-3 py-1.5 rounded-lg" style="background:rgba(52,211,153,0.15);color:#34d399;">Choose .xlsx</span>
+                <p class="text-xs mt-2" style="color:var(--ink-muted);">Tally → Display → Trial Balance → Alt+E</p>
+              </label>
+              <!-- Daybook -->
+              <label class="rounded-xl p-5 text-center cursor-pointer block relative transition hover:brightness-110" style="border:2px dashed var(--border-light);background:var(--navy-700);" for="auditDBFile">
+                <i class="fas fa-book text-2xl mb-2 block" style="color:#f59e0b;"></i>
+                <div class="font-semibold text-sm mb-1" style="color:var(--ink);">Daybook</div>
+                <div class="text-xs mb-3" style="color:var(--ink-muted);" id="dbFileName">Click to browse</div>
+                <input type="file" accept=".xlsx,.xls" id="auditDBFile" class="hidden"
+                  onchange="auditOnDBSelected(this)">
+                <span class="text-xs font-semibold px-3 py-1.5 rounded-lg" style="background:rgba(245,158,11,0.15);color:#f59e0b;">Choose .xlsx</span>
+                <p class="text-xs mt-2" style="color:var(--ink-muted);">Alt+F5 Detailed → Alt+E → Excel</p>
+              </label>
             </div>
-            <!-- Daybook export instructions -->
-            <div class="mb-5 rounded-xl border border-blue-100 bg-blue-50 overflow-hidden">
-              <button onclick="this.nextElementSibling.classList.toggle('hidden')" class="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-blue-100 transition">
-                <i class="fas fa-info-circle text-blue-500"></i>
-                <span class="text-xs font-semibold text-blue-700">How to export Day Book from Tally (for accurate cash detection)</span>
-                <i class="fas fa-chevron-down text-blue-400 ml-auto text-xs"></i>
+
+            <!-- Tally guide collapsible -->
+            <div class="rounded-xl overflow-hidden mb-4" style="border:1px solid var(--border-light);">
+              <button onclick="this.nextElementSibling.classList.toggle('hidden')" class="w-full flex items-center gap-2 px-4 py-3 text-left transition hover:brightness-110" style="background:var(--navy-700);">
+                <i class="fas fa-info-circle" style="color:var(--gold-400);"></i>
+                <span class="text-xs font-semibold" style="color:var(--ink);">How to export from Tally? (click to expand)</span>
+                <i class="fas fa-chevron-down ml-auto text-xs" style="color:var(--ink-muted);"></i>
               </button>
-              <div class="hidden px-4 pb-4">
-                <!-- Why it matters -->
-                <div class="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3 text-xs text-amber-800">
-                  <i class="fas fa-exclamation-triangle mr-1"></i>
-                  <strong>Why this matters:</strong> Standard Tally daybook export shows only the party name (e.g. "Aakash"), not the payment account (e.g. "ICICI Bank"). Without the account, the app cannot tell if a payment was cash or bank — and may flag bank payments as cash violations incorrectly.
-                </div>
-
-                <!-- Format 1: Detailed -->
-                <div class="mb-3">
-                  <div class="flex items-center gap-2 mb-1.5">
-                    <span class="bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">RECOMMENDED</span>
-                    <span class="text-xs font-bold text-gray-800">Detailed Daybook (shows bank account on each row)</span>
-                  </div>
-                  <ol class="text-xs text-gray-600 space-y-1 ml-2">
-                    <li><span class="font-semibold text-gray-700">1.</span> Gateway of Tally → <strong>Display More Reports → Account Books → Day Book</strong></li>
-                    <li><span class="font-semibold text-gray-700">2.</span> Set date range: <strong>1-Apr-2025 to 31-Mar-2026</strong></li>
-                    <li><span class="font-semibold text-gray-700">3.</span> Press <strong>Alt+F5</strong> (Detailed) — this expands each voucher to show ALL ledger entries including bank/cash account</li>
-                    <li><span class="font-semibold text-gray-700">4.</span> Press <strong>Alt+E → Excel (Spreadsheet)</strong> → Save as .xlsx</li>
-                  </ol>
-                  <div class="mt-2 bg-gray-50 rounded-lg px-3 py-2 text-xs text-gray-600 font-mono">
-                    Example of what you'll see:<br>
-                    <span class="text-green-700">Aakash &nbsp;&nbsp;&nbsp;&nbsp; Payment &nbsp; 26 &nbsp; 70,000</span><br>
-                    <span class="text-blue-700">ICICI Bank &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 70,000</span>
-                    <span class="text-gray-400 ml-1">← app sees this = bank payment ✓</span>
-                  </div>
-                </div>
-
-                <!-- Format 2: Standard -->
-                <div class="border-t border-blue-100 pt-3">
-                  <div class="flex items-center gap-2 mb-1.5">
-                    <span class="bg-gray-400 text-white text-xs font-bold px-2 py-0.5 rounded-full">CURRENT</span>
-                    <span class="text-xs font-bold text-gray-800">Standard Daybook (what you're using now)</span>
-                  </div>
-                  <ol class="text-xs text-gray-600 space-y-1 ml-2">
-                    <li><span class="font-semibold text-gray-700">1.</span> Gateway of Tally → Display More Reports → Account Books → Day Book</li>
-                    <li><span class="font-semibold text-gray-700">2.</span> Set date range → Alt+E → Excel → Save</li>
-                  </ol>
-                  <div class="mt-2 text-xs text-gray-500">
-                    <i class="fas fa-times-circle text-red-400 mr-1"></i>Limitation: shows only party name, no bank/cash account → app may show false cash violation alerts. Use "Reply" on each query to confirm payment mode.
-                  </div>
-                </div>
+              <div class="hidden p-4 text-xs space-y-2" style="background:var(--navy-700);color:var(--ink-muted);">
+                <p class="font-semibold" style="color:var(--ink);">Trial Balance:</p>
+                <p>Gateway → Display More Reports → Trial Balance → Alt+E → Excel</p>
+                <p class="font-semibold mt-2" style="color:var(--ink);">Daybook (Detailed — recommended):</p>
+                <p>Gateway → Display More Reports → Account Books → Day Book → <strong style="color:var(--gold-400);">Alt+F5</strong> (Detailed) → Set date 1-Apr to 31-Mar → Alt+E → Excel</p>
+                <p class="mt-2" style="color:#f59e0b;"><i class="fas fa-exclamation-triangle mr-1"></i>Use Alt+F5 Detailed — shows bank/cash account per voucher, prevents false cash violation alerts.</p>
               </div>
             </div>
 
-            <p class="text-xs text-gray-400 mb-6"><i class="fas fa-shield-alt mr-1"></i> Files are processed locally — nothing is sent to any server except your local app.py running on port 5050.</p>
-
-            <button onclick="startFullAudit()" class="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-2xl text-base font-bold transition flex items-center justify-center gap-3">
-              <i class="fas fa-play"></i> Run Full Audit
+            <button id="auditRunBtn" onclick="startFullAudit()" class="w-full py-3 rounded-xl text-sm font-bold transition" style="background:var(--gold-500);color:var(--navy-900);">
+              <i class="fas fa-play mr-2"></i>Run Full Audit
             </button>
           </div>
+
         </div>
 
         <!-- STEP 2: Audit running -->
@@ -2697,6 +2630,25 @@ function switchTab(tab) {
 let savedTBFile = null;   // File object selected by user (not yet saved)
 let savedDBFile = null;
 
+// ── Audit page file selectors ─────────────────────────────────────────────────
+function auditOnTBSelected(input) {
+  const f = input.files[0];
+  if (!f) return;
+  savedTBFile = f;
+  document.getElementById('tbFileName').textContent = f.name;
+}
+function auditOnDBSelected(input) {
+  const f = input.files[0];
+  if (!f) return;
+  savedDBFile = f;
+  document.getElementById('dbFileName').textContent = f.name;
+}
+function auditShowChangeFiles() {
+  // Show upload zones again, hide "files loaded" bar
+  document.getElementById('auditFilesLoaded')?.classList.add('hidden');
+  document.getElementById('auditUploadZones')?.classList.remove('hidden');
+}
+
 function onTBSelected(input) {
   const f = input.files[0];
   if (!f) return;
@@ -2719,42 +2671,30 @@ async function loadFilesStatus() {
     if (!resp.ok) return;
     const meta = await resp.json();
 
-    const tbBar  = document.getElementById('globalFilesBar');
-    const hdr    = document.getElementById('headerFilesStatus');
-    const lbl    = document.getElementById('headerFilesLabel');
-    const tbBadge = document.getElementById('tbSavedBadge');
-    const dbBadge = document.getElementById('dbSavedBadge');
-    const detail = document.getElementById('globalFilesDetail');
-
+    const hdr = document.getElementById('headerFilesStatus');
+    const lbl = document.getElementById('headerFilesLabel');
     const tbOk = meta.tb_exists && meta.tb;
     const dbOk = meta.db_exists && meta.db;
 
-    if (tbOk) {
-      tbBadge && tbBadge.classList.remove('hidden');
-      document.getElementById('uploadFileName').textContent = meta.tb.filename;
-    }
-    if (dbOk) {
-      dbBadge && dbBadge.classList.remove('hidden');
-      document.getElementById('uploadDbName').textContent = meta.db.filename;
-    }
-
+    // Header pill
     if (tbOk || dbOk) {
-      const parts = [];
-      if (tbOk) parts.push('TB: ' + meta.tb.filename);
-      if (dbOk) parts.push('DB: ' + meta.db.filename);
-      const detailText = parts.join('  ·  ');
-
-      // Show global bar on upload page
-      if (tbBar) { tbBar.classList.remove('hidden'); }
-      if (detail) detail.textContent = detailText;
-
-      // Show header pill everywhere
       if (hdr) { hdr.classList.remove('hidden'); hdr.style.display = 'flex'; }
-      const count = (tbOk ? 1 : 0) + (dbOk ? 1 : 0);
+      const count = (tbOk?1:0) + (dbOk?1:0);
       if (lbl) lbl.textContent = count === 2 ? 'TB + DB loaded' : (tbOk ? 'TB loaded' : 'DB loaded');
+    }
 
-      // Show Run button if TB loaded
-      if (tbOk) document.getElementById('uploadRunBtn')?.classList.remove('hidden');
+    // Full Audit page — switch between State A and State B
+    const filesLoaded = document.getElementById('auditFilesLoaded');
+    const uploadZones = document.getElementById('auditUploadZones');
+    const detail = document.getElementById('auditFilesDetail');
+    if (tbOk && filesLoaded && uploadZones) {
+      // State A: files ready — show compact bar, hide drop zones
+      const parts = [];
+      if (tbOk) parts.push('✅ TB: ' + meta.tb.filename);
+      if (dbOk) parts.push('✅ DB: ' + meta.db.filename);
+      if (detail) detail.textContent = parts.join('   ');
+      filesLoaded.classList.remove('hidden');
+      uploadZones.classList.add('hidden');
     }
   } catch(e) { /* ignore */ }
 }
@@ -2769,39 +2709,31 @@ async function saveAndRunAudit() {
 }
 
 async function runAuditWithFiles(tbFile, dbFile) {
-  // Switch to processing screen
-  document.getElementById('uploadStep1').classList.add('hidden');
-  document.getElementById('uploadStep2').classList.remove('hidden');
+  // Always navigate to Full Audit page and show processing screen
+  showPage('fullaudit');
+  document.getElementById('auditStep1').classList.add('hidden');
+  document.getElementById('auditStep2').classList.remove('hidden');
 
-  const bar      = document.getElementById('progressBar');
-  const text     = document.getElementById('progressText');
-  const title    = document.getElementById('processingTitle');
-  const subtitle = document.getElementById('processingSubtitle');
-  const s1 = document.getElementById('step1');
-  const s2 = document.getElementById('step2');
-  const s3 = document.getElementById('step3');
-
-  s1.classList.remove('opacity-30');
-  s1.querySelector('div').className = 'w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center mx-auto mb-2';
-  s1.querySelector('i').className = 'fas fa-upload text-blue-500';
+  const bar      = document.getElementById('auditProgressBar');
+  const text     = document.getElementById('auditProgressText');
+  const title    = document.getElementById('auditProcessingTitle');
+  const subtitle = document.getElementById('auditProcessingSubtitle');
+  const s1 = document.getElementById('am1');
+  const s2 = document.getElementById('am2');
+  const s3 = document.getElementById('am3');
 
   let prog = 0;
   const fakeInterval = setInterval(() => {
-    if (prog < 60) { prog++; bar.style.width = prog + '%'; text.textContent = prog + '%'; }
-    if (prog === 30) {
-      title.textContent = 'Reading ledgers...';
-      subtitle.textContent = 'Running all 9 audit modules';
-      s2.classList.remove('opacity-30');
-      s2.querySelector('div').className = 'w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center mx-auto mb-2';
-      s2.querySelector('i').className = 'fas fa-search text-blue-500';
-    }
+    if (prog < 60) { prog++; if(bar) bar.style.width = prog + '%'; if(text) text.textContent = prog + '%'; }
+    if (prog === 20 && s1) s1.innerHTML = '<i class="fas fa-circle-notch fa-spin text-gold-400 text-xs"></i> Ledger Classification';
+    if (prog === 35 && s2) s2.innerHTML = '<i class="fas fa-circle-notch fa-spin text-gold-400 text-xs"></i> Cash Violations';
+    if (prog === 50 && s3) s3.innerHTML = '<i class="fas fa-circle-notch fa-spin text-gold-400 text-xs"></i> TDS & Compliance';
   }, 40);
 
   try {
     const fd = new FormData();
     if (tbFile) fd.append('trial_balance', tbFile);
     if (dbFile) fd.append('daybook', dbFile);
-    // If no files sent, backend uses saved files automatically
 
     const resp = await fetch(API_BASE + '/api/audit', { method: 'POST', body: fd });
     clearInterval(fakeInterval);
@@ -2810,120 +2742,32 @@ async function runAuditWithFiles(tbFile, dbFile) {
 
     prog = 60;
     const finishInterval = setInterval(() => {
-      prog += 2; bar.style.width = prog + '%'; text.textContent = prog + '%';
+      prog += 3; if(bar) bar.style.width = prog + '%'; if(text) text.textContent = prog + '%';
       if (prog >= 100) {
         clearInterval(finishInterval);
-        s3.classList.remove('opacity-30');
-        s3.querySelector('div').className = 'w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center mx-auto mb-2';
-        s3.querySelector('i').className = 'fas fa-check text-green-500';
-        title.textContent = 'Audit complete!';
-        const issues = (data.summary?.critical || 0) + (data.summary?.warnings || 0);
-        subtitle.textContent = `Score ${data.summary?.score}/100 — ${issues} issues found`;
-        document.getElementById('processingIcon').style.animation = 'none';
-        document.getElementById('processingIcon').className = 'fas fa-check-circle text-green-500 text-2xl';
         auditData = data;
         updateCABanner(data);
         renderTDSPage(data);
-        loadFilesStatus();   // refresh header pill
+        loadFilesStatus();
         setTimeout(() => {
-          document.getElementById('uploadStep2').classList.add('hidden');
-          showPage('fullaudit');
+          document.getElementById('auditStep2').classList.add('hidden');
           renderAuditResults(data);
-          document.getElementById('auditStep1')?.classList.add('hidden');
-          document.getElementById('auditStep3')?.classList.remove('hidden');
-        }, 800);
+          document.getElementById('auditStep3').classList.remove('hidden');
+        }, 600);
       }
-    }, 20);
+    }, 25);
 
   } catch(e) {
     clearInterval(fakeInterval);
-    document.getElementById('uploadStep2').classList.add('hidden');
-    document.getElementById('uploadStep1').classList.remove('hidden');
+    document.getElementById('auditStep2').classList.add('hidden');
+    document.getElementById('auditStep1').classList.remove('hidden');
     alert('Audit failed: ' + e.message);
   }
 }
 
-// Keep old name as alias so any other callers don't break
+// Legacy alias — redirects to new flow
 async function simulateUpload() {
-  const fileInput = document.getElementById('uploadFileInput');
-  if (!fileInput || !fileInput.files[0]) {
-    alert('Please choose a Trial Balance file first.');
-    return;
-  }
-  const file = fileInput.files[0];
-
-  // Switch to processing screen
-  document.getElementById('uploadStep1').classList.add('hidden');
-  document.getElementById('uploadStep2').classList.remove('hidden');
-
-  const bar      = document.getElementById('progressBar');
-  const text     = document.getElementById('progressText');
-  const title    = document.getElementById('processingTitle');
-  const subtitle = document.getElementById('processingSubtitle');
-  const s1 = document.getElementById('step1');
-  const s2 = document.getElementById('step2');
-  const s3 = document.getElementById('step3');
-
-  s1.classList.remove('opacity-30');
-  s1.querySelector('div').className = 'w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center mx-auto mb-2';
-  s1.querySelector('i').className = 'fas fa-upload text-blue-500';
-
-  // Animate to 60% while waiting for API
-  let prog = 0;
-  const fakeInterval = setInterval(() => {
-    if (prog < 60) { prog++; bar.style.width = prog + '%'; text.textContent = prog + '%'; }
-    if (prog === 30) {
-      title.textContent = 'Reading ledgers...';
-      subtitle.textContent = 'Checking 20 audit rules';
-      s2.classList.remove('opacity-30');
-      s2.querySelector('div').className = 'w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center mx-auto mb-2';
-      s2.querySelector('i').className = 'fas fa-search text-blue-500';
-    }
-  }, 40);
-
-  try {
-    const fd = new FormData();
-    fd.append('trial_balance', file);
-
-    const resp = await fetch(API_BASE + '/api/audit', { method: 'POST', body: fd });
-    clearInterval(fakeInterval);
-
-    if (!resp.ok) { throw new Error(await resp.text()); }
-    const data = await resp.json();
-
-    // Race to 100%
-    prog = 60;
-    const finishInterval = setInterval(() => {
-      prog += 2; bar.style.width = prog + '%'; text.textContent = prog + '%';
-      if (prog >= 100) {
-        clearInterval(finishInterval);
-        s3.classList.remove('opacity-30');
-        s3.querySelector('div').className = 'w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center mx-auto mb-2';
-        s3.querySelector('i').className = 'fas fa-check text-green-500';
-        title.textContent = 'Audit complete!';
-        const issues = (data.summary?.critical || 0) + (data.summary?.warnings || 0);
-        subtitle.textContent = `Score ${data.summary?.score}/100 — ${issues} issues found`;
-        document.getElementById('processingIcon').style.animation = 'none';
-        document.getElementById('processingIcon').className = 'fas fa-check-circle text-green-500 text-2xl';
-        auditData = data;
-        updateCABanner(data);
-        setTimeout(() => {
-          document.getElementById('uploadStep2').classList.add('hidden');
-          // Go to Full Audit results
-          showPage('fullaudit');
-          renderAuditResults(data);
-          document.getElementById('auditStep1').classList.add('hidden');
-          document.getElementById('auditStep3').classList.remove('hidden');
-        }, 800);
-      }
-    }, 20);
-
-  } catch(e) {
-    clearInterval(fakeInterval);
-    document.getElementById('uploadStep2').classList.add('hidden');
-    document.getElementById('uploadStep1').classList.remove('hidden');
-    alert('Audit failed: ' + e.message);
-  }
+  showPage('fullaudit');
 }
 
 function toggleTallyGuide() {
