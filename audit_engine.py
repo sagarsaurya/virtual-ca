@@ -388,6 +388,10 @@ NOT_A_BANK = [
     'bank interest', 'bank charges', 'bank od interest', 'bank commission',
     'bank fee', 'bank penalty', 'bank processing', 'interest received',
     'interest paid', 'charges', 'processing fee',
+    # Credit/debit cards and investment/insurance products — NOT bank accounts
+    'credit card', 'debit card',
+    'fund', 'prudential', 'bluechip', 'flexi', 'liquid', 'growth', 'dividend',
+    'insurance', 'policy', 'lic',
 ]
 
 BANK_NAME_PATTERNS = [
@@ -415,8 +419,9 @@ def audit_bank_accounts(ledgers, transactions=None):
     seen     = set()
     findings = []
 
-    # Build a balance lookup from TB for daybook-discovered banks
+    # Build a case-insensitive balance lookup from TB for daybook-discovered banks
     tb_balance = {l['name']: l for l in ledgers}
+    tb_balance_ci = {l['name'].lower(): l for l in ledgers}  # case-insensitive fallback
 
     def _add(name, balance=0, dr_cr='Dr', group='', note=''):
         if name in seen:
@@ -465,14 +470,14 @@ def audit_bank_accounts(ledgers, transactions=None):
                 continue
             n = party.lower()
             if _is_real_bank(n):
-                # Try to get balance from TB; if not found show 0 with note
-                tb = tb_balance.get(party)
+                # Try to get balance from TB — exact match first, then case-insensitive
+                tb = tb_balance.get(party) or tb_balance_ci.get(party.lower())
                 if tb:
                     bal = tb['balance']
-                    _add(party, bal, 'Dr' if bal >= 0 else 'Cr',
-                         tb.get('group',''), ' (from daybook)')
+                    _add(tb['name'], bal, 'Dr' if bal >= 0 else 'Cr',
+                         tb.get('group', ''), '')
                 else:
-                    _add(party, 0, 'Dr', '', ' (found in daybook)')
+                    _add(party, 0, 'Dr', '', ' (found in daybook — verify balance)')
 
     return findings
 
