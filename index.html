@@ -1441,6 +1441,57 @@
                 </label>
               </div>
             </div>
+            <!-- Daybook export instructions -->
+            <div class="mb-5 rounded-xl border border-blue-100 bg-blue-50 overflow-hidden">
+              <button onclick="this.nextElementSibling.classList.toggle('hidden')" class="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-blue-100 transition">
+                <i class="fas fa-info-circle text-blue-500"></i>
+                <span class="text-xs font-semibold text-blue-700">How to export Day Book from Tally (for accurate cash detection)</span>
+                <i class="fas fa-chevron-down text-blue-400 ml-auto text-xs"></i>
+              </button>
+              <div class="hidden px-4 pb-4">
+                <!-- Why it matters -->
+                <div class="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3 text-xs text-amber-800">
+                  <i class="fas fa-exclamation-triangle mr-1"></i>
+                  <strong>Why this matters:</strong> Standard Tally daybook export shows only the party name (e.g. "Aakash"), not the payment account (e.g. "ICICI Bank"). Without the account, the app cannot tell if a payment was cash or bank — and may flag bank payments as cash violations incorrectly.
+                </div>
+
+                <!-- Format 1: Detailed -->
+                <div class="mb-3">
+                  <div class="flex items-center gap-2 mb-1.5">
+                    <span class="bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">RECOMMENDED</span>
+                    <span class="text-xs font-bold text-gray-800">Detailed Daybook (shows bank account on each row)</span>
+                  </div>
+                  <ol class="text-xs text-gray-600 space-y-1 ml-2">
+                    <li><span class="font-semibold text-gray-700">1.</span> Gateway of Tally → <strong>Display More Reports → Account Books → Day Book</strong></li>
+                    <li><span class="font-semibold text-gray-700">2.</span> Set date range: <strong>1-Apr-2025 to 31-Mar-2026</strong></li>
+                    <li><span class="font-semibold text-gray-700">3.</span> Press <strong>Alt+F5</strong> (Detailed) — this expands each voucher to show ALL ledger entries including bank/cash account</li>
+                    <li><span class="font-semibold text-gray-700">4.</span> Press <strong>Alt+E → Excel (Spreadsheet)</strong> → Save as .xlsx</li>
+                  </ol>
+                  <div class="mt-2 bg-gray-50 rounded-lg px-3 py-2 text-xs text-gray-600 font-mono">
+                    Example of what you'll see:<br>
+                    <span class="text-green-700">Aakash &nbsp;&nbsp;&nbsp;&nbsp; Payment &nbsp; 26 &nbsp; 70,000</span><br>
+                    <span class="text-blue-700">ICICI Bank &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 70,000</span>
+                    <span class="text-gray-400 ml-1">← app sees this = bank payment ✓</span>
+                  </div>
+                </div>
+
+                <!-- Format 2: Standard -->
+                <div class="border-t border-blue-100 pt-3">
+                  <div class="flex items-center gap-2 mb-1.5">
+                    <span class="bg-gray-400 text-white text-xs font-bold px-2 py-0.5 rounded-full">CURRENT</span>
+                    <span class="text-xs font-bold text-gray-800">Standard Daybook (what you're using now)</span>
+                  </div>
+                  <ol class="text-xs text-gray-600 space-y-1 ml-2">
+                    <li><span class="font-semibold text-gray-700">1.</span> Gateway of Tally → Display More Reports → Account Books → Day Book</li>
+                    <li><span class="font-semibold text-gray-700">2.</span> Set date range → Alt+E → Excel → Save</li>
+                  </ol>
+                  <div class="mt-2 text-xs text-gray-500">
+                    <i class="fas fa-times-circle text-red-400 mr-1"></i>Limitation: shows only party name, no bank/cash account → app may show false cash violation alerts. Use "Reply" on each query to confirm payment mode.
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <p class="text-xs text-gray-400 mb-6"><i class="fas fa-shield-alt mr-1"></i> Files are processed locally — nothing is sent to any server except your local app.py running on port 5050.</p>
 
             <button onclick="startFullAudit()" class="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-2xl text-base font-bold transition flex items-center justify-center gap-3">

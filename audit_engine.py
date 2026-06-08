@@ -102,14 +102,34 @@ def parse_trial_balance(filepath):
 
 # ── PARSE DAYBOOK ─────────────────────────────────────────────────────────────
 def parse_daybook(filepath):
+    """
+    Parses Tally daybook export. Handles two formats:
+    - Standard (single row per voucher): only party name visible
+    - Detailed / Alt+F5 (multiple rows per voucher): bank/cash account also visible
+
+    Adds '_vid' (voucher id) to every row so continuation rows can be grouped.
+    """
     df = pd.read_excel(filepath, header=None)
     df = df[5:].reset_index(drop=True)
     df.columns = ['Date','Particulars','VchType','VchNo','Debit','Credit']
-    df['Debit']  = pd.to_numeric(df['Debit'],  errors='coerce').fillna(0)
-    df['Credit'] = pd.to_numeric(df['Credit'], errors='coerce').fillna(0)
-    df['Date']   = pd.to_datetime(df['Date'],  errors='coerce')
+    df['Debit']       = pd.to_numeric(df['Debit'],  errors='coerce').fillna(0)
+    df['Credit']      = pd.to_numeric(df['Credit'], errors='coerce').fillna(0)
+    df['Date']        = pd.to_datetime(df['Date'],  errors='coerce')
     df['Particulars'] = df['Particulars'].astype(str).str.strip()
     df['VchType']     = df['VchType'].astype(str).str.strip()
+
+    # Assign voucher_id to all rows (continuation rows inherit from header row)
+    VOUCHER_TYPES = {'Payment','Receipt','Journal','Contra','Sales','Purchase',
+                     'Credit Note','Debit Note','Memo'}
+    vid = 0
+    vids = []
+    for _, row in df.iterrows():
+        vt = row['VchType']
+        if vt in VOUCHER_TYPES:
+            vid += 1
+        vids.append(vid)
+    df['_vid'] = vids
+
     return df
 
 # ── MODULE 1: LEDGER CLASSIFICATION ──────────────────────────────────────────
