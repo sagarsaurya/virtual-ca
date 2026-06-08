@@ -2067,9 +2067,9 @@
         <!-- PT Summary Cards -->
         <div class="grid grid-cols-4 gap-4 mb-5">
           <div class="stat-card" style="border-top:2px solid #0D9488;">
-            <div class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--ink-muted);">PT Deducted (Mar)</div>
-            <div class="text-2xl font-bold" style="color:var(--ink);">₹2,640</div>
-            <div class="text-xs mt-1" style="color:var(--ink-muted);">From 12 employees</div>
+            <div class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--ink-muted);">PT Deducted (FY)</div>
+            <div class="text-2xl font-bold" style="color:#f1f5f9;" id="pt-total-deducted">—</div>
+            <div class="text-xs mt-1" style="color:var(--ink-muted);" id="pt-emp-count">Run audit to load</div>
           </div>
           <div class="stat-card" style="border-top:2px solid #DC2626;">
             <div class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--ink-muted);">PT Deposited</div>
@@ -2329,6 +2329,16 @@ function showPage(page) {
   if (page === 'history')     loadHistory();
   if (page === 'compliance')  loadCompliance();
   if (page === 'admin')       loadAdminPage();
+  // Re-render TDS page from cached audit data whenever user navigates to it
+  if (page === 'tdsanalysis' && auditData) {
+    renderTDSPage(auditData);
+    renderSalaryCompliance(auditData.salary_compliance || []);
+    _renderPTSummary(auditData.salary_compliance || []);
+  }
+  // Re-render Full Audit results when navigating back
+  if (page === 'fullaudit' && auditData) {
+    loadFilesStatus();
+  }
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
@@ -3235,6 +3245,8 @@ window.addEventListener('load', async () => {
       auditData = d;
       updateCABanner(d);
       renderTDSPage(d);
+      renderSalaryCompliance(d.salary_compliance || []);
+      _renderPTSummary(d.salary_compliance || []);
     }
   } catch(e) {}
 });
@@ -3352,12 +3364,27 @@ function renderAuditResults(data) {
   renderBankAccounts(data.bank_accounts || []);
   // Salary / PF / PT
   renderSalaryCompliance(data.salary_compliance || []);
+  // TDS Analysis page — populate from same audit data
+  renderTDSPage(data);
+  // PT summary cards — from salary_compliance
+  _renderPTSummary(data.salary_compliance || []);
   // Progress bar init
   _updateProgressBar(data);
   // Auto-open cash section since it's the main one
   const cashBody = document.getElementById('abody-cash');
   const cashChev = document.getElementById('achev-cash');
   if (cashBody) { cashBody.classList.remove('hidden'); if(cashChev) cashChev.style.transform='rotate(180deg)'; }
+}
+
+function _renderPTSummary(salaryItems) {
+  // Extract PT total from salary_compliance items that have pt field
+  const ptItems = (salaryItems||[]).filter(s => s.pt && s.pt > 0);
+  const totalPT = ptItems.reduce((sum, s) => sum + (s.pt||0), 0);
+  const empCount = ptItems.length;
+  const elAmt = document.getElementById('pt-total-deducted');
+  const elCnt = document.getElementById('pt-emp-count');
+  if (elAmt) elAmt.textContent = totalPT > 0 ? '₹' + totalPT.toLocaleString('en-IN') : '—';
+  if (elCnt) elCnt.textContent = empCount > 0 ? `From ${empCount} employees` : 'No PT data in books';
 }
 
 function fmt(n) { return 'Rs.' + Number(n).toLocaleString('en-IN', {maximumFractionDigits:0}); }
