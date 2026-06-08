@@ -1,10 +1,81 @@
-# 🤖 AI Integration — Claude API
+# 🤖 AI Integration
 
 **← [[00 - Home]]**
 
 ---
 
-## Overview
+## ⚡ CURRENT STATUS (as of 8 June 2026)
+
+**Live on production** — using Groq API (free tier). See section below.
+
+---
+
+## CURRENT IMPLEMENTATION — Groq API (Live ✅)
+
+### Provider
+- **Groq API** (free) — `console.groq.com`
+- Model: `llama-3.3-70b-versatile`
+- Key stored in: Render Environment Variable `GROQ_API_KEY`
+
+### Files
+| File | Purpose |
+|---|---|
+| `ca_agent.py` | Core AI logic — builds context from audit data, calls Groq, returns response |
+| `app.py` → `/api/ca-chat` | Flask endpoint — loads last audit result, calls ca_agent, returns JSON |
+| `.env` | Local dev key storage (not committed to git) |
+
+### How It Works
+1. User uploads Trial Balance / Daybook → audit runs → result saved to `data/audit_result.json`
+2. User opens "Ask Your CA" tab
+3. Page loads → calls `/api/audit/last` → builds numbered queries from audit data → shows greeting
+4. User sends message → JS calls `/api/ca-chat` with `{message, history[]}`
+5. Backend loads `audit_result.json` as context → sends to Groq with CA system prompt
+6. Response returned as JSON `{reply: "..."}` → rendered in chat panel
+
+### Context Built for AI
+```
+Company: AJKL
+Period: 1-Apr-25 to 31-Mar-26
+Score: 82/100
+Issues: 2 Critical | 8 Important
+
+LEDGER CLASSIFICATION ISSUES (2):
+  [Critical] Credit Card Membership Fee — rule text | Balance: ₹X
+
+CASH VIOLATIONS (Sec 40A3):
+  date  party  ₹amount
+
+OUTSTANDING BALANCES:
+  [Critical] Difference in Opening Balances — question text
+
+LARGE EXPENSES — TDS threshold:
+  date  party  ₹amount  [voucher_type]
+
+LOANS:
+  ledger — ₹balance | question text
+```
+
+### Query Auto-Generation (Left Panel)
+Queries are built in JS from `auditData` using `buildCAQueries()`:
+- `ledger_classification` → LEDGER category queries (uses: `rule`, `current_group`, `correct_group`, `balance`, `fix`)
+- `cash_violations` → SEC 40A(3) queries (uses: `party`, `amount`, `date`, `issue`, `impact`, `section`)
+- `outstanding` → BALANCE queries (uses: `ledger`, `amount`, `question`, `severity`)
+- `large_expenses` → TDS·BILL queries (uses: `party`, `amount`, `date`, `question`)
+- `loans` → LOAN queries (uses: `ledger`, `balance`, `question`)
+
+### Conversation History
+- Client-side array `caChatHistory` — last 20 turns
+- Sent with every request so AI remembers context
+- Cleared on "Clear chat" button or page reload
+
+---
+
+## PREVIOUS DESIGN — Claude API (Planned, not yet live)
+
+> The below was the original plan. Now superseded by Groq implementation above.
+> Will be revisited if Claude API is preferred in future.
+
+### Overview
 
 VirtualCA uses Anthropic's Claude API to power the "Ask Your CA" chat feature. The AI reads the actual uploaded data and gives specific, data-driven answers — not generic accounting advice.
 
