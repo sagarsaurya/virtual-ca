@@ -2932,53 +2932,55 @@ function renderCAQueries() {
   if (caQueryFilter === 'resolved')  filtered = caQueries.filter(q => q.status === 'resolved');
 
   if (filtered.length === 0) {
-    list.innerHTML = `<div class="flex flex-col items-center justify-center py-16 text-center text-gray-400">
-      <i class="fas fa-check-circle text-4xl mb-3 text-green-300"></i>
-      <div class="text-sm font-medium">${caQueryFilter === 'resolved' ? 'No resolved items yet' : 'No items in this category'}</div>
+    list.innerHTML = `<div class="flex flex-col items-center justify-center py-16 text-center">
+      <i class="fas fa-check-circle text-4xl mb-3" style="color:#34d399;"></i>
+      <div class="text-sm font-medium" style="color:#64748b;">${caQueryFilter === 'resolved' ? 'No resolved items yet' : 'No items in this category'}</div>
     </div>`;
     return;
   }
 
   list.innerHTML = filtered.map(q => {
     const borderColor = q.severity === 'critical' ? '#ef4444' : q.severity === 'important' ? '#eab308' : '#60a5fa';
-    const badgeClass  = q.severity === 'critical' ? 'bg-red-100 text-red-700' : q.severity === 'important' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700';
-    const badgeText   = q.severity === 'critical' ? 'CRITICAL' : q.severity === 'important' ? 'IMPORTANT' : 'INFO';
+    const badgeBg   = q.severity === 'critical' ? 'rgba(239,68,68,0.2)' : q.severity === 'important' ? 'rgba(234,179,8,0.2)' : 'rgba(96,165,250,0.2)';
+    const badgeClr  = q.severity === 'critical' ? '#f87171' : q.severity === 'important' ? '#fbbf24' : '#60a5fa';
+    const badgeText = q.severity === 'critical' ? 'CRITICAL' : q.severity === 'important' ? 'IMPORTANT' : 'INFO';
     const statusBadge = q.status === 'resolved'
-      ? `<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700">✅ DONE</span>`
-      : `<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">PENDING</span>`;
-    const opacity = q.status === 'resolved' ? 'opacity-70' : '';
+      ? `<span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:rgba(52,211,153,0.2);color:#34d399;">✅ DONE</span>`
+      : `<span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:rgba(249,115,22,0.2);color:#fb923c;">PENDING</span>`;
+    const opacity = q.status === 'resolved' ? 'opacity-60' : '';
 
-    const alertHtml = q.alert ? `<div class="bg-red-50 rounded-lg px-3 py-2 text-xs text-red-700 mt-2">
+    const alertHtml = q.alert ? `<div class="rounded-lg px-3 py-2 text-xs mt-2" style="background:rgba(239,68,68,0.1);color:#f87171;">
       <i class="fas fa-exclamation-circle mr-1"></i>${q.alert}</div>` : '';
 
     const resolvedHtml = q.status === 'resolved' ? `
-      <div class="mt-2 bg-gray-50 rounded-lg px-3 py-2 text-xs text-gray-600">
-        <span class="font-medium text-gray-700">Your reply:</span> "${escapeHtml(q.reply)}"
+      <div class="mt-2 rounded-lg px-3 py-2 text-xs" style="background:var(--navy-700);color:#94a3b8;">
+        <span class="font-medium" style="color:#cbd5e1;">Your reply:</span> "${escapeHtml(q.reply)}"
       </div>
-      <div class="mt-1 bg-green-50 rounded-lg px-3 py-2 text-xs text-green-700">
+      <div class="mt-1 rounded-lg px-3 py-2 text-xs" style="background:rgba(52,211,153,0.1);color:#34d399;">
         <i class="fas fa-check-circle mr-1"></i>${escapeHtml(q.aiReply || 'Marked resolved.')}
       </div>` : `
       <div class="mt-3 flex gap-2">
         <input type="text" id="qreply-${q.id}" placeholder="Confirm action taken (e.g. 'TDS paid, challan attached')..."
-          class="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-400"
+          class="flex-1 text-xs rounded-lg px-3 py-2 focus:outline-none"
+          style="background:var(--navy-700);border:1px solid var(--navy-500);color:#e2e8f0;"
           onkeydown="if(event.key==='Enter') replyToQuery(${q.id})">
-        <button onclick="replyToQuery(${q.id})" class="bg-blue-500 text-white text-xs px-3 py-2 rounded-lg font-medium hover:bg-blue-600 transition">Reply</button>
-        <button onclick="askAboutQuery(${q.id})" class="bg-gray-100 text-gray-600 text-xs px-3 py-2 rounded-lg font-medium hover:bg-gray-200 transition" title="Ask CA about this"><i class="fas fa-comment-dots"></i></button>
+        <button onclick="replyToQuery(${q.id})" class="text-white text-xs px-3 py-2 rounded-lg font-medium transition" style="background:#3b82f6;">Reply</button>
+        <button onclick="askAboutQuery(${q.id})" class="text-xs px-3 py-2 rounded-lg font-medium transition" style="background:var(--navy-700);color:#94a3b8;border:1px solid var(--navy-500);" title="Ask CA about this"><i class="fas fa-comment-dots"></i></button>
       </div>
-      <div class="text-xs text-gray-400 mt-1 ml-1">💡 Type a confirmation to mark Done · Type a question to send to chat</div>`;
+      <div class="text-xs mt-1 ml-1" style="color:#475569;">💡 Type a confirmation to mark Done · Type a question to send to chat</div>`;
 
-    return `<div class="bg-white rounded-xl border border-gray-100 overflow-hidden ${opacity}" style="border-left:4px solid ${borderColor}; margin-bottom:10px;">
+    return `<div class="rounded-xl overflow-hidden ${opacity}" style="background:var(--navy-800);border:1px solid var(--navy-600);border-left:4px solid ${borderColor};margin-bottom:10px;">
       <div class="px-4 py-3">
         <div class="flex items-start justify-between gap-3">
           <div class="flex items-start gap-2 flex-1">
-            <span class="text-gray-400 text-xs font-bold mt-0.5 w-5 flex-shrink-0">#${q.id}</span>
+            <span class="text-xs font-bold mt-0.5 w-5 flex-shrink-0" style="color:#475569;">#${q.id}</span>
             <div class="flex-1">
               <div class="flex items-center gap-1.5 mb-1 flex-wrap">
-                <span class="text-xs font-bold px-2 py-0.5 rounded-full ${badgeClass}">${badgeText}</span>
-                <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">${escapeHtml(q.category)}</span>
+                <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:${badgeBg};color:${badgeClr};">${badgeText}</span>
+                <span class="text-xs font-semibold px-2 py-0.5 rounded-full" style="background:var(--navy-700);color:#94a3b8;">${escapeHtml(q.category)}</span>
               </div>
-              <div class="text-sm font-semibold text-gray-800 mb-1">${escapeHtml(q.title)}</div>
-              <div class="text-xs text-gray-500">${escapeHtml(q.detail)}</div>
+              <div class="text-sm font-semibold mb-1" style="color:#f1f5f9;">${escapeHtml(q.title)}</div>
+              <div class="text-xs" style="color:#64748b;">${escapeHtml(q.detail)}</div>
               ${alertHtml}
               ${resolvedHtml}
             </div>
@@ -3090,8 +3092,8 @@ function showCAGreeting(data) {
       <i class="fas fa-robot text-white" style="font-size:11px"></i>
     </div>
     <div>
-      <div class="bg-white border border-gray-200 rounded-2xl rounded-tl-sm p-4 max-w-xs text-sm text-gray-700 leading-relaxed">
-        <div class="font-bold text-gray-800 mb-1">Hello Sagar! 👋</div>
+      <div class="chat-bubble-ai p-4 max-w-xs text-sm leading-relaxed" style="color:#e2e8f0;">
+        <div class="font-bold mb-1" style="color:#f1f5f9;">Hello Sagar! 👋</div>
         I've analysed <strong>${escapeHtml(company)}</strong> for <strong>${escapeHtml(s.period || 'FY 2025-26')}</strong>. Score: <strong>${score}/100</strong>.<br><br>
         Here's what I found:<br>
         ${ledgerCount ? `• <strong class="text-red-600">${ledgerCount} ledger mis-classifications</strong><br>` : ''}
@@ -3169,7 +3171,7 @@ async function sendChat() {
 
     chat.innerHTML += `<div class="flex items-start gap-3">
       <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0"><i class="fas fa-robot text-white text-xs"></i></div>
-      <div class="chat-bubble-ai p-4 max-w-lg text-sm text-gray-700 leading-relaxed">${renderMd(reply)}</div></div>`;
+      <div class="chat-bubble-ai p-4 max-w-lg text-sm leading-relaxed" style="color:#e2e8f0;">${renderMd(reply)}</div></div>`;
 
   } catch (err) {
     document.getElementById('typingIndicator')?.remove();
