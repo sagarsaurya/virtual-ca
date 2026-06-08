@@ -47,6 +47,7 @@ def build_context(audit_data: dict) -> str:
     warnings_count  = summary.get('warnings', 0)
     questions_count = summary.get('questions', 0)
     lines.append(f"Issues: {critical_count} Critical | {warnings_count} Warnings | {questions_count} Questions")
+    lines.append("NOTE: All amounts below are pre-computed by the audit engine. Use them exactly — do NOT re-calculate or second-guess these figures.")
 
     # Ledger classification issues
     ledger_issues = audit_data.get('ledger_classification', [])
@@ -74,12 +75,26 @@ def build_context(audit_data: dict) -> str:
         for o in outstanding[:10]:
             lines.append(f"  [{o.get('severity','')}] {o.get('ledger','')} — {o.get('issue','')} | ₹{o.get('balance',0):,.0f}")
 
-    # Large expenses
+    # Large expenses — GROUP by party so AI sees the same totals as the query cards
     large_exp = audit_data.get('large_expenses', [])
     if large_exp:
-        lines.append(f"\nLARGE EXPENSES — TDS threshold check ({len(large_exp)}):")
-        for e in large_exp[:10]:
-            lines.append(f"  {e.get('date','')}  {e.get('party','')}  ₹{e.get('amount',0):,.0f}  [{e.get('voucher_type','')}]")
+        # Build grouped totals (mirrors buildCAQueries logic in the frontend)
+        party_totals = {}
+        for e in large_exp:
+            p = e.get('party', 'Unknown')
+            if p not in party_totals:
+                party_totals[p] = {'total': 0, 'count': 0, 'dates': []}
+            party_totals[p]['total'] += e.get('amount', 0)
+            party_totals[p]['count'] += 1
+            party_totals[p]['dates'].append(e.get('date', ''))
+        lines.append(f"\nLARGE EXPENSES — grouped by party ({len(party_totals)} parties, {len(large_exp)} payments total):")
+        lines.append("  IMPORTANT: Always use these TOTAL figures when discussing payments to any party.")
+        for party, info in sorted(party_totals.items(), key=lambda x: -x[1]['total']):
+            count = info['count']
+            total = info['total']
+            dates = ', '.join(sorted(set(info['dates']))[:3])
+            suffix = f"({count} payments on {dates})" if count > 1 else f"(on {dates})"
+            lines.append(f"  {party}: ₹{total:,.0f} total {suffix}")
 
     # TDS items (if engine returns them)
     tds_items = audit_data.get('tds_items', [])
