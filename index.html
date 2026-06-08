@@ -2607,7 +2607,65 @@ function buildCAQueries(data) {
     });
   });
 
-  // 6. Cash violations — grouped by party to avoid 158 individual cards
+  // 6. Bank accounts — one query per account asking for bank statement upload
+  (data.bank_accounts || []).forEach(b => {
+    const bal = `₹${Number(b.balance || 0).toLocaleString('en-IN')}`;
+    queries.push({
+      id: id++, severity: 'important', category: 'BANK STMT',
+      title: `${b.ledger} — Closing balance ${bal} (${b.dr_cr}). Upload bank statement`,
+      detail: b.question || `Bank account '${b.ledger}' needs statement for reconciliation.`,
+      alert: `Go to Bank Reconciliation tab → select '${b.ledger}' → upload PDF/Excel statement → system will auto-match entries`,
+      status: 'pending', reply: '', aiReply: ''
+    });
+  });
+
+  // 7. TDS compliance issues
+  (data.tds_compliance || []).forEach(t => {
+    if (t.type === 'deposit_check') {
+      queries.push({
+        id: id++, severity: 'critical', category: 'TDS · DEPOSIT',
+        title: `No TDS Payable ledger found — TDS may not be deducted`,
+        detail: t.issue || '',
+        alert: t.impact || 'Create TDS Payable ledger under Duties & Taxes and record deductions.',
+        status: 'pending', reply: '', aiReply: ''
+      });
+      return;
+    }
+    const paid  = `₹${Number(t.total_paid || 0).toLocaleString('en-IN')}`;
+    const tdsAmt = `₹${Number(t.tds_expected || 0).toLocaleString('en-IN')}`;
+    queries.push({
+      id: id++, severity: 'critical', category: `TDS · SEC ${t.section}`,
+      title: `${t.party} — ${paid} paid. TDS ${tdsAmt} @ ${t.rate}% not found`,
+      detail: t.issue || '',
+      alert: t.impact || `Sec ${t.section}: TDS @ ${t.rate}% must be deducted at source. Deposit to govt by 7th of next month.`,
+      status: 'pending', reply: '', aiReply: ''
+    });
+  });
+
+  // 8. Salary / PF / PT compliance
+  (data.salary_compliance || []).forEach(s => {
+    if (s.type === 'salary_summary') {
+      const total = `₹${Number(s.total || 0).toLocaleString('en-IN')}`;
+      queries.push({
+        id: id++, severity: 'info', category: 'SALARY',
+        title: `Salary expense ${total} — confirm employee details`,
+        detail: s.question || '',
+        alert: null,
+        status: 'pending', reply: '', aiReply: ''
+      });
+      return;
+    }
+    const sev = s.severity === 'Critical' ? 'critical' : s.severity === 'Important' ? 'important' : 'info';
+    queries.push({
+      id: id++, severity: sev, category: 'SALARY · PF/PT',
+      title: s.issue || 'Salary compliance issue',
+      detail: s.question || s.impact || '',
+      alert: s.impact && s.question ? s.impact : null,
+      status: 'pending', reply: '', aiReply: ''
+    });
+  });
+
+  // 9. Cash violations — grouped by party to avoid 158 individual cards
   const cashByParty = {};
   (data.cash_violations || []).forEach(v => {
     const key = `${v.party}__${v.type}`;
@@ -2791,6 +2849,9 @@ function showCAGreeting(data) {
   const loanCount   = (data.loans || []).length;
   const itrCount    = (data.itr || []).filter(x => x.ledger && x.ledger !== 'Cash Payments (Sec 40A(3))').length;
   const outCount    = (data.outstanding || []).length;
+  const bankCount   = (data.bank_accounts || []).length;
+  const tdsCount    = (data.tds_compliance || []).filter(t => t.type !== 'deposit_check').length;
+  const salIssues   = (data.salary_compliance || []).filter(s => s.severity === 'Important' || s.severity === 'Critical').length;
 
   chat.innerHTML = `<div class="flex gap-2 items-start">
     <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
@@ -2807,7 +2868,10 @@ function showCAGreeting(data) {
         ${expCount    ? `• <strong class="text-yellow-600">${expCount} large payments need bill + TDS check</strong><br>` : ''}
         ${loanCount   ? `• <strong class="text-yellow-600">${loanCount} loan accounts need documents</strong><br>` : ''}
         ${cashCount   ? `• <strong class="text-orange-600">${cashCount} payments flagged — verify cash or bank</strong><br>` : ''}
-        <br>I've raised <strong>${caQueries.length} queries</strong> on the left (grouped by party). Reply to them or ask me anything here. 👈
+        ${bankCount   ? `• <strong class="text-blue-600">${bankCount} bank account${bankCount>1?'s':''} — upload statement${bankCount>1?'s':''} for reconciliation</strong><br>` : ''}
+        ${tdsCount    ? `• <strong class="text-red-600">${tdsCount} TDS compliance issue${tdsCount>1?'s':''} — may attract interest + penalty</strong><br>` : ''}
+        ${salIssues   ? `• <strong class="text-yellow-600">${salIssues} salary/PF/PT compliance gap${salIssues>1?'s':''}</strong><br>` : ''}
+        <br>I've raised <strong>${caQueries.length} queries</strong> on the left. Reply to any query or ask me anything here. 👈
       </div>
       <div class="text-xs text-gray-400 mt-1 ml-1">Just now</div>
     </div>

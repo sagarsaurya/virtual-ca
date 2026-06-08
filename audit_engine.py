@@ -368,6 +368,280 @@ def audit_itr(ledgers, daybook):
         })
     return findings
 
+# ── MODULE 7: BANK ACCOUNT DETECTION ─────────────────────────────────────────
+def audit_bank_accounts(ledgers):
+    """
+    Detects all bank accounts from the trial balance.
+    Returns one item per bank account asking user to upload statement.
+    """
+    findings = []
+    for ledger in ledgers:
+        if ledger['group'] == 'Bank Accounts':
+            bal     = ledger['balance']
+            bal_abs = abs(bal)
+            dr_cr   = 'Dr' if bal > 0 else 'Cr'
+            findings.append({
+                'ledger':   ledger['name'],
+                'balance':  bal_abs,
+                'dr_cr':    dr_cr,
+                'debit':    ledger['debit'],
+                'credit':   ledger['credit'],
+                'question': (
+                    f"Bank account '{ledger['name']}' shows closing balance of "
+                    f"Rs.{bal_abs:,.0f} ({dr_cr}) in your books. "
+                    f"Please upload the bank statement to reconcile and verify this balance."
+                ),
+            })
+    return findings
+
+
+# ── MODULE 8: TDS COMPLIANCE CHECK ───────────────────────────────────────────
+TDS_RULES_CONFIG = [
+    {
+        'section': '194C',
+        'description': 'Contractor / Manpower / Freight',
+        'keywords': [
+            'contractor', 'construction', 'repair', 'maintenance', 'labour',
+            'labor', 'manpower', 'transport', 'freight', 'cargo', 'logistics',
+            'fabricat', 'housekeeping', 'security guard', 'catering', 'printing',
+            'packing', 'loading', 'unloading', 'courier',
+        ],
+        'rate': 1.0,          # 1% for individual/HUF, 2% for company
+        'single_limit': 30000,
+        'annual_limit': 75000,
+    },
+    {
+        'section': '194J',
+        'description': 'Professional / Technical Fees',
+        'keywords': [
+            'professional fee', 'consultant', 'consulting', 'legal', 'advocate',
+            'lawyer', 'doctor fee', 'technical fee', 'technical service',
+            'architect', 'engineer fee', 'ca fee', 'cs fee', 'audit fee',
+            'accountant fee', 'royalty', 'software service', 'it service',
+            'design fee', 'professional charges', 'technical charges',
+        ],
+        'rate': 10.0,
+        'single_limit': 50000,
+        'annual_limit': 50000,
+    },
+    {
+        'section': '194I',
+        'description': 'Rent',
+        'keywords': [
+            'rent', 'office rent', 'shop rent', 'warehouse rent', 'godown rent',
+            'factory rent', 'lease rent', 'hire charge', 'vehicle hire',
+            'machinery hire', 'equipment hire',
+        ],
+        'rate': 10.0,
+        'single_limit': 20000,   # per month trigger; annual = 240,000
+        'annual_limit': 240000,
+    },
+    {
+        'section': '194H',
+        'description': 'Commission / Brokerage',
+        'keywords': [
+            'commission', 'brokerage', 'agency fee', 'referral fee',
+            'marketing commission', 'dealer commission', 'distributor commission',
+        ],
+        'rate': 5.0,
+        'single_limit': 15000,
+        'annual_limit': 15000,
+    },
+]
+
+def audit_tds_compliance(ledgers, daybook):
+    """
+    Checks TDS compliance for payments made during the year.
+
+    Two checks:
+    A. Payment-based check: aggregate daybook payments by party name;
+       if party name keywords suggest TDS section AND total > annual limit → flag.
+    B. TDS ledger check: look for TDS Payable ledgers in trial balance;
+       if payable balance = 0 but large professional/contractor payments exist → flag.
+    """
+    findings = []
+
+    # ── A. Aggregate payments by party ──────────────────────────────────────
+    if not daybook.empty:
+        payments = daybook[
+            (daybook['VchType'].isin(['Payment','Journal'])) &
+            (daybook['Debit'] > 0)
+        ].copy()
+
+        party_totals = (
+            payments.groupby('Particulars')['Debit']
+            .sum()
+            .reset_index()
+        )
+
+        for _, pr in party_totals.iterrows():
+            party = str(pr['Particulars']).strip()
+            total = float(pr['Debit'])
+            party_lower = party.lower()
+
+            for rule in TDS_RULES_CONFIG:
+                if any(kw in party_lower for kw in rule['keywords']):
+                    if total > rule['annual_limit']:
+                        tds_expected = round(total * rule['rate'] / 100, 0)
+                        interest     = round(tds_expected * 0.015 * 12, 0)  # 1.5%/month × 12
+                        findings.append({
+                            'party':        party,
+                            'section':      rule['section'],
+                            'description':  rule['description'],
+                            'total_paid':   total,
+                            'rate':         rule['rate'],
+                            'tds_expected': tds_expected,
+                            'interest_est': interest,
+                            'type':         'payment_check',
+                            'severity':     'Critical',
+                            'issue': (
+                                f"Total payments to '{party}' = Rs.{total:,.0f}. "
+                                f"TDS under Sec {rule['section']} ({rule['description']}) @ "
+                                f"{rule['rate']}% applies — TDS should have been Rs.{tds_expected:,.0f}."
+                            ),
+                            'impact': (
+                                f"If TDS not deducted: interest @ 1%/month until deduction "
+                                f"+ 1.5%/month until deposit. Estimated exposure = Rs.{interest:,.0f}. "
+                                f"File 26Q/27Q return and pay TDS now to stop further interest."
+                            ),
+                        })
+                    break   # matched one rule — don't double-flag
+
+    # ── B. TDS ledger balance check ──────────────────────────────────────────
+    # Find total professional + contractor payments
+    tds_bal = 0
+    for ledger in ledgers:
+        n = ledger['name'].lower()
+        if ('tds payable' in n or 'tds on' in n) and ledger['group'] == 'Duties & Taxes':
+            tds_bal += abs(ledger['balance'])
+
+    # Heuristic: if tds_bal = 0 but there are findings above → add a general deposit warning
+    if tds_bal == 0 and findings:
+        findings.append({
+            'party':        'TDS Payable Ledger',
+            'section':      'General',
+            'description':  'TDS deposit check',
+            'total_paid':   0,
+            'rate':         0,
+            'tds_expected': 0,
+            'interest_est': 0,
+            'type':         'deposit_check',
+            'severity':     'Critical',
+            'issue': (
+                "No 'TDS Payable' ledger found in Duties & Taxes. "
+                "Either TDS was not deducted, or it is recorded in wrong ledger."
+            ),
+            'impact': (
+                "TDS must be deposited by 7th of the following month (March: by 30 April). "
+                "Late deposit attracts interest @ 1.5%/month. "
+                "Also verify: is there a TDS Payable ledger under Current Liabilities instead of Duties & Taxes?"
+            ),
+        })
+
+    return findings
+
+
+# ── MODULE 9: SALARY / PF / PT COMPLIANCE ────────────────────────────────────
+def audit_salary_compliance(ledgers):
+    """
+    Checks salary payments, PF deduction, and Professional Tax from the trial balance.
+    Works entirely from ledger balances — no daybook needed.
+    """
+    findings = []
+
+    salary_ledgers = [l for l in ledgers
+                      if any(k in l['name'].lower()
+                             for k in ['salary','wages','remuneration','staff cost'])]
+    pf_ledgers     = [l for l in ledgers
+                      if any(k in l['name'].lower()
+                             for k in ['provident fund','pf payable','epf','pf contribution'])]
+    esi_ledgers    = [l for l in ledgers
+                      if any(k in l['name'].lower()
+                             for k in ['esi','esic','employee state insurance'])]
+    pt_ledgers     = [l for l in ledgers
+                      if any(k in l['name'].lower()
+                             for k in ['professional tax','pt payable','p.tax'])]
+
+    total_salary = sum(l['debit'] for l in salary_ledgers if l['debit'] > 0)
+
+    if total_salary == 0:
+        return []  # No salary entries — skip
+
+    findings.append({
+        'type':    'salary_summary',
+        'ledgers': [l['name'] for l in salary_ledgers],
+        'total':   total_salary,
+        'issue':   f"Total salary/wages in books = Rs.{total_salary:,.0f}",
+        'question': (
+            f"Total salary expense = Rs.{total_salary:,.0f}. "
+            f"Please confirm: How many employees? Monthly salary per employee? "
+            f"Monthly salary register maintained? Form 16 issued to employees?"
+        ),
+        'severity': 'Info',
+    })
+
+    # PF check
+    if not pf_ledgers:
+        expected_pf = round(total_salary * 0.12, 0)
+        findings.append({
+            'type':         'pf_missing',
+            'total_salary': total_salary,
+            'expected_pf':  expected_pf,
+            'issue': (
+                f"Salary in books = Rs.{total_salary:,.0f} but NO PF/EPF ledger found. "
+                f"If any employee earns ≤ Rs.15,000/month, PF @ 12% of basic is mandatory."
+            ),
+            'impact': (
+                f"Estimated employer PF contribution (12%) = Rs.{expected_pf:,.0f}. "
+                f"Non-deduction of PF attracts penalty u/s 14B of EPF Act: up to 25% of dues."
+            ),
+            'severity': 'Important',
+        })
+    else:
+        total_pf = sum(abs(l['balance']) for l in pf_ledgers)
+        findings.append({
+            'type':      'pf_found',
+            'total_pf':  total_pf,
+            'pf_ledgers': [l['name'] for l in pf_ledgers],
+            'issue':     f"PF ledger found. Total PF amount = Rs.{total_pf:,.0f}.",
+            'question':  (
+                f"PF ledger shows Rs.{total_pf:,.0f}. "
+                f"Please confirm: Is PF being deposited by 15th of every month? "
+                f"ECR filed monthly on EPFO portal? Any arrears outstanding?"
+            ),
+            'severity': 'Info',
+        })
+
+    # ESI check
+    if not esi_ledgers and total_salary > 0:
+        findings.append({
+            'type':    'esi_missing',
+            'issue':   "No ESI ledger found. If any employee earns ≤ Rs.21,000/month, ESI registration and contribution is mandatory.",
+            'impact':  "Employee contribution = 0.75% of gross salary. Employer contribution = 3.25% of gross salary. Monthly deposit by 15th.",
+            'severity': 'Important',
+        })
+
+    # PT check
+    if not pt_ledgers and total_salary > 0:
+        findings.append({
+            'type':    'pt_missing',
+            'issue':   "No Professional Tax (PT) ledger found. PT is mandatory for all employees in West Bengal (and most states).",
+            'impact':  "WB PT slabs: ₹0 (≤10K), ₹110 (≤15K), ₹130 (≤25K), ₹150 (≤40K), ₹200 (>40K). Annual employer PT registration also required.",
+            'severity': 'Important',
+        })
+    elif pt_ledgers:
+        total_pt = sum(abs(l['balance']) for l in pt_ledgers)
+        if total_pt == 0:
+            findings.append({
+                'type':    'pt_zero_balance',
+                'issue':   f"PT ledger found ({pt_ledgers[0]['name']}) but balance is ₹0. Was PT collected from employees?",
+                'impact':  "PT should be deducted monthly and deposited to state govt. Nil balance may mean PT was not deducted or was already deposited (verify deposit challan).",
+                'severity': 'Important',
+            })
+
+    return findings
+
+
 # ── MAIN AUDIT RUNNER ─────────────────────────────────────────────────────────
 def run_full_audit(tb_path, db_path=None):
     print("Parsing files...")
@@ -396,6 +670,15 @@ def run_full_audit(tb_path, db_path=None):
     print("Module 6: ITR / Tax Audit...")
     results['itr'] = audit_itr(ledgers, daybook)
 
+    print("Module 7: Bank Account Detection...")
+    results['bank_accounts'] = audit_bank_accounts(ledgers)
+
+    print("Module 8: TDS Compliance...")
+    results['tds_compliance'] = audit_tds_compliance(ledgers, daybook)
+
+    print("Module 9: Salary / PF / PT Compliance...")
+    results['salary_compliance'] = audit_salary_compliance(ledgers)
+
     # Score
     critical = (
         sum(1 for f in results['ledger_classification'] if f['severity']=='Critical') +
@@ -406,8 +689,11 @@ def run_full_audit(tb_path, db_path=None):
         sum(1 for f in results['ledger_classification'] if f['severity']=='Review') +
         sum(1 for f in results['outstanding'] if f['severity']=='Review')
     )
-    questions = len(results['loans']) + len(results['large_expenses'])
-    score = max(0, 100 - (critical * 8) - (warnings * 3) - (questions * 2))
+    tds_critical  = sum(1 for t in results['tds_compliance'] if t.get('severity') == 'Critical')
+    salary_issues = sum(1 for s in results['salary_compliance'] if s.get('severity') in ('Critical','Important'))
+    questions = len(results['loans']) + len(results['large_expenses']) + len(results['bank_accounts'])
+    score = max(0, 100 - (critical * 8) - (warnings * 3) - (questions * 2)
+                      - (tds_critical * 6) - (salary_issues * 3))
 
     results['summary'] = {
         'company': 'AJAY KUMAR LADDHA',

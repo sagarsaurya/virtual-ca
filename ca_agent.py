@@ -95,6 +95,30 @@ def build_context(audit_data: dict) -> str:
         for l in loans[:5]:
             lines.append(f"  {l.get('ledger','')} — ₹{l.get('balance',0):,.0f} | {l.get('note','')}")
 
+    # Bank accounts
+    bank_accounts = audit_data.get('bank_accounts', [])
+    if bank_accounts:
+        lines.append(f"\nBANK ACCOUNTS IN BOOKS ({len(bank_accounts)}):")
+        for b in bank_accounts:
+            lines.append(f"  {b.get('ledger','')} — Rs.{b.get('balance',0):,.0f} {b.get('dr_cr','')}")
+
+    # TDS compliance
+    tds_comp = audit_data.get('tds_compliance', [])
+    if tds_comp:
+        lines.append(f"\nTDS COMPLIANCE ISSUES ({len(tds_comp)}):")
+        for t in tds_comp:
+            if t.get('tds_expected', 0) > 0:
+                lines.append(f"  [Sec {t.get('section','')}] {t.get('party','')} — Paid Rs.{t.get('total_paid',0):,.0f} | TDS expected Rs.{t.get('tds_expected',0):,.0f} @ {t.get('rate',0)}%")
+            else:
+                lines.append(f"  {t.get('issue','')}")
+
+    # Salary compliance
+    sal_comp = audit_data.get('salary_compliance', [])
+    if sal_comp:
+        lines.append(f"\nSALARY / PF / PT COMPLIANCE ({len(sal_comp)}):")
+        for s in sal_comp:
+            lines.append(f"  [{s.get('severity','')}] {s.get('issue','')}")
+
     # Personal marks
     personal = audit_data.get('personal_marks', [])
     if personal:
