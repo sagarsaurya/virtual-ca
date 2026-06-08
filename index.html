@@ -5,106 +5,230 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>VirtualCA — Your AI Accountant</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 <style>
+  /* ── TOKENS ─────────────────────────────────────────────────── */
+  :root {
+    --navy-900: #070E1A;
+    --navy-800: #0D1B2E;
+    --navy-700: #132640;
+    --navy-600: #1A3352;
+    --navy-500: #1E3A5F;
+    --navy-400: #2A5080;
+    --gold-500: #C9A84C;
+    --gold-400: #DFC06E;
+    --gold-300: #EDD896;
+    --cream-50:  #FAFAF7;
+    --cream-100: #F5F0E6;
+    --cream-200: #EDE5D4;
+    --ink:       #1A2438;
+    --ink-light: #4A6080;
+    --ink-muted: #8096B0;
+    --border:    #E8E2D6;
+    --border-light: #F0EBE0;
+  }
+
   * { font-family: 'Inter', sans-serif; }
-  .gradient-bg { background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%); }
-  .card-shadow { box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
-  .sidebar { width: 260px; min-height: 100vh; background: #0f172a; }
-  .main-content { flex: 1; background: #f1f5f9; min-height: 100vh; }
-  .nav-item { transition: all 0.2s; border-radius: 10px; }
-  .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.12); }
-  .nav-item.active { border-left: 3px solid #3b82f6; }
+  .font-display { font-family: 'Playfair Display', serif; }
+
+  /* ── LAYOUT ──────────────────────────────────────────────────── */
+  body { background: var(--cream-50); }
+  .sidebar {
+    width: 256px; min-height: 100vh;
+    background: var(--navy-800);
+    border-right: 1px solid var(--navy-600);
+  }
+  .main-content { flex: 1; background: var(--cream-50); min-height: 100vh; }
   .page { display: none; }
   .page.active { display: block; }
-  .tag-critical { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
-  .tag-review   { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
-  .tag-ok       { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
-  .chat-bubble-ai   { background: #f1f5f9; border-radius: 0 16px 16px 16px; }
-  .chat-bubble-user { background: #2563eb; color: white; border-radius: 16px 0 16px 16px; }
-  .compliance-card { border-left: 4px solid; }
-  .overdue  { border-color: #dc2626; background: #fef2f2; }
-  .upcoming { border-color: #f59e0b; background: #fffbeb; }
-  .done     { border-color: #16a34a; background: #f0fdf4; }
-  .pulse { animation: pulse 2s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
-  .upload-zone { border: 2px dashed #cbd5e1; transition: all 0.3s; }
-  .upload-zone:hover { border-color: #2563eb; background: #eff6ff; }
-  ::-webkit-scrollbar { width: 5px; }
-  ::-webkit-scrollbar-track { background: #f1f5f9; }
-  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-  .stat-card { background: white; border-radius: 16px; padding: 24px; }
-  .login-page { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #1d4ed8 100%); }
-  .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
-  .progress-bar { height: 6px; background: #e2e8f0; border-radius: 99px; overflow: hidden; }
-  .progress-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #2563eb, #7c3aed); }
-  .typing span { width: 8px; height: 8px; background: #94a3b8; border-radius: 50%; display: inline-block; animation: typing 1.4s infinite; }
+
+  /* ── SIDEBAR NAV ─────────────────────────────────────────────── */
+  .nav-item { transition: all 0.18s; border-radius: 8px; position: relative; }
+  .nav-item:hover { background: rgba(255,255,255,0.06); }
+  .nav-item.active {
+    background: rgba(201,168,76,0.12);
+    border-left: 2px solid var(--gold-500);
+  }
+  .nav-item.active .nav-icon { color: var(--gold-400); }
+  .nav-item.active .nav-label { color: #F5F0E6; font-weight: 600; }
+  .nav-icon { color: #4A6A8A; transition: color 0.18s; }
+  .nav-label { color: #6A8AAA; font-size: 13.5px; transition: color 0.18s; }
+  .nav-item:hover .nav-icon { color: #8AAAC0; }
+  .nav-item:hover .nav-label { color: #B0C8D8; }
+  .nav-section-label {
+    font-size: 10px; letter-spacing: 0.1em;
+    color: #2E4A62; font-weight: 700;
+    text-transform: uppercase; padding: 0 12px;
+    margin: 20px 0 6px;
+  }
+
+  /* ── CARDS ───────────────────────────────────────────────────── */
+  .card-shadow { box-shadow: 0 1px 3px rgba(26,36,56,0.06), 0 4px 16px rgba(26,36,56,0.06); }
+  .card-gold-border { border: 1px solid var(--border); border-top: 2px solid var(--gold-500); }
+  .stat-card {
+    background: white; border-radius: 14px; padding: 24px;
+    border: 1px solid var(--border-light);
+    box-shadow: 0 1px 3px rgba(26,36,56,0.05), 0 4px 16px rgba(26,36,56,0.05);
+  }
+
+  /* ── BADGES ──────────────────────────────────────────────────── */
+  .tag-critical { background: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA; font-size:11px; }
+  .tag-review   { background: #FFFBEB; color: #B45309; border: 1px solid #FDE68A; font-size:11px; }
+  .tag-ok       { background: #F0FDF4; color: #15803D; border: 1px solid #BBF7D0; font-size:11px; }
+  .tag-gold     { background: rgba(201,168,76,0.1); color: var(--gold-500); border: 1px solid rgba(201,168,76,0.3); font-size:11px; }
+  .tag-navy     { background: var(--navy-800); color: var(--gold-400); border: 1px solid var(--navy-600); font-size:11px; }
+
+  /* ── COMPLIANCE CARDS ────────────────────────────────────────── */
+  .compliance-card { border-left: 3px solid; border-radius: 10px; }
+  .overdue  { border-color: #DC2626; background: #FEF2F2; }
+  .upcoming { border-color: #D97706; background: #FFFBEB; }
+  .done     { border-color: #15803D; background: #F0FDF4; }
+
+  /* ── CHAT ────────────────────────────────────────────────────── */
+  .chat-bubble-ai   {
+    background: white;
+    border: 1px solid var(--border-light);
+    border-radius: 2px 14px 14px 14px;
+    box-shadow: 0 1px 4px rgba(26,36,56,0.06);
+  }
+  .chat-bubble-user {
+    background: var(--navy-700);
+    color: #F0EAD8;
+    border-radius: 14px 2px 14px 14px;
+  }
+  .typing span { width: 7px; height: 7px; background: var(--gold-400); border-radius: 50%; display: inline-block; animation: typing 1.4s infinite; }
   .typing span:nth-child(2) { animation-delay: 0.2s; }
   .typing span:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes typing { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-8px)} }
+
+  /* ── UPLOAD ──────────────────────────────────────────────────── */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    background: white;
+    transition: all 0.25s;
+  }
+  .upload-zone:hover {
+    border-color: var(--gold-500);
+    background: rgba(201,168,76,0.04);
+  }
+
+  /* ── BUTTONS ─────────────────────────────────────────────────── */
+  .btn-primary {
+    background: var(--navy-700); color: #F0EAD8;
+    border: 1px solid var(--navy-500);
+    transition: all 0.18s;
+  }
+  .btn-primary:hover { background: var(--navy-600); }
+  .btn-gold {
+    background: var(--gold-500); color: var(--navy-900);
+    font-weight: 700; transition: all 0.18s;
+  }
+  .btn-gold:hover { background: var(--gold-400); }
+
+  /* ── PROGRESS ────────────────────────────────────────────────── */
+  .progress-bar { height: 5px; background: var(--cream-200); border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--gold-500), var(--gold-300)); }
+
+  /* ── SCROLLBAR ───────────────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--cream-200); border-radius: 10px; }
+
+  /* ── LOGIN ───────────────────────────────────────────────────── */
+  .login-page {
+    background: var(--navy-900);
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(201,168,76,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(30,58,95,0.6) 0%, transparent 50%);
+  }
+  .glass {
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(201,168,76,0.15);
+  }
+
+  /* ── MISC ────────────────────────────────────────────────────── */
+  .gradient-bg { background: linear-gradient(135deg, var(--navy-800) 0%, var(--navy-500) 100%); }
+  .pulse { animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  @keyframes typing { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-7px)} }
   @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-  .entry-card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; }
-  .debit-tag  { background: #eff6ff; color: #1d4ed8; padding: 2px 10px; border-radius: 99px; font-size: 12px; }
-  .credit-tag { background: #fdf4ff; color: #7e22ce; padding: 2px 10px; border-radius: 99px; font-size: 12px; }
+
+  .entry-card { background: white; border-radius: 10px; border: 1px solid var(--border-light); }
+  .debit-tag  { background: rgba(30,58,95,0.08); color: var(--navy-500); padding: 2px 10px; border-radius: 99px; font-size: 11.5px; }
+  .credit-tag { background: rgba(201,168,76,0.1); color: #8B6914; padding: 2px 10px; border-radius: 99px; font-size: 11.5px; }
+
   /* Drill-down modal */
-  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:center; justify-content:center; padding:20px; }
-  .modal-box { background:white; border-radius:20px; width:100%; max-width:760px; max-height:88vh; overflow-y:auto; box-shadow:0 24px 80px rgba(0,0,0,0.2); }
+  .modal-overlay { position:fixed; inset:0; background:rgba(7,14,26,0.7); backdrop-filter:blur(4px); z-index:1000; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .modal-box { background:white; border-radius:16px; width:100%; max-width:760px; max-height:88vh; overflow-y:auto; box-shadow:0 32px 80px rgba(7,14,26,0.3); border: 1px solid var(--border); }
   .modal-hidden { display:none; }
-  /* Journal entry suggestion */
-  .je-row { display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:10px; background:#f8fafc; margin-bottom:6px; }
+
+  .je-row { display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:8px; background:var(--cream-50); border: 1px solid var(--border-light); margin-bottom:6px; }
   .je-row:last-child { margin-bottom:0; }
-  /* Export panel */
-  .export-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:16px 20px; border-radius:14px; border:1.5px solid #e2e8f0; background:white; cursor:pointer; transition:all 0.2s; min-width:130px; }
-  .export-btn:hover { border-color:#2563eb; background:#eff6ff; }
-  /* Explanation panel */
-  .explain-panel { background:#fafafa; border:1px solid #e2e8f0; border-radius:12px; padding:14px 16px; margin-bottom:12px; }
-  /* Accordion toggle */
-  .drill-section { border-top:1px solid #f1f5f9; padding-top:12px; margin-top:12px; }
+
+  .export-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:16px 20px; border-radius:12px; border:1.5px solid var(--border); background:white; cursor:pointer; transition:all 0.2s; min-width:130px; }
+  .export-btn:hover { border-color:var(--gold-500); background:rgba(201,168,76,0.04); }
+
+  .explain-panel { background:var(--cream-50); border:1px solid var(--border-light); border-radius:10px; padding:14px 16px; margin-bottom:12px; }
+  .drill-section { border-top:1px solid var(--border-light); padding-top:12px; margin-top:12px; }
+
+  /* Score ring colors */
+  .score-high   { color: #15803D; }
+  .score-medium { color: #D97706; }
+  .score-low    { color: #DC2626; }
+
+  /* Header */
+  .app-header {
+    background: white;
+    border-bottom: 1px solid var(--border-light);
+    box-shadow: 0 1px 0 var(--border-light);
+  }
 </style>
 </head>
 <body class="bg-gray-100">
 
 <!-- ======================== LOGIN PAGE ======================== -->
 <div id="loginPage" class="login-page min-h-screen flex items-center justify-center p-4">
-  <div class="w-full max-w-md">
-    <div class="text-center mb-8">
-      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-600 mb-4">
-        <i class="fas fa-calculator text-white text-2xl"></i>
+  <div class="w-full max-w-sm">
+    <!-- Brand mark -->
+    <div class="text-center mb-10">
+      <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-5" style="background:rgba(201,168,76,0.15); border:1px solid rgba(201,168,76,0.3);">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L2 7v10l10 5 10-5V7L12 2z" stroke="#C9A84C" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M12 22V12M2 7l10 5 10-5" stroke="#C9A84C" stroke-width="1.5"/>
+        </svg>
       </div>
-      <h1 class="text-3xl font-bold text-white">VirtualCA</h1>
-      <p class="text-blue-300 mt-1">Your AI-Powered Accountant</p>
+      <h1 class="font-display text-3xl font-bold text-white tracking-tight">VirtualCA</h1>
+      <p class="mt-2 text-sm" style="color:#5A7A9A;">Intelligent Accounting. Trusted Results.</p>
     </div>
+
+    <!-- Card -->
     <div class="glass rounded-2xl p-8">
-      <h2 class="text-xl font-semibold text-white mb-6">Sign in to your account</h2>
+      <p class="text-xs font-semibold uppercase tracking-widest mb-6" style="color:var(--gold-400);">Client Portal</p>
       <div class="space-y-4">
         <div>
-          <label class="text-blue-200 text-sm mb-1 block">Email Address</label>
-          <input type="email" placeholder="you@company.com" value="admin@company.com"
-            class="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-blue-300 focus:outline-none focus:border-blue-400"/>
+          <label class="block text-xs font-medium mb-1.5" style="color:#8AA8C0;">Email Address</label>
+          <input type="email" value="admin@company.com"
+            class="w-full rounded-xl px-4 py-3 text-sm focus:outline-none"
+            style="background:rgba(255,255,255,0.06); border:1px solid rgba(201,168,76,0.2); color:white;"/>
         </div>
         <div>
-          <label class="text-blue-200 text-sm mb-1 block">Password</label>
-          <div class="relative">
-            <input type="password" placeholder="••••••••" value="••••••••"
-              class="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-blue-300 focus:outline-none focus:border-blue-400"/>
-            <i class="fas fa-eye-slash text-blue-300 absolute right-4 top-3.5 cursor-pointer"></i>
-          </div>
+          <label class="block text-xs font-medium mb-1.5" style="color:#8AA8C0;">Password</label>
+          <input type="password" value="••••••••"
+            class="w-full rounded-xl px-4 py-3 text-sm focus:outline-none"
+            style="background:rgba(255,255,255,0.06); border:1px solid rgba(201,168,76,0.2); color:white;"/>
         </div>
-        <div class="flex items-center justify-between">
-          <label class="flex items-center gap-2 text-blue-200 text-sm cursor-pointer">
-            <input type="checkbox" checked class="rounded"/> Remember me
-          </label>
-          <a href="#" class="text-blue-400 text-sm hover:text-blue-300">Forgot password?</a>
-        </div>
-        <button onclick="showApp()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-all duration-200 mt-2">
-          Sign In
+        <button onclick="showApp()" class="btn-gold w-full py-3 rounded-xl text-sm font-bold mt-2 transition">
+          Sign In →
         </button>
       </div>
-      <p class="text-center text-blue-300 text-sm mt-6">
-        Demo: admin@company.com / any password
-      </p>
+      <p class="text-center text-xs mt-5" style="color:#3A5A72;">Demo: any email / any password</p>
     </div>
+
+    <!-- Footer -->
+    <p class="text-center text-xs mt-6" style="color:#2A4A62;">
+      Secured &nbsp;·&nbsp; FY 2025–26 &nbsp;·&nbsp; India
+    </p>
   </div>
 </div>
 
@@ -113,214 +237,226 @@
 
   <!-- SIDEBAR -->
   <div class="sidebar fixed top-0 left-0 h-full flex flex-col z-50 overflow-y-auto">
+
     <!-- Logo -->
-    <div class="p-6 border-b border-white/10">
+    <div class="px-6 py-5" style="border-bottom:1px solid rgba(255,255,255,0.06);">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
-          <i class="fas fa-calculator text-white"></i>
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(201,168,76,0.15); border:1px solid rgba(201,168,76,0.25);">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L2 7v10l10 5 10-5V7L12 2z" stroke="#C9A84C" stroke-width="1.8" stroke-linejoin="round"/>
+            <path d="M12 22V12M2 7l10 5 10-5" stroke="#C9A84C" stroke-width="1.8"/>
+          </svg>
         </div>
         <div>
-          <div class="text-white font-bold text-lg">VirtualCA</div>
-          <div class="text-blue-400 text-xs">AI Accountant</div>
+          <div class="font-display font-bold text-base tracking-tight" style="color:#F0EAD8;">VirtualCA</div>
+          <div class="text-xs" style="color:#2E4A62;">AI Accountant</div>
         </div>
       </div>
     </div>
 
-    <!-- User -->
-    <div class="p-4 mx-4 mt-4 rounded-xl bg-white/5">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm">S</div>
-        <div>
-          <div class="text-white text-sm font-medium">Sagar Pathak</div>
-          <div class="text-xs text-green-400 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-400 inline-block"></span> Admin</div>
+    <!-- User chip -->
+    <div class="mx-4 mt-4 px-3 py-2.5 rounded-xl flex items-center gap-3" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06);">
+      <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+           style="background:rgba(201,168,76,0.2); color:var(--gold-400); border:1px solid rgba(201,168,76,0.3);">S</div>
+      <div class="min-w-0">
+        <div class="text-sm font-semibold truncate" style="color:#D0C8B8;">Sagar Pathak</div>
+        <div class="text-xs flex items-center gap-1" style="color:#2E7D32;">
+          <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>Active
         </div>
       </div>
     </div>
 
     <!-- Nav -->
-    <nav class="flex-1 p-4 space-y-1 mt-2">
-      <div class="text-xs text-slate-500 uppercase tracking-wider px-3 mb-2">Main</div>
-      <a onclick="showPage('dashboard')" class="nav-item active flex items-center gap-3 px-3 py-2.5 cursor-pointer">
-        <i class="fas fa-chart-pie text-blue-400 w-5"></i>
-        <span class="text-slate-200 text-sm font-medium">Dashboard</span>
+    <nav class="flex-1 px-3 pb-4 mt-2">
+
+      <div class="nav-section-label">Workspace</div>
+      <a onclick="showPage('dashboard')" class="nav-item active flex items-center gap-3 px-3 py-2.5 cursor-pointer mb-0.5">
+        <i class="fas fa-th-large nav-icon w-4 text-sm"></i>
+        <span class="nav-label">Dashboard</span>
       </a>
-      <a onclick="showPage('upload')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer">
-        <i class="fas fa-file-upload text-slate-400 w-5"></i>
-        <span class="text-slate-400 text-sm">Upload & Analyze</span>
+      <a onclick="showPage('upload')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer mb-0.5">
+        <i class="fas fa-file-arrow-up nav-icon w-4 text-sm"></i>
+        <span class="nav-label">Upload & Analyse</span>
       </a>
-      <a onclick="showPage('history')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer">
-        <i class="fas fa-history text-slate-400 w-5"></i>
-        <span class="text-slate-400 text-sm">History</span>
+      <a onclick="showPage('history')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer mb-0.5">
+        <i class="fas fa-clock-rotate-left nav-icon w-4 text-sm"></i>
+        <span class="nav-label">History</span>
+      </a>
+      <a onclick="showPage('bankrec')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer mb-0.5">
+        <i class="fas fa-right-left nav-icon w-4 text-sm"></i>
+        <span class="nav-label">Bank Reconciliation</span>
       </a>
 
-      <a onclick="showPage('bankrec')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer">
-        <i class="fas fa-exchange-alt text-slate-400 w-5"></i>
-        <span class="text-slate-400 text-sm">Bank Reconciliation</span>
+      <div class="nav-section-label">Analysis</div>
+      <a onclick="showPage('fullaudit')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer mb-0.5">
+        <i class="fas fa-magnifying-glass-dollar nav-icon w-4 text-sm"></i>
+        <span class="nav-label">Full Audit</span>
+        <span class="ml-auto text-xs font-bold px-2 py-0.5 rounded-full" style="background:rgba(201,168,76,0.15);color:var(--gold-400);">New</span>
+      </a>
+      <a onclick="showPage('tdsanalysis')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer mb-0.5">
+        <i class="fas fa-percent nav-icon w-4 text-sm"></i>
+        <span class="nav-label">TDS Analysis</span>
+      </a>
+      <a onclick="showPage('compliance')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer mb-0.5">
+        <i class="fas fa-calendar-check nav-icon w-4 text-sm"></i>
+        <span class="nav-label">Compliance Calendar</span>
+        <span class="ml-auto text-xs font-bold px-2 py-0.5 rounded-full bg-red-900 text-red-300">2</span>
       </a>
 
-      <div class="text-xs text-slate-500 uppercase tracking-wider px-3 mb-2 mt-5">Tools</div>
-      <a onclick="showPage('askca')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer">
-        <i class="fas fa-robot text-slate-400 w-5"></i>
-        <span class="text-slate-400 text-sm">Ask Your CA</span>
-        <span class="ml-auto bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">AI</span>
+      <div class="nav-section-label">AI &amp; Guides</div>
+      <a onclick="showPage('askca')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer mb-0.5">
+        <i class="fas fa-comments nav-icon w-4 text-sm"></i>
+        <span class="nav-label">Ask Your CA</span>
+        <span class="ml-auto text-xs font-bold px-2 py-0.5 rounded-full" style="background:rgba(201,168,76,0.15);color:var(--gold-400);">AI</span>
       </a>
-      <a onclick="showPage('journal')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer">
-        <i class="fas fa-book text-slate-400 w-5"></i>
-        <span class="text-slate-400 text-sm">Journal Entry Guide</span>
-      </a>
-      <a onclick="showPage('compliance')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer">
-        <i class="fas fa-calendar-check text-slate-400 w-5"></i>
-        <span class="text-slate-400 text-sm">Compliance Calendar</span>
-        <span class="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">2</span>
+      <a onclick="showPage('journal')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer mb-0.5">
+        <i class="fas fa-book-open nav-icon w-4 text-sm"></i>
+        <span class="nav-label">Journal Entry Guide</span>
       </a>
 
-      <a onclick="showPage('tdsanalysis')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer">
-        <i class="fas fa-percentage text-slate-400 w-5"></i>
-        <span class="text-slate-400 text-sm">TDS Analysis</span>
-      </a>
-
-      <a onclick="showPage('fullaudit')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer">
-        <i class="fas fa-search-dollar text-slate-400 w-5"></i>
-        <span class="text-slate-400 text-sm">Full Audit</span>
-        <span class="ml-auto bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full">New</span>
-      </a>
-
-      <div class="text-xs text-slate-500 uppercase tracking-wider px-3 mb-2 mt-5">Admin</div>
-      <a onclick="showPage('admin')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer">
-        <i class="fas fa-users-cog text-slate-400 w-5"></i>
-        <span class="text-slate-400 text-sm">Admin Panel</span>
+      <div class="nav-section-label">Admin</div>
+      <a onclick="showPage('admin')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer mb-0.5">
+        <i class="fas fa-sliders nav-icon w-4 text-sm"></i>
+        <span class="nav-label">Admin Panel</span>
       </a>
     </nav>
 
     <!-- Logout -->
-    <div class="p-4 border-t border-white/10">
-      <button onclick="logout()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition">
-        <i class="fas fa-sign-out-alt text-slate-400 w-5"></i>
-        <span class="text-slate-400 text-sm">Logout</span>
+    <div class="px-4 py-3" style="border-top:1px solid rgba(255,255,255,0.05);">
+      <button onclick="logout()" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition">
+        <i class="fas fa-arrow-right-from-bracket w-4 text-sm" style="color:#2E4A62;"></i>
+        <span class="text-xs" style="color:#2E4A62;">Sign out</span>
       </button>
     </div>
   </div>
 
   <!-- CONTENT AREA -->
-  <div class="main-content ml-[260px]">
+  <div class="main-content ml-[256px]">
 
     <!-- TOP BAR -->
-    <div class="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between sticky top-0 z-40">
+    <div class="app-header px-8 py-3.5 flex items-center justify-between sticky top-0 z-40">
       <div>
-        <h2 id="pageTitle" class="text-lg font-semibold text-gray-800">Dashboard</h2>
-        <p id="pageSubtitle" class="text-xs text-gray-500">Welcome back, Sagar</p>
+        <h2 id="pageTitle" class="text-base font-semibold" style="color:var(--ink);">Dashboard</h2>
+        <p id="pageSubtitle" class="text-xs mt-0.5" style="color:var(--ink-muted);">Welcome back, Sagar</p>
       </div>
       <div class="flex items-center gap-3">
-        <!-- Global files status pill — shown when files are saved -->
-        <div id="headerFilesStatus" class="hidden items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-1.5 cursor-pointer hover:bg-green-100 transition" onclick="showPage('upload')" title="Click to manage files">
-          <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-          <span class="text-xs font-semibold text-green-700" id="headerFilesLabel">Files loaded</span>
+        <!-- Files loaded pill -->
+        <div id="headerFilesStatus" class="hidden items-center gap-2 rounded-xl px-3 py-1.5 cursor-pointer transition" style="background:rgba(201,168,76,0.08); border:1px solid rgba(201,168,76,0.2);" onclick="showPage('upload')" title="Click to manage files">
+          <span class="w-1.5 h-1.5 rounded-full" style="background:var(--gold-500);"></span>
+          <span class="text-xs font-semibold" style="color:var(--gold-500);" id="headerFilesLabel">Files loaded</span>
         </div>
-        <button class="relative p-2 rounded-xl hover:bg-gray-100">
-          <i class="fas fa-bell text-gray-500"></i>
+        <button class="relative p-2 rounded-xl transition" style="hover:background:var(--cream-100)">
+          <i class="fas fa-bell text-sm" style="color:var(--ink-muted);"></i>
           <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
         </button>
-        <div class="text-sm text-gray-500">FY 2025–26</div>
-        <button onclick="showPage('upload')" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-blue-700 transition">
-          <i class="fas fa-plus mr-2"></i>Upload Files
+        <div class="text-xs font-medium px-3 py-1.5 rounded-lg" style="background:var(--cream-100); color:var(--ink-light); border:1px solid var(--border);">FY 2025–26</div>
+        <button onclick="showPage('upload')" class="btn-gold px-4 py-2 rounded-xl text-sm">
+          <i class="fas fa-arrow-up-from-bracket mr-2"></i>Upload Files
         </button>
       </div>
     </div>
 
     <!-- ===== DASHBOARD PAGE ===== -->
     <div id="page-dashboard" class="page active p-8">
-      <!-- Stats -->
-      <div class="grid grid-cols-4 gap-6 mb-8">
-        <div class="stat-card card-shadow">
-          <div class="flex items-center justify-between mb-3">
-            <span class="text-sm text-gray-500">Total Analyses</span>
-            <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-              <i class="fas fa-file-chart-line text-blue-600"></i>
+
+      <!-- Stats row -->
+      <div class="grid grid-cols-4 gap-5 mb-7">
+
+        <div class="stat-card" style="border-top:2px solid var(--navy-500);">
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-xs font-semibold uppercase tracking-wider" style="color:var(--ink-muted);">Total Audits</span>
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:var(--navy-800);">
+              <i class="fas fa-file-lines text-xs" style="color:var(--gold-400);"></i>
             </div>
           </div>
-          <div class="text-3xl font-bold text-gray-800" id="dash-total">0</div>
-          <div class="text-xs text-gray-400 mt-1">Run your first audit</div>
+          <div class="text-3xl font-bold" style="color:var(--ink);" id="dash-total">0</div>
+          <div class="text-xs mt-1.5" style="color:var(--ink-muted);">Upload to begin</div>
         </div>
-        <div class="stat-card card-shadow">
-          <div class="flex items-center justify-between mb-3">
-            <span class="text-sm text-gray-500">Critical Errors</span>
-            <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
-              <i class="fas fa-exclamation-circle text-red-500"></i>
+
+        <div class="stat-card" style="border-top:2px solid #DC2626;">
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-xs font-semibold uppercase tracking-wider" style="color:var(--ink-muted);">Critical</span>
+            <div class="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center">
+              <i class="fas fa-triangle-exclamation text-red-500 text-xs"></i>
             </div>
           </div>
           <div class="text-3xl font-bold text-red-600" id="dash-critical">—</div>
-          <div class="text-xs text-gray-400 mt-1">No audit yet</div>
+          <div class="text-xs mt-1.5" style="color:var(--ink-muted);">Errors in last audit</div>
         </div>
-        <div class="stat-card card-shadow">
-          <div class="flex items-center justify-between mb-3">
-            <span class="text-sm text-gray-500">Needs Review</span>
-            <div class="w-10 h-10 rounded-xl bg-yellow-50 flex items-center justify-center">
-              <i class="fas fa-search text-yellow-500"></i>
+
+        <div class="stat-card" style="border-top:2px solid #D97706;">
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-xs font-semibold uppercase tracking-wider" style="color:var(--ink-muted);">For Review</span>
+            <div class="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center">
+              <i class="fas fa-eye text-amber-500 text-xs"></i>
             </div>
           </div>
-          <div class="text-3xl font-bold text-yellow-600" id="dash-warnings">—</div>
-          <div class="text-xs text-gray-400 mt-1">No audit yet</div>
+          <div class="text-3xl font-bold text-amber-600" id="dash-warnings">—</div>
+          <div class="text-xs mt-1.5" style="color:var(--ink-muted);">Items to verify</div>
         </div>
-        <div class="stat-card card-shadow">
-          <div class="flex items-center justify-between mb-3">
-            <span class="text-sm text-gray-500">Compliance Health</span>
-            <div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
-              <i class="fas fa-shield-check text-green-500"></i>
+
+        <div class="stat-card" style="border-top:2px solid var(--gold-500);">
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-xs font-semibold uppercase tracking-wider" style="color:var(--ink-muted);">Health Score</span>
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(201,168,76,0.1);">
+              <i class="fas fa-shield-halved text-xs" style="color:var(--gold-500);"></i>
             </div>
           </div>
-          <div class="text-3xl font-bold text-gray-800" id="dash-score">—</div>
-          <div class="progress-bar mt-2"><div class="progress-fill" id="dash-score-bar" style="width:0%"></div></div>
+          <div class="text-3xl font-bold" style="color:var(--ink);" id="dash-score">—</div>
+          <div class="progress-bar mt-3"><div class="progress-fill" id="dash-score-bar" style="width:0%"></div></div>
         </div>
       </div>
 
-      <div class="grid grid-cols-3 gap-6">
-        <!-- Recent Uploads -->
-        <div class="col-span-2 bg-white rounded-2xl card-shadow p-6">
+      <div class="grid grid-cols-3 gap-5">
+        <!-- Recent Analyses -->
+        <div class="col-span-2 bg-white rounded-2xl p-6 card-shadow" style="border:1px solid var(--border-light);">
           <div class="flex items-center justify-between mb-5">
-            <h3 class="font-semibold text-gray-800">Recent Analyses</h3>
-            <button onclick="showPage('history')" class="text-blue-600 text-sm hover:underline">View all</button>
+            <h3 class="text-sm font-semibold" style="color:var(--ink);">Recent Analyses</h3>
+            <button onclick="showPage('history')" class="text-xs font-medium transition" style="color:var(--gold-500);">View all →</button>
           </div>
           <div id="dash-recent-list">
             <div class="flex flex-col items-center justify-center py-12 text-center">
-              <div class="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center mb-3">
-                <i class="fas fa-folder-open text-gray-300 text-2xl"></i>
+              <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style="background:var(--cream-100);">
+                <i class="fas fa-folder-open text-sm" style="color:var(--ink-muted);"></i>
               </div>
-              <div class="text-sm font-medium text-gray-400">No audits yet</div>
-              <div class="text-xs text-gray-300 mt-1">Run Full Audit to see results here</div>
-              <button onclick="showPage('fullaudit')" class="mt-4 bg-orange-500 text-white text-xs px-4 py-2 rounded-xl font-semibold hover:bg-orange-600 transition">Run Full Audit</button>
+              <div class="text-sm font-medium" style="color:var(--ink-light);">No audits yet</div>
+              <div class="text-xs mt-1" style="color:var(--ink-muted);">Upload files to run your first audit</div>
+              <button onclick="showPage('fullaudit')" class="btn-gold mt-4 text-xs px-4 py-2 rounded-xl font-semibold">
+                Run Full Audit
+              </button>
             </div>
           </div>
         </div>
 
-        <!-- Compliance Alert -->
-        <div class="bg-white rounded-2xl card-shadow p-6">
+        <!-- Compliance -->
+        <div class="bg-white rounded-2xl p-6 card-shadow" style="border:1px solid var(--border-light);">
           <div class="flex items-center justify-between mb-5">
-            <h3 class="font-semibold text-gray-800">Compliance Alerts</h3>
-            <span class="bg-gray-100 text-gray-400 text-xs px-2 py-1 rounded-full">0 Due</span>
+            <h3 class="text-sm font-semibold" style="color:var(--ink);">Compliance</h3>
+            <span class="text-xs px-2 py-0.5 rounded-full" style="background:var(--cream-100); color:var(--ink-muted);">0 Due</span>
           </div>
           <div class="flex flex-col items-center justify-center py-8 text-center">
-            <i class="fas fa-calendar-check text-gray-200 text-3xl mb-2"></i>
-            <div class="text-xs text-gray-400">No compliance items yet</div>
+            <i class="fas fa-calendar-check text-2xl mb-2" style="color:var(--cream-200);"></i>
+            <div class="text-xs" style="color:var(--ink-muted);">No upcoming deadlines</div>
           </div>
-          <button onclick="showPage('compliance')" class="w-full mt-4 text-blue-600 text-sm border border-blue-200 rounded-xl py-2 hover:bg-blue-50 transition">
-            View Full Calendar
+          <button onclick="showPage('compliance')" class="w-full mt-4 text-xs font-medium py-2 rounded-xl transition" style="border:1px solid var(--border); color:var(--ink-light);">
+            View Calendar →
           </button>
         </div>
       </div>
 
-      <!-- Quick Ask CA -->
-      <div class="mt-6 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 flex items-center justify-between">
+      <!-- Ask CA banner -->
+      <div class="mt-5 rounded-2xl p-6 flex items-center justify-between" style="background:var(--navy-800); border:1px solid var(--navy-600);">
         <div class="flex items-center gap-4">
-          <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
-            <i class="fas fa-robot text-white text-xl"></i>
+          <div class="w-11 h-11 rounded-xl flex items-center justify-center" style="background:rgba(201,168,76,0.15); border:1px solid rgba(201,168,76,0.25);">
+            <i class="fas fa-comments" style="color:var(--gold-400);"></i>
           </div>
           <div>
-            <div class="text-white font-semibold text-lg">Ask Your Virtual CA</div>
-            <div class="text-blue-200 text-sm">Get instant answers to any accounting or tax question</div>
+            <div class="font-semibold text-sm" style="color:#F0EAD8;">Ask Your Virtual CA</div>
+            <div class="text-xs mt-0.5" style="color:#4A6A8A;">Instant answers to accounting, TDS, GST, ITR questions — based on your actual data</div>
           </div>
         </div>
-        <button onclick="showPage('askca')" class="bg-white text-blue-600 font-semibold px-6 py-3 rounded-xl hover:bg-blue-50 transition">
-          Ask Now <i class="fas fa-arrow-right ml-2"></i>
+        <button onclick="showPage('askca')" class="btn-gold px-5 py-2.5 rounded-xl text-sm whitespace-nowrap">
+          Ask Now →
         </button>
       </div>
     </div>
@@ -330,18 +466,18 @@
       <div class="max-w-3xl mx-auto">
 
         <!-- Global Files Status Bar -->
-        <div id="globalFilesBar" class="hidden mb-6 bg-green-50 border border-green-200 rounded-2xl px-5 py-4">
+        <div id="globalFilesBar" class="hidden mb-6 rounded-2xl px-5 py-4" style="background:var(--navy-800); border:1px solid var(--navy-600);">
           <div class="flex items-center justify-between flex-wrap gap-3">
             <div class="flex items-center gap-3">
-              <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                <i class="fas fa-check text-white text-xs"></i>
+              <div class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:rgba(201,168,76,0.15); border:1px solid rgba(201,168,76,0.25);">
+                <i class="fas fa-check text-xs" style="color:var(--gold-400);"></i>
               </div>
               <div>
-                <div class="text-sm font-bold text-green-800">Files Loaded — Ready to Analyse</div>
-                <div class="text-xs text-green-600 mt-0.5" id="globalFilesDetail">—</div>
+                <div class="text-sm font-semibold" style="color:#F0EAD8;">Files saved — ready to analyse</div>
+                <div class="text-xs mt-0.5" style="color:#4A6A8A;" id="globalFilesDetail">—</div>
               </div>
             </div>
-            <button onclick="runSavedAudit()" class="bg-green-600 hover:bg-green-700 text-white text-sm font-bold px-5 py-2 rounded-xl transition">
+            <button onclick="runSavedAudit()" class="btn-gold text-sm font-bold px-5 py-2 rounded-xl">
               <i class="fas fa-play mr-1.5"></i>Run Full Audit
             </button>
           </div>
