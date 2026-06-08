@@ -375,24 +375,34 @@ def audit_itr(ledgers, daybook):
     return findings
 
 # ── MODULE 7: BANK ACCOUNT DETECTION ─────────────────────────────────────────
-BANK_NAME_KEYWORDS = [
-    'hdfc', 'icici', 'sbi', 'axis', 'kotak', 'pnb', 'canara', 'bob', 'bank of baroda',
-    'union bank', 'idbi', 'yes bank', 'indusind', 'rbl', 'federal', 'karnataka bank',
-    'current a/c', 'savings a/c', 'current account', 'savings account',
-    'od a/c', 'overdraft', 'cash credit', 'cc a/c',
+BANK_GROUPS = ('Bank Accounts', 'Bank OD A/c')
+
+# Words that disqualify a ledger from being a bank account
+NOT_A_BANK = [
+    'loan', 'advance', 'tax', 'tds', 'gst', 'income tax', 'investment',
+    'redemption', 'deposit', 'fd', 'fixed deposit', 'mutual fund', 'shares',
+    'capital', 'salary', 'payable', 'receivable', 'creditor', 'debtor',
+    'expense', 'income', 'profit', 'loss', 'reserve', 'drawings',
+    'insurance', 'rent', 'interest payable',
 ]
 
-BANK_GROUPS = ('Bank Accounts', 'Bank OD A/c')
+def _is_real_bank(name_lower):
+    """
+    Returns True if name looks like an actual bank account.
+    Must contain 'bank' AND not contain disqualifying words.
+    OR must be in a known bank account group (handled separately).
+    """
+    if any(bad in name_lower for bad in NOT_A_BANK):
+        return False
+    return 'bank' in name_lower
 
 def audit_bank_accounts(ledgers):
     """
-    Detects bank accounts TWO ways:
-    1. Any ledger in 'Bank Accounts' or 'Bank OD A/c' group (primary — from Tally group)
-    2. Any ledger in ANY group whose name contains a bank name keyword
-       (catches banks mis-filed under Current Assets etc.)
-    Deduplicates by ledger name.
+    Detects bank accounts:
+    1. Ledgers in 'Bank Accounts' or 'Bank OD A/c' group that don't look like non-bank items
+    2. Ledgers in any other group whose name clearly says 'bank' with no disqualifying words
     """
-    seen    = set()
+    seen     = set()
     findings = []
 
     def _add(ledger, note=''):
@@ -416,18 +426,19 @@ def audit_bank_accounts(ledgers):
             ),
         })
 
-    # Pass 1 — group-based (most reliable)
     for ledger in ledgers:
-        if ledger['group'] in BANK_GROUPS:
-            od = ' (OD Account)' if ledger['group'] == 'Bank OD A/c' else ''
-            _add(ledger, od)
+        n   = ledger['name'].lower()
+        grp = ledger['group']
 
-    # Pass 2 — name-based scan across ALL groups (catches banks under wrong group)
-    for ledger in ledgers:
-        n = ledger['name'].lower()
-        if any(kw in n for kw in BANK_NAME_KEYWORDS):
-            grp_note = f' [under: {ledger["group"]}]' if ledger['group'] not in BANK_GROUPS else ''
-            _add(ledger, grp_note)
+        if grp in BANK_GROUPS:
+            # In bank group — include only if it doesn't look like a non-bank item
+            if not any(bad in n for bad in NOT_A_BANK):
+                od = ' (OD Account)' if grp == 'Bank OD A/c' else ''
+                _add(ledger, od)
+        else:
+            # In other group — include only if name clearly indicates a bank account
+            if _is_real_bank(n):
+                _add(ledger, f' [filed under: {grp}]')
 
     return findings
 
