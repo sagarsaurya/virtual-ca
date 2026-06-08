@@ -1687,7 +1687,7 @@
               <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl flex items-center justify-center text-base" style="background:rgba(239,68,68,0.15);">💸</div>
                 <div>
-                  <div class="font-semibold text-sm" style="color:var(--ink);">Cash Violations</div>
+                  <div class="font-semibold text-sm" style="color:#f1f5f9;">Cash Violations</div>
                   <div class="text-xs" style="color:var(--ink-muted);">Sec 40A(3) &gt;₹10k &nbsp;·&nbsp; Sec 269ST &gt;₹2L &nbsp;·&nbsp; grouped by party</div>
                 </div>
               </div>
@@ -1708,7 +1708,7 @@
               <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl flex items-center justify-center text-base" style="background:rgba(245,158,11,0.15);">📋</div>
                 <div>
-                  <div class="font-semibold text-sm" style="color:var(--ink);">Ledger Classification</div>
+                  <div class="font-semibold text-sm" style="color:#f1f5f9;">Ledger Classification</div>
                   <div class="text-xs" style="color:var(--ink-muted);">Wrong groups · misclassified accounts</div>
                 </div>
               </div>
@@ -1728,7 +1728,7 @@
               <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl flex items-center justify-center text-base" style="background:rgba(96,165,250,0.15);">🧾</div>
                 <div>
-                  <div class="font-semibold text-sm" style="color:var(--ink);">TDS Compliance</div>
+                  <div class="font-semibold text-sm" style="color:#f1f5f9;">TDS Compliance</div>
                   <div class="text-xs" style="color:var(--ink-muted);">Sec 194C · 194J · 194I · 194H</div>
                 </div>
               </div>
@@ -1749,7 +1749,7 @@
               <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl flex items-center justify-center text-base" style="background:rgba(16,185,129,0.15);">⚖️</div>
                 <div>
-                  <div class="font-semibold text-sm" style="color:var(--ink);">Outstanding Balances</div>
+                  <div class="font-semibold text-sm" style="color:#f1f5f9;">Outstanding Balances</div>
                   <div class="text-xs" style="color:var(--ink-muted);">Abnormal balances · suspense accounts</div>
                 </div>
               </div>
@@ -1769,7 +1769,7 @@
               <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl flex items-center justify-center text-base" style="background:rgba(245,158,11,0.15);">💰</div>
                 <div>
-                  <div class="font-semibold text-sm" style="color:var(--ink);">Large Expenses</div>
+                  <div class="font-semibold text-sm" style="color:#f1f5f9;">Large Expenses</div>
                   <div class="text-xs" style="color:var(--ink-muted);">Payments above ₹1L · bill & TDS verification</div>
                 </div>
               </div>
@@ -1789,7 +1789,7 @@
               <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl flex items-center justify-center text-base" style="background:rgba(239,68,68,0.15);">🏦</div>
                 <div>
-                  <div class="font-semibold text-sm" style="color:var(--ink);">Loans &amp; Director Advances</div>
+                  <div class="font-semibold text-sm" style="color:#f1f5f9;">Loans &amp; Director Advances</div>
                   <div class="text-xs" style="color:var(--ink-muted);">Sec 269SS/269T · director loans · long-pending advances</div>
                 </div>
               </div>
@@ -1809,7 +1809,7 @@
               <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl flex items-center justify-center text-base" style="background:rgba(16,185,129,0.15);">🏧</div>
                 <div>
-                  <div class="font-semibold text-sm" style="color:var(--ink);">Bank Accounts in Books</div>
+                  <div class="font-semibold text-sm" style="color:#f1f5f9;">Bank Accounts in Books</div>
                   <div class="text-xs" style="color:var(--ink-muted);">All bank ledgers detected · reconcile each with statement</div>
                 </div>
               </div>
@@ -1830,7 +1830,7 @@
               <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl flex items-center justify-center text-base" style="background:rgba(96,165,250,0.15);">👥</div>
                 <div>
-                  <div class="font-semibold text-sm" style="color:var(--ink);">Salary / PF / PT Compliance</div>
+                  <div class="font-semibold text-sm" style="color:#f1f5f9;">Salary / PF / PT Compliance</div>
                   <div class="text-xs" style="color:var(--ink-muted);">EPF Act · Professional Tax (WB) · salary deductions</div>
                 </div>
               </div>
@@ -2552,9 +2552,9 @@ function renderTDSPage(data) {
       </tr></thead>
       <tbody class="text-xs divide-y" style="divide-color:var(--border-light);">
         ${items.map(t => `<tr>
-          <td class="py-2.5 font-medium" style="color:var(--ink);">${escapeHtml(t.party)}</td>
+          <td class="py-2.5 font-medium" style="color:#e2e8f0;">${escapeHtml(t.party)}</td>
           <td><span class="tag-navy px-2 py-0.5 rounded-full font-bold">${t.section}</span></td>
-          <td style="color:var(--ink);">${fmt(t.total_paid)}</td>
+          <td style="color:#e2e8f0;">${fmt(t.total_paid)}</td>
           <td class="font-semibold text-red-600">${fmt(t.tds_expected)} <span style="color:var(--ink-muted); font-weight:400;">@ ${t.rate}%</span></td>
           <td class="text-amber-600">${t.interest_est > 0 ? fmt(t.interest_est) : '—'}</td>
         </tr>`).join('')}
@@ -3415,7 +3415,7 @@ const _aRow = (cells, extra='') =>
   `<tr class="transition" style="border-bottom:1px solid rgba(255,255,255,0.04);" ${extra}>${cells}</tr>`;
 
 const _aTd = (content, style='') =>
-  `<td class="py-3 px-4" style="color:var(--ink);${style}">${content}</td>`;
+  `<td class="py-3 px-4" style="color:#e2e8f0;${style}">${content}</td>`;
 
 const _aEmpty = (msg) =>
   `<div class="p-5 text-sm font-medium" style="color:#34d399;">✅ ${msg}</div>`;
@@ -3481,8 +3481,8 @@ function renderCashViolations(violations, personalMarks) {
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style="background:linear-gradient(135deg,${col});">${initials(g.party)}</div>
           <div>
-            <div class="font-semibold text-sm ${isConfirmed?'line-through':''}" style="color:var(--ink);">${escapeHtml(g.party)}</div>
-            <div class="text-xs" style="color:var(--ink-muted);">${g.items.length} transaction${g.items.length>1?'s':''} · click to expand</div>
+            <div class="font-semibold text-sm ${isConfirmed?'line-through':''}" style="color:#e2e8f0;">${escapeHtml(g.party)}</div>
+            <div class="text-xs" style="color:#94a3b8;">${g.items.length} transaction${g.items.length>1?'s':''} · click to expand</div>
           </div>
         </div>
         <div class="flex items-center gap-2 flex-wrap justify-end">
@@ -3681,7 +3681,7 @@ function renderSalaryCompliance(items) {
     const color  = isCrit ? '#f87171' : isImp ? '#fbbf24' : '#34d399';
     const bg     = isCrit ? 'rgba(239,68,68,0.15)' : isImp ? 'rgba(245,158,11,0.15)' : 'rgba(16,185,129,0.15)';
     return _aRow(
-      _aTd(`<span class="font-semibold text-xs" style="color:var(--ink);">${escapeHtml(s.issue||'')}</span>`) +
+      _aTd(`<span class="font-semibold text-xs" style="color:#e2e8f0;">${escapeHtml(s.issue||'')}</span>`) +
       _aTd(`<span style="color:${color};font-weight:600;">${s.amount ? '₹'+Number(s.amount).toLocaleString('en-IN') : '—'}</span>`) +
       _aTd(`<span class="text-xs" style="color:var(--ink-muted);">${escapeHtml(s.impact||s.note||'')}</span>`) +
       _aTd(_secTag(s.severity||'Info', color, bg))
