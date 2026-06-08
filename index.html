@@ -63,9 +63,35 @@
     margin: 20px 0 6px;
   }
 
+  /* ── GLOBAL DARK MODE OVERRIDES — kills ALL Tailwind white/gray ── */
+  .bg-white                { background: var(--navy-800) !important; color: #e2e8f0; }
+  .bg-gray-50              { background: var(--navy-700) !important; }
+  .bg-gray-100             { background: var(--navy-700) !important; }
+  .bg-gray-200             { background: var(--navy-600) !important; }
+  .hover\:bg-gray-50:hover { background: var(--navy-700) !important; }
+  .hover\:bg-gray-100:hover{ background: var(--navy-600) !important; }
+  .hover\:bg-gray-200:hover{ background: var(--navy-600) !important; }
+  .border-gray-100         { border-color: var(--navy-600) !important; }
+  .border-gray-200         { border-color: var(--navy-600) !important; }
+  .border-gray-300         { border-color: var(--navy-500) !important; }
+  .text-gray-900           { color: #f1f5f9 !important; }
+  .text-gray-800           { color: #e2e8f0 !important; }
+  .text-gray-700           { color: #cbd5e1 !important; }
+  .text-gray-600           { color: #94a3b8 !important; }
+  .text-gray-500           { color: #64748b !important; }
+  .text-gray-400           { color: #475569 !important; }
+  .divide-gray-100 > * + * { border-color: var(--navy-600) !important; }
+  .divide-gray-200 > * + * { border-color: var(--navy-600) !important; }
+  /* Table rows */
+  tr.hover\:bg-gray-50:hover { background: var(--navy-700) !important; }
+  /* kbd tags */
+  kbd.bg-gray-100          { background: var(--navy-600) !important; color: #e2e8f0 !important; border: 1px solid var(--navy-500); }
+  /* Modals / overlays that use bg-white */
+  .rounded-2xl.bg-white, .rounded-xl.bg-white { background: var(--navy-800) !important; }
+
   /* ── CARDS ───────────────────────────────────────────────────── */
-  .card-shadow { box-shadow: 0 1px 3px rgba(26,36,56,0.06), 0 4px 16px rgba(26,36,56,0.06); }
-  .card-gold-border { border: 1px solid var(--border); border-top: 2px solid var(--gold-500); }
+  .card-shadow { box-shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.3); }
+  .card-gold-border { border: 1px solid var(--navy-600); border-top: 2px solid var(--gold-500); }
   .stat-card {
     background: var(--navy-800); border-radius: 14px; padding: 24px;
     border: 1px solid var(--navy-600);
