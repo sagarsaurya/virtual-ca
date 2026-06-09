@@ -220,52 +220,144 @@ def audit_ledger_classification(ledgers):
 
 # ── MODULE 2: OUTSTANDING AMOUNTS ────────────────────────────────────────────
 def audit_outstanding(ledgers):
+    """
+    Checks:
+    - Suspense A/c non-zero (Critical)
+    - Sundry Debtors: credit balance, large outstanding, >3yr bad debt (Sec 36(1)(vii))
+    - Sundry Creditors: debit balance, >3yr cessation of liability (Sec 41(1) IT Act),
+                        MSME 45-day rule flag (Sec 43B(h))
+    - Cash-in-Hand: negative balance (impossible = books error), very high balance (>₹2L)
+    - Loans & Advances: unadjusted advances
+    - Opening balance difference
+    """
     findings = []
     for ledger in ledgers:
         name  = ledger['name']
         group = ledger['group']
-        bal   = ledger['balance']
-        # Suspense non-zero
-        if 'suspense' in name.lower() and (ledger['debit'] > 0 or ledger['credit'] > 0):
+        nl    = name.lower()
+        bal   = ledger['balance']   # debit - credit (positive = Dr balance)
+
+        # ── Suspense non-zero ────────────────────────────────────────────────
+        if 'suspense' in nl and (ledger['debit'] > 0 or ledger['credit'] > 0):
+            amt = abs(ledger['credit'] or ledger['debit'])
             findings.append({
-                'type': 'suspense', 'ledger': name,
-                'amount': abs(ledger['credit'] or ledger['debit']),
-                'question': f'Suspense account has Rs.{abs(ledger["credit"] or ledger["debit"]):,.0f} balance. What is this for? Identify and move to correct ledger before finalising books.',
-                'severity': 'Critical'
+                'type': 'suspense', 'ledger': name, 'amount': amt,
+                'question': (f'Suspense account has Rs.{amt:,.0f} balance. '
+                             'Identify the nature and move to correct ledger before finalising books. '
+                             'Suspense balance in final accounts is not acceptable per ICAI standards.'),
+                'severity': 'Critical',
+                'law': 'ICAI Guidance Note on Accounts — suspense must be nil at year-end'
             })
-        # Debtor with credit balance (unusual)
-        if group == 'Sundry Debtors' and ledger['credit'] > ledger['debit'] and ledger['credit'] > 0:
+
+        # ── Sundry Debtors ───────────────────────────────────────────────────
+        if group == 'Sundry Debtors':
+            # Credit balance debtor = advance received? Should be Current Liability
+            if ledger['credit'] > ledger['debit'] and ledger['credit'] > 0:
+                findings.append({
+                    'type': 'debtor_credit_balance', 'ledger': name,
+                    'amount': ledger['credit'] - ledger['debit'],
+                    'question': (f'{name} is under Sundry Debtors but has a CREDIT balance '
+                                 f'of Rs.{(ledger["credit"]-ledger["debit"]):,.0f}. '
+                                 'Is this an advance received from the customer? '
+                                 'If yes, move to Current Liabilities → Advance from Customers.'),
+                    'severity': 'Review',
+                    'law': 'AS 9 Revenue Recognition — advance received is a liability, not a debtor'
+                })
+            # Large outstanding debtor
+            if ledger['debit'] > 50000:
+                findings.append({
+                    'type': 'outstanding_debtor', 'ledger': name,
+                    'amount': ledger['debit'],
+                    'question': (f'Rs.{ledger["debit"]:,.0f} outstanding from {name}. '
+                                 'When was this invoiced? Has any payment been received? '
+                                 'If outstanding >6 months: consider provision for bad debt. '
+                                 'If outstanding >3 years and irrecoverable: write off as bad debt '
+                                 'and claim deduction under Sec 36(1)(vii) IT Act.'),
+                    'severity': 'Review',
+                    'law': 'Sec 36(1)(vii) IT Act — bad debt deduction allowed on write-off in books'
+                })
+
+        # ── Sundry Creditors ─────────────────────────────────────────────────
+        if group == 'Sundry Creditors':
+            # Debit balance creditor = advance paid = should be asset
+            if ledger['debit'] > ledger['credit'] and ledger['debit'] > 0:
+                findings.append({
+                    'type': 'creditor_debit_balance', 'ledger': name,
+                    'amount': ledger['debit'] - ledger['credit'],
+                    'question': (f'{name} is under Sundry Creditors but has a DEBIT balance '
+                                 f'of Rs.{(ledger["debit"]-ledger["credit"]):,.0f}. '
+                                 'Is this an advance paid to a supplier? '
+                                 'If yes, move to Loans & Advances (Asset).'),
+                    'severity': 'Review',
+                    'law': 'AS 2 / Balance Sheet presentation — advance paid is an asset'
+                })
+            # Large creditor outstanding — Sec 41(1) + MSME 43B(h) flag
+            if ledger['credit'] > 50000:
+                findings.append({
+                    'type': 'large_creditor_outstanding', 'ledger': name,
+                    'amount': ledger['credit'],
+                    'question': (f'Rs.{ledger["credit"]:,.0f} payable to {name}. '
+                                 '(1) Is this creditor an MSME? If yes and payment is >45 days, '
+                                 'expense will be DISALLOWED under Sec 43B(h) — re-allowed only in year of payment. '
+                                 '(2) If this liability is >3 years old and not likely to be paid, '
+                                 'it becomes taxable income under Sec 41(1) IT Act (cessation of liability). '),
+                    'severity': 'Review',
+                    'law': 'Sec 43B(h) IT Act (MSME 45-day rule) | Sec 41(1) IT Act (cessation of liability >3yr)'
+                })
+
+        # ── Cash-in-Hand ─────────────────────────────────────────────────────
+        if group == 'Cash-in-Hand':
+            # Negative cash = impossible = books error
+            if bal < 0:
+                findings.append({
+                    'type': 'negative_cash', 'ledger': name,
+                    'amount': abs(bal),
+                    'question': (f'Cash-in-Hand "{name}" shows a NEGATIVE balance of '
+                                 f'Rs.{abs(bal):,.0f}. This is impossible — cash cannot be negative. '
+                                 'A payment entry must be missing or wrongly entered. '
+                                 'Check the cash ledger and correct the entry.'),
+                    'severity': 'Critical',
+                    'law': 'Basic accounting principle — cash balance cannot be negative'
+                })
+            # Very high cash balance
+            elif bal > 200000:
+                findings.append({
+                    'type': 'high_cash_balance', 'ledger': name,
+                    'amount': bal,
+                    'question': (f'Cash-in-Hand balance is very high at Rs.{bal:,.0f}. '
+                                 'Is this correct? High cash balance invites scrutiny. '
+                                 'Verify with physical cash count. Any cash above ₹2L received '
+                                 'in a single transaction is prohibited under Sec 269ST.'),
+                    'severity': 'Review',
+                    'law': 'Sec 269ST IT Act — cash receipt >₹2L prohibited; penalty = 100% of amount'
+                })
+
+        # ── Loans & Advances (Asset) — old unadjusted advances ───────────────
+        if group == 'Loans & Advances (Asset)' and 'advance' in nl and bal > 50000:
             findings.append({
-                'type': 'debtor_credit_balance', 'ledger': name,
-                'amount': ledger['credit'] - ledger['debit'],
-                'question': f'{name} is a debtor but has a credit balance of Rs.{(ledger["credit"]-ledger["debit"]):,.0f}. Is this an advance received? If yes, move to Current Liabilities.',
-                'severity': 'Review'
+                'type': 'old_advance', 'ledger': name,
+                'amount': bal,
+                'question': (f'Advance of Rs.{bal:,.0f} in "{name}" is outstanding. '
+                             'Has the advance been adjusted against bills/services received? '
+                             'Old unadjusted advances should be recovered or written off.'),
+                'severity': 'Review',
+                'law': 'AS 4 / Prudence principle — unadjusted advances should be reviewed annually'
             })
-        # Large outstanding debtor
-        if group == 'Sundry Debtors' and ledger['debit'] > 50000:
-            findings.append({
-                'type': 'outstanding_debtor', 'ledger': name,
-                'amount': ledger['debit'],
-                'question': f'Rs.{ledger["debit"]:,.0f} is outstanding from {name}. Has this been received? If yes, add receipt entry. If no — is recovery being pursued? Should this be written off as bad debt?',
-                'severity': 'Review'
-            })
-        # Creditor with debit balance
-        if group == 'Sundry Creditors' and ledger['debit'] > ledger['credit'] and ledger['debit'] > 0:
-            findings.append({
-                'type': 'creditor_debit_balance', 'ledger': name,
-                'amount': ledger['debit'] - ledger['credit'],
-                'question': f'{name} is a creditor but shows a debit balance of Rs.{(ledger["debit"]-ledger["credit"]):,.0f}. Is this an advance paid? If yes, move to Loans & Advances (Asset).',
-                'severity': 'Review'
-            })
-        # Opening balance difference
-        if 'difference in opening' in name.lower() and (ledger['debit'] > 0 or ledger['credit'] > 0):
+
+        # ── Opening balance difference ────────────────────────────────────────
+        if 'difference in opening' in nl and (ledger['debit'] > 0 or ledger['credit'] > 0):
             amt = ledger['debit'] or ledger['credit']
             findings.append({
                 'type': 'opening_balance_diff', 'ledger': name,
                 'amount': abs(amt),
-                'question': f'Difference in Opening Balances = Rs.{abs(amt):,.0f}. This means last year closing balance does not match this year opening balance. Needs investigation.',
-                'severity': 'Critical'
+                'question': (f'Difference in Opening Balances = Rs.{abs(amt):,.0f}. '
+                             'This means last year closing balance does not match this year opening balance. '
+                             'Likely cause: ledger added mid-year without opening balance entry, '
+                             'or prior year balance was edited. Must be corrected before audit.'),
+                'severity': 'Critical',
+                'law': 'AS 1 — opening balance of current year must equal closing balance of prior year'
             })
+
     return findings
 
 # ── MODULE 3: CASH VIOLATIONS ────────────────────────────────────────────────
@@ -376,22 +468,90 @@ def audit_cash_violations(daybook):
 
 # ── MODULE 4: LOAN AUDIT ──────────────────────────────────────────────────────
 def audit_loans(ledgers, daybook):
+    """
+    Checks:
+    - Any loan/advance account > ₹10,000 → ask for documentation
+    - Sec 269SS: loan ACCEPTED in cash > ₹20,000 → penalty = 100% of loan amount (Sec 271D)
+    - Sec 269T: loan REPAID in cash > ₹20,000 → penalty = 100% of amount (Sec 271E)
+    - Director loans → Companies Act Sec 185 restriction + Sec 269SS compliance
+    - Form 3CD Clause 13 reporting requirement for 269SS/269T transactions
+    """
     findings = []
     loan_groups = ['Loans (Liability)', 'Loans & Advances (Asset)']
+
     for ledger in ledgers:
-        if ledger['group'] in loan_groups and abs(ledger['balance']) > 10000:
-            bal = abs(ledger['balance'])
-            findings.append({
-                'ledger': ledger['name'],
-                'group': ledger['group'],
-                'balance': bal,
-                'documents_required': [
-                    f"Bank statement showing loan {'receipt' if ledger['group']=='Loans (Liability)' else 'disbursement'} of Rs.{bal:,.0f}",
-                    "Loan agreement with repayment terms and interest rate",
-                    "If Director loan — Board resolution + compliance with Sec 269SS (must be via banking channel)"
-                ],
-                'question': f"Loan account '{ledger['name']}' has balance of Rs.{bal:,.0f}. Please provide bank statement and loan agreement for verification."
-            })
+        if ledger['group'] not in loan_groups:
+            continue
+        bal  = abs(ledger['balance'])
+        name = ledger['name']
+        nl   = name.lower()
+        if bal < 10000:
+            continue
+
+        is_director = any(k in nl for k in ['director', 'partner', 'proprietor', 'shareholder', 'promoter'])
+        is_liability = ledger['group'] == 'Loans (Liability)'
+
+        docs = [
+            f"Bank statement showing loan {'receipt' if is_liability else 'disbursement'} of Rs.{bal:,.0f}",
+            "Loan agreement with repayment schedule and interest rate",
+        ]
+        law_notes = []
+
+        if is_director:
+            law_notes.append(
+                "Director/Partner loan: must comply with Sec 269SS (acceptance via banking channel only). "
+                "For companies: Sec 185 Companies Act restricts loans to directors — requires Board resolution."
+            )
+            docs.append("Board resolution authorising the loan (mandatory for companies)")
+            docs.append("Form DPT-3 filed with ROC (annual return of deposits/loans)")
+
+        law_notes.append(
+            f"Sec 269SS: If any amount of Rs.20,000+ was ACCEPTED as loan in cash → "
+            f"penalty = 100% of loan amount under Sec 271D. "
+            f"Sec 269T: If any repayment of Rs.20,000+ was made in cash → "
+            f"penalty = 100% under Sec 271E. Both must be reported in Form 3CD Clause 13."
+        )
+
+        findings.append({
+            'ledger':   name,
+            'group':    ledger['group'],
+            'balance':  bal,
+            'is_director': is_director,
+            'documents_required': docs,
+            'law': ' | '.join(law_notes),
+            'question': (
+                f"{'Director/Partner' if is_director else 'Loan'} account '{name}' has "
+                f"balance of Rs.{bal:,.0f}. "
+                f"(1) Was this loan received/given via banking channel? "
+                f"(2) Any cash acceptance/repayment >₹20,000 = penalty under Sec 269SS/269T. "
+                f"Please provide bank statement + loan agreement."
+            )
+        })
+
+    # Daybook-based 269SS check: look for Journal/Receipt vouchers to loan accounts with cash
+    if not daybook.empty:
+        cash_loan_receipts = daybook[
+            (daybook['VchType'].isin(['Receipt', 'Journal'])) &
+            (daybook['Credit'] >= 20000)
+        ]
+        for _, row in cash_loan_receipts.iterrows():
+            party = str(row['Particulars']).strip()
+            if any(k in party.lower() for k in ['loan', 'advance', 'director', 'partner']):
+                findings.append({
+                    'ledger': party,
+                    'group': 'Loan Receipt (Daybook)',
+                    'balance': row['Credit'],
+                    'is_director': False,
+                    'documents_required': ['Bank statement confirming receipt was via banking channel'],
+                    'law': 'Sec 269SS IT Act — cash loan receipt >₹20,000 attracts penalty = 100% of amount (Sec 271D)',
+                    'question': (
+                        f"Receipt of Rs.{row['Credit']:,.0f} from '{party}' on "
+                        f"{str(row['Date'].date()) if pd.notna(row['Date']) else 'unknown'}. "
+                        f"If this was a CASH loan receipt, it violates Sec 269SS — penalty = Rs.{row['Credit']:,.0f}. "
+                        f"Confirm: was this received via bank transfer/cheque?"
+                    )
+                })
+
     return findings
 
 # ── MODULE 5: LARGE EXPENSE CHECK ────────────────────────────────────────────
@@ -409,30 +569,155 @@ def audit_large_expenses(daybook, threshold=100000):
 
 # ── MODULE 6: INCOME TAX / ITR FLAGS ─────────────────────────────────────────
 def audit_itr(ledgers, daybook):
+    """
+    Checks expenses that are NOT deductible as business expenses under IT Act:
+    - Personal expenses in business books (Sec 37 — only wholly business expenditure allowed)
+    - Fines & penalties (Sec 37(1) — explicitly disallowed)
+    - Donations to non-80G entities (Sec 80G — only approved institutions)
+    - Cash payment disallowance (Sec 40A(3))
+    - Drawings booked as expense
+    """
     findings = []
-    # Personal expenses in business books
-    personal_keywords = ['grocery','personal','family','children','school','shopping','hotel',
-                         'food','club','medical','college fees','membership']
+
+    # ── Personal expenses (Sec 37) ───────────────────────────────────────────
+    PERSONAL_KEYWORDS = [
+        'grocery', 'personal', 'family', 'children', 'school fees', 'tuition',
+        'shopping', 'club membership', 'medical expense', 'college fees',
+        'birthday', 'wedding', 'party expense', 'tour personal', 'holiday',
+        'household', 'home expense', 'domestic', 'vehicle personal',
+    ]
     for ledger in ledgers:
-        name_lower = ledger['name'].lower()
-        if any(k in name_lower for k in personal_keywords) and ledger['debit'] > 0:
+        nl  = ledger['name'].lower()
+        amt = ledger['debit']
+        if any(k in nl for k in PERSONAL_KEYWORDS) and amt > 0:
             findings.append({
-                'ledger': ledger['name'],
-                'amount': ledger['debit'],
-                'issue': f"'{ledger['name']}' (Rs.{ledger['debit']:,.0f}) may be a personal expense — not deductible as business expense",
-                'action': "Verify — if personal, move to Drawings account"
+                'ledger': ledger['name'], 'amount': amt,
+                'type': 'personal_expense',
+                'issue': f"'{ledger['name']}' (Rs.{amt:,.0f}) appears to be a personal expense — not deductible as business expense",
+                'action': "Verify — if personal, pass journal entry: Dr Drawings A/c / Cr this ledger",
+                'law': 'Sec 37(1) IT Act — only expenditure laid out wholly for business purposes is deductible'
             })
-    # Disallowed cash payments — reuse cash_violations to get accurate list
+
+    # ── Fines & penalties (Sec 37(1) Explanation — disallowed) ──────────────
+    PENALTY_KEYWORDS = ['fine', 'penalty', 'late fee', 'traffic challan', 'challaan', 'compounding fee']
+    for ledger in ledgers:
+        nl  = ledger['name'].lower()
+        amt = ledger['debit']
+        if any(k in nl for k in PENALTY_KEYWORDS) and amt > 0:
+            findings.append({
+                'ledger': ledger['name'], 'amount': amt,
+                'type': 'fine_penalty',
+                'issue': f"'{ledger['name']}' (Rs.{amt:,.0f}) — fines/penalties are explicitly disallowed as business expense",
+                'action': "This amount will be added back in the income tax computation — not a valid deduction",
+                'law': 'Sec 37(1) IT Act Explanation 1 — penalty for infraction of law is not deductible'
+            })
+
+    # ── Donations — disallowed unless to 80G approved institution ────────────
+    DONATION_KEYWORDS = ['donation', 'charity', 'contribution', 'csr expense', 'csr fund']
+    for ledger in ledgers:
+        nl  = ledger['name'].lower()
+        amt = ledger['debit']
+        if any(k in nl for k in DONATION_KEYWORDS) and amt > 0:
+            findings.append({
+                'ledger': ledger['name'], 'amount': amt,
+                'type': 'donation',
+                'issue': f"'{ledger['name']}' (Rs.{amt:,.0f}) — donations are not deductible as business expense",
+                'action': "Only donations to 80G-approved institutions are deductible (as deduction from taxable income, NOT as expense). Obtain 80G certificate from recipient.",
+                'law': 'Sec 80G IT Act — deduction for donations; Sec 37 — donations NOT a business expense'
+            })
+
+    # ── Drawings booked as expense ────────────────────────────────────────────
+    for ledger in ledgers:
+        nl  = ledger['name'].lower()
+        amt = ledger['debit']
+        if 'drawing' in nl and ledger['group'] in ['Indirect Expenses', 'Direct Expenses'] and amt > 0:
+            findings.append({
+                'ledger': ledger['name'], 'amount': amt,
+                'type': 'drawings_as_expense',
+                'issue': f"'{ledger['name']}' (Rs.{amt:,.0f}) — Drawings is booked as an expense. Drawings is NOT a business expense; it is a reduction of capital.",
+                'action': "Move to Capital Account group. Journal: Dr Capital A/c / Cr Drawings A/c",
+                'law': 'Sec 37 IT Act — drawings is not a business expenditure; will be disallowed'
+            })
+
+    # ── Cash payment disallowance (Sec 40A(3)) ───────────────────────────────
     cash_violations = audit_cash_violations(daybook)
     cash_disallowed = sum(v['amount'] for v in cash_violations if v['type'] == 'cash_expense')
     if cash_disallowed > 0:
         findings.append({
             'ledger': 'Cash Payments (Sec 40A(3))',
             'amount': cash_disallowed,
-            'issue': f"Total cash payments above Rs.10,000 = Rs.{cash_disallowed:,.0f} — will be disallowed under Section 40A(3)",
-            'action': f"Estimated additional tax (30% bracket) = Rs.{cash_disallowed*0.30:,.0f}"
+            'type': 'cash_disallowance',
+            'issue': f"Cash payments above Rs.10,000 total = Rs.{cash_disallowed:,.0f} — will be disallowed under Sec 40A(3)",
+            'action': f"Estimated additional tax (@30% bracket) = Rs.{cash_disallowed*0.30:,.0f}. Obtain confirmation that payments were via bank — if yes, dismiss these.",
+            'law': 'Sec 40A(3) IT Act — cash expense >₹10,000 per day per person disallowed (₹35,000 for transporters)'
         })
+
     return findings
+
+# ── MODULE 6B: FIXED ASSETS CHECK ────────────────────────────────────────────
+def audit_fixed_assets(ledgers):
+    """
+    Checks:
+    - Fixed assets exist but no depreciation ledger (Schedule II Companies Act 2013)
+    - Accumulated depreciation not maintained separately (AS 10 requirement)
+    - CARO 2020 Clause 3(i): fixed asset register must be maintained
+    - Assets fully depreciated still in books (residual value must be ≥5% of cost per Schedule II)
+    """
+    findings = []
+    fixed_asset_ledgers = [l for l in ledgers if l['group'] == 'Fixed Assets']
+    if not fixed_asset_ledgers:
+        return findings
+
+    total_gross = sum(l['debit'] for l in fixed_asset_ledgers if l['debit'] > 0)
+
+    # Check for depreciation ledger
+    dep_ledgers = [l for l in ledgers if any(k in l['name'].lower()
+                   for k in ['depreciation', 'accum. dep', 'accumulated dep', 'dep reserve'])]
+
+    if not dep_ledgers and total_gross > 50000:
+        findings.append({
+            'type': 'no_depreciation',
+            'amount': total_gross,
+            'issue': (f"Fixed assets of Rs.{total_gross:,.0f} found but NO depreciation ledger exists. "
+                      "Depreciation is mandatory every year on all fixed assets."),
+            'action': (
+                "Create 'Depreciation' ledger under Indirect Expenses. "
+                "Create 'Accumulated Depreciation' ledger under Fixed Assets (credit side). "
+                "Calculate depreciation as per Schedule II of Companies Act 2013 (useful life method) "
+                "OR Income Tax rates (WDV method) — whichever applies to this entity."
+            ),
+            'law': 'Schedule II Companies Act 2013 — mandatory depreciation on useful life basis | AS 10 Fixed Assets | CARO 2020 Clause 3(i)',
+            'severity': 'Critical'
+        })
+    else:
+        total_dep = sum(abs(l['balance']) for l in dep_ledgers)
+        dep_pct   = (total_dep / total_gross * 100) if total_gross > 0 else 0
+        findings.append({
+            'type': 'depreciation_summary',
+            'gross_assets': total_gross,
+            'total_depreciation': total_dep,
+            'dep_pct': dep_pct,
+            'issue': (f"Fixed assets gross = Rs.{total_gross:,.0f}. "
+                      f"Accumulated depreciation = Rs.{total_dep:,.0f} ({dep_pct:.1f}% of gross). "
+                      "Verify depreciation rates are as per Schedule II Companies Act 2013."),
+            'action': "Check useful life used for each asset class matches Schedule II. Residual value must be ≥5% of cost.",
+            'law': 'Schedule II Companies Act 2013 | AS 10 Accounting for Fixed Assets',
+            'severity': 'Review'
+        })
+
+    # CARO 2020 reminder
+    findings.append({
+        'type': 'caro_fixed_assets',
+        'amount': total_gross,
+        'issue': (f"CARO 2020 Clause 3(i): Maintain a Fixed Asset Register showing — "
+                  "description, location, quantity, gross cost, accumulated depreciation, net book value for each asset."),
+        'action': "If not maintained, create FAR immediately. Physical verification of assets at least once in 3 years required.",
+        'law': 'CARO 2020 Clause 3(i) — mandatory for companies; best practice for all entities',
+        'severity': 'Review'
+    })
+
+    return findings
+
 
 # ── MODULE 7: BANK ACCOUNT DETECTION ─────────────────────────────────────────
 BANK_GROUPS = ('Bank Accounts', 'Bank OD A/c')
@@ -601,6 +886,27 @@ TDS_RULES_CONFIG = [
         'rate': 5.0,
         'single_limit': 15000,
         'annual_limit': 15000,
+    },
+    {
+        'section': '194A',
+        'description': 'Interest on Loans / Deposits (other than bank)',
+        'keywords': [
+            'interest paid', 'interest on loan', 'interest on unsecured',
+            'interest on borrowing', 'interest expense', 'loan interest',
+        ],
+        'rate': 10.0,
+        'single_limit': 5000,
+        'annual_limit': 5000,
+    },
+    {
+        'section': '194M',
+        'description': 'Contract/Professional payments by Individuals/HUF (>₹50L)',
+        'keywords': [
+            'contractor payment', 'professional payment', 'consulting fee paid',
+        ],
+        'rate': 5.0,
+        'single_limit': 5000000,
+        'annual_limit': 5000000,
     },
 ]
 
@@ -880,6 +1186,9 @@ def run_full_audit(tb_path, db_path=None):
     print("Module 6: ITR / Tax Audit...")
     results['itr'] = audit_itr(ledgers, daybook)
 
+    print("Module 6B: Fixed Assets...")
+    results['fixed_assets'] = audit_fixed_assets(ledgers)
+
     print("Module 7: Bank Account Detection...")
     # Convert daybook DataFrame to list of dicts for bank scanning
     txn_list = daybook.to_dict('records') if not daybook.empty else []
@@ -926,11 +1235,12 @@ def run_full_audit(tb_path, db_path=None):
     )
     tds_critical  = sum(1 for t in results['tds_compliance'] if t.get('severity') == 'Critical')
     salary_issues = sum(1 for s in results['salary_compliance'] if s.get('severity') in ('Critical','Important'))
+    fa_issues = sum(1 for f in results['fixed_assets'] if f.get('severity') == 'Critical')
     questions = len(results['loans']) + len(results['large_expenses']) + len(results['bank_accounts'])
     # Cash violations: cap penalty at 20 pts (unverified — could be bank payments)
     cash_penalty = min(20, cash_violations_count)
     score = max(0, 100 - (critical * 8) - (warnings * 1) - (questions * 2)
-                      - (tds_critical * 6) - (salary_issues * 3) - cash_penalty)
+                      - (tds_critical * 6) - (salary_issues * 3) - (fa_issues * 5) - cash_penalty)
 
     # Module status — green confirmation when a module finds zero issues
     module_status = {
@@ -969,6 +1279,10 @@ def run_full_audit(tb_path, db_path=None):
         'bank_accounts': {
             'count': len(results['bank_accounts']),
             'ok_msg': 'No bank accounts detected in books — upload daybook to enable bank detection.',
+        },
+        'fixed_assets': {
+            'count': fa_issues,
+            'ok_msg': 'No fixed assets found in books — or depreciation is correctly maintained.',
         },
     }
 
