@@ -126,18 +126,18 @@ def parse_trial_balance(filepath):
                     'debit': debit, 'credit': credit, 'balance': debit - credit
                 })
         elif not has_balance:
-            # No indentation, no balance → GROUP HEADER
+            # No indentation, no balance → GROUP HEADER → update current_group
             current_group = name
         else:
-            # No indentation but has balance → ledger used directly as name
-            # (e.g. company created ledger called "Bank Accounts" under Current Assets)
+            # No indentation but has balance → standalone ledger (e.g. "Bank Accounts" Dr ₹36,876)
+            # Add as ledger under the CURRENT group — do NOT change current_group.
+            # Changing current_group here would cause the next indented ledger (e.g. "Advance to Staff")
+            # to inherit this ledger's name as its group, which is wrong.
             if current_group:
                 ledgers.append({
                     'name': name, 'group': current_group,
                     'debit': debit, 'credit': credit, 'balance': debit - credit
                 })
-            # Also treat as potential new group for anything that follows
-            current_group = name
 
     return ledgers, company_name, period_str
 
