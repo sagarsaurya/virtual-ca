@@ -1068,93 +1068,181 @@ def audit_salary_compliance(ledgers, daybook=None):
             'severity': 'Important',
         })
 
-    # ── PT check — 3 levels ──────────────────────────────────────────────────
-    # Level 1: Does PT ledger exist?
-    # Level 2: Was PT deducted from employees (daybook salary vouchers)?
-    # Level 3: Was deducted PT paid to government (daybook payment to PT/govt)?
-    avg_monthly    = total_salary / 12
-    est_employees  = max(1, round(avg_monthly / 15000))
-    est_pt_per_emp = calc_pt(avg_monthly / max(est_employees, 1))
-    est_annual_pt  = est_pt_per_emp * 12 * est_employees
+    # ── PT check — voucher-level analysis ───────────────────────────────────
+    # For every salary payment voucher in the daybook:
+    #   1. Find the salary amount paid (Debit on salary/staff ledger)
+    #   2. Check if a PT deduction entry (Credit to PT Payable) exists in the SAME voucher
+    #   3. Calculate expected PT using WB slabs
+    #   4. Sum: expected PT due vs actually deducted vs paid to govt → show gap
+    #
+    # Journal structure for correct salary payment:
+    #   Dr  Salary Expense   (gross)
+    #   Cr  PT Payable       (PT deducted)
+    #   Cr  PF Payable       (PF deducted)
+    #   Cr  Bank / Cash      (net salary paid)
 
-    if not pt_ledgers:
-        findings.append({
-            'type':           'pt_missing',
-            'total_salary':   total_salary,
-            'est_annual_pt':  est_annual_pt,
-            'issue': (
-                f"No Professional Tax (PT) ledger found. PT is mandatory for all salaried employees. "
-                f"Based on salary of Rs.{total_salary:,.0f}, estimated PT liability = Rs.{est_annual_pt:,.0f}/year."
-            ),
-            'impact': (
-                "Two separate PT obligations: "
-                "(1) EMPLOYEE PT — deduct from each employee's salary monthly per slab. "
-                "(2) EMPLOYER PT — Rs.2,500/year flat, pay separately. "
-                "WB PT slabs: ₹0 (≤₹10K/month), ₹110 (≤₹15K), ₹130 (≤₹25K), ₹150 (≤₹40K), ₹200 (>₹40K). "
-                "Deposit by 21st every month via Grips portal (wbifms.gov.in). "
-                "Non-payment attracts interest @ 2% per month + penalty."
-            ),
-            'law': 'West Bengal State Tax on Professions, Trades, Callings and Employments Act, 1979',
-            'severity': 'Important',
-        })
-    else:
-        # PT ledger exists — now check if it was deducted AND paid
-        pt_ledger      = pt_ledgers[0]
-        pt_balance     = pt_ledger['balance']   # Dr - Cr
-        pt_cr_total    = pt_ledger['credit']     # total PT collected (deducted from employees)
-        pt_dr_total    = pt_ledger['debit']      # total PT paid to govt
+    PT_KEYWORDS    = ['professional tax', 'pt payable', 'p.tax', 'ptax', 'prof tax', 'professionaltax']
+    SALARY_KEYWORDS = ['salary', 'wages', 'staff salary', 'staff wages', 'remuneration',
+                       'staff incentive', 'incentive']
+    PT_GOVT_KEYWORDS = ['professional tax', 'pt payable', 'p.tax', 'grips', 'wbifms', 'prof tax']
 
-        # Check daybook for PT payment to government
-        pt_paid_to_govt = 0
-        if daybook is not None and not daybook.empty:
-            pt_payments = daybook[
-                (daybook['VchType'] == 'Payment') &
-                (daybook['Particulars'].str.lower().str.contains('professional tax|pt payable|p\.tax|grips|wbifms', na=False))
+    # Voucher-level PT analysis from daybook
+    salary_months_missing_pt = []   # months where salary paid but no PT entry
+    total_pt_deducted_db     = 0.0  # PT credits seen in salary vouchers
+    total_pt_expected_db     = 0.0  # expected PT based on salary amounts
+    total_pt_paid_govt       = 0.0  # PT payments to government
+
+    if daybook is not None and not daybook.empty:
+        db = daybook.copy()
+
+        # Group rows by voucher (_vid already assigned in parse_daybook)
+        # For each voucher, collect: salary debits, PT credits, voucher date
+        for vid, grp_df in db.groupby('_vid'):
+            particulars = grp_df['Particulars'].str.lower().fillna('')
+            vtypes      = grp_df['VchType'].str.lower().fillna('')
+
+            # Only look at Payment and Journal vouchers
+            if not vtypes.isin(['payment', 'journal']).any():
+                continue
+
+            # Find salary rows (Debit entries for salary ledgers)
+            salary_rows = grp_df[
+                particulars.str.contains('|'.join(SALARY_KEYWORDS), na=False) &
+                (grp_df['Debit'] > 0)
             ]
-            pt_paid_to_govt = pt_payments['Debit'].sum()
+            if salary_rows.empty:
+                continue
 
-        if pt_cr_total == 0 and pt_dr_total == 0:
-            # Ledger exists but no transactions
+            salary_amt = salary_rows['Debit'].sum()
+
+            # Find PT deduction rows (Credit entries for PT ledger in same voucher)
+            pt_rows = grp_df[
+                particulars.str.contains('|'.join(PT_KEYWORDS), na=False) &
+                (grp_df['Credit'] > 0)
+            ]
+            pt_deducted = pt_rows['Credit'].sum()
+
+            # Expected PT: use WB slab on salary amount
+            # Assume monthly salary = salary_amt (each voucher = one month)
+            pt_expected = calc_pt(salary_amt)
+
+            total_pt_expected_db += pt_expected
+            total_pt_deducted_db += pt_deducted
+
+            # Get voucher date
+            date_val = grp_df['Date'].dropna().iloc[0] if not grp_df['Date'].dropna().empty else None
+            month_str = date_val.strftime('%b %Y') if date_val is not None else 'Unknown month'
+
+            if pt_expected > 0 and pt_deducted == 0:
+                salary_months_missing_pt.append({
+                    'month':          month_str,
+                    'salary_paid':    salary_amt,
+                    'pt_expected':    pt_expected,
+                    'pt_deducted':    0,
+                    'shortfall':      pt_expected,
+                })
+            elif pt_deducted < pt_expected:
+                salary_months_missing_pt.append({
+                    'month':          month_str,
+                    'salary_paid':    salary_amt,
+                    'pt_expected':    pt_expected,
+                    'pt_deducted':    pt_deducted,
+                    'shortfall':      pt_expected - pt_deducted,
+                })
+
+        # PT payments to government
+        pt_govt_rows = db[
+            (db['VchType'] == 'Payment') &
+            db['Particulars'].str.lower().str.contains('|'.join(PT_GOVT_KEYWORDS), na=False)
+        ]
+        total_pt_paid_govt = pt_govt_rows['Debit'].sum()
+
+    total_pt_shortfall = total_pt_expected_db - total_pt_deducted_db
+    total_pt_unpaid    = max(0, total_pt_deducted_db - total_pt_paid_govt)
+
+    if daybook is not None and not daybook.empty and total_pt_expected_db > 0:
+        # Voucher-level result — detailed
+        if salary_months_missing_pt:
+            month_details = '; '.join(
+                f"{m['month']}: salary Rs.{m['salary_paid']:,.0f}, "
+                f"PT due Rs.{m['pt_expected']:,.0f}, deducted Rs.{m['pt_deducted']:,.0f}"
+                for m in salary_months_missing_pt[:6]
+            )
             findings.append({
-                'type':    'pt_no_transactions',
-                'amount':  est_annual_pt,
-                'issue':   f"PT ledger '{pt_ledger['name']}' exists but has NO entries — PT was never deducted from employees.",
-                'impact':  (
-                    f"PT deduction is mandatory every month. "
-                    f"Estimated annual PT = Rs.{est_annual_pt:,.0f}. "
-                    "Pass monthly journal: Dr Salary Expense / Cr PT Payable (deduction). "
-                    "Then pay: Dr PT Payable / Cr Bank (by 21st each month)."
+                'type':           'pt_not_deducted',
+                'months':         salary_months_missing_pt,
+                'total_shortfall': total_pt_shortfall,
+                'issue': (
+                    f"PT NOT deducted in {len(salary_months_missing_pt)} salary voucher(s). "
+                    f"Total PT shortfall = Rs.{total_pt_shortfall:,.0f}. "
+                    f"Details: {month_details}"
                 ),
-                'law': 'WB PT Act 1979 — employer must deduct PT from salary and deposit to state govt',
-                'severity': 'Important',
-            })
-        elif pt_balance > 0:
-            # PT deducted but not fully paid to govt — balance is outstanding
-            findings.append({
-                'type':    'pt_deducted_not_paid',
-                'amount':  pt_balance,
-                'issue':   (
-                    f"PT deducted from employees (Cr Rs.{pt_cr_total:,.0f}) "
-                    f"but PT paid to govt (Dr Rs.{pt_dr_total:,.0f}). "
-                    f"Outstanding PT payable = Rs.{pt_balance:,.0f} — NOT yet deposited to government."
+                'impact': (
+                    f"Employer is liable to pay the undeducted PT from own pocket. "
+                    f"Interest @ 2%/month on shortfall of Rs.{total_pt_shortfall:,.0f}. "
+                    "Pass missed journal entries and deposit to Grips portal immediately."
                 ),
-                'impact':  (
-                    "PT collected from employees must be deposited to state govt by 21st of the following month. "
-                    f"Late payment attracts interest @ 2% per month on Rs.{pt_balance:,.0f}. "
-                    "Pay immediately via Grips portal (wbifms.gov.in)."
-                ),
-                'law': 'WB PT Act 1979 Sec 7 — employer liable for deposit; interest @ 2%/month on delay',
+                'law': 'WB PT Act 1979 — employer must deduct PT from salary; liable even if not deducted',
                 'severity': 'Critical',
             })
         else:
-            # PT looks clean — deducted and paid
             findings.append({
-                'type':     'pt_ok',
-                'amount':   pt_dr_total,
-                'issue':    f"PT ledger found. Total PT deducted = Rs.{pt_cr_total:,.0f}. Total paid to govt = Rs.{pt_dr_total:,.0f}. Balance = Rs.{abs(pt_balance):,.0f}.",
-                'impact':   "Verify PT challans for each month. Ensure employer PT (Rs.2,500/year) is also paid separately.",
-                'law':      'WB PT Act 1979',
+                'type':    'pt_deducted_ok',
+                'amount':  total_pt_deducted_db,
+                'issue':   f"PT deducted correctly in all salary vouchers. Total PT deducted = Rs.{total_pt_deducted_db:,.0f}.",
+                'impact':  '',
+                'law':     'WB PT Act 1979',
                 'severity': 'Info',
+            })
+
+        if total_pt_unpaid > 0:
+            findings.append({
+                'type':    'pt_not_paid_govt',
+                'amount':  total_pt_unpaid,
+                'issue': (
+                    f"PT deducted from employees = Rs.{total_pt_deducted_db:,.0f} "
+                    f"but PT paid to government = Rs.{total_pt_paid_govt:,.0f}. "
+                    f"Outstanding PT not yet deposited = Rs.{total_pt_unpaid:,.0f}."
+                ),
+                'impact': (
+                    "PT collected from employees MUST be deposited to state govt by 21st of following month. "
+                    f"Late deposit: interest @ 2%/month on Rs.{total_pt_unpaid:,.0f}. "
+                    "Pay via Grips portal: wbifms.gov.in"
+                ),
+                'law': 'WB PT Act 1979 Sec 7 — interest @ 2%/month on delayed deposit',
+                'severity': 'Critical',
+            })
+        elif total_pt_deducted_db > 0:
+            findings.append({
+                'type':    'pt_paid_govt_ok',
+                'amount':  total_pt_paid_govt,
+                'issue':   f"PT deposited to government = Rs.{total_pt_paid_govt:,.0f}. All PT collected appears to be deposited.",
+                'impact':  "Verify monthly challans on Grips portal match this amount.",
+                'law':     'WB PT Act 1979',
+                'severity': 'Info',
+            })
+    else:
+        # No daybook or no salary vouchers found — fall back to TB-level estimate
+        avg_monthly   = total_salary / 12
+        est_employees = max(1, round(avg_monthly / 15000))
+        est_annual_pt = calc_pt(avg_monthly / max(est_employees, 1)) * 12 * est_employees
+
+        if not pt_ledgers:
+            findings.append({
+                'type':          'pt_missing',
+                'total_salary':  total_salary,
+                'est_annual_pt': est_annual_pt,
+                'issue': (
+                    f"No PT ledger found. Salary in books = Rs.{total_salary:,.0f}. "
+                    f"Estimated PT liability = Rs.{est_annual_pt:,.0f}/year."
+                ),
+                'impact': (
+                    "WB PT slabs: ₹0 (≤₹10K/month), ₹110 (≤₹15K), ₹130 (≤₹25K), "
+                    "₹150 (≤₹40K), ₹200 (>₹40K). "
+                    "Deposit by 21st every month via Grips portal (wbifms.gov.in)."
+                ),
+                'law':     'WB PT Act 1979',
+                'severity': 'Important',
             })
 
     return findings
