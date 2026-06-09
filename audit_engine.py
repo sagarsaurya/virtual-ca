@@ -786,6 +786,8 @@ def audit_bank_accounts(ledgers, transactions=None):
             ),
         })
 
+    GENERIC_BANK_NAMES = {'bank accounts', 'bank account', 'bank', 'banks'}
+
     # Pass 1 — TB group-based
     misclassified_as_bank = []   # income/expense ledgers wrongly under Bank Accounts group
     for ledger in ledgers:
@@ -795,12 +797,16 @@ def audit_bank_accounts(ledgers, transactions=None):
             if not any(bad in n for bad in NOT_A_BANK):
                 bal = ledger['balance']
                 # Credit balance under Bank Accounts = income/liability ledger wrongly grouped
-                # Real bank accounts (not OD) should have Debit balance
                 if bal < 0 and grp == 'Bank Accounts':
                     misclassified_as_bank.append(ledger)
-                    continue   # don't show as bank — will be flagged in ledger_classification
-                od = ' (OD Account)' if grp == 'Bank OD A/c' else ''
-                _add(ledger['name'], bal, 'Dr' if bal >= 0 else 'Cr', grp, od)
+                    continue
+                od   = ' (OD Account)' if grp == 'Bank OD A/c' else ''
+                note = od
+                # Flag generic names — ledger should have actual bank name
+                if n in GENERIC_BANK_NAMES:
+                    note = (od or '') + ' ⚠️ Generic name — rename to actual bank (e.g. "HDFC Current A/c"). '
+                    note += 'Cannot identify which bank this is.'
+                _add(ledger['name'], bal, 'Dr' if bal >= 0 else 'Cr', grp, note)
 
     findings.append({'_misclassified_as_bank': misclassified_as_bank})
 
@@ -1040,7 +1046,7 @@ def audit_tds_compliance(ledgers, daybook):
 
 
 # ── MODULE 9: SALARY / PF / PT COMPLIANCE ────────────────────────────────────
-def audit_salary_compliance(ledgers):
+def audit_salary_compliance(ledgers, daybook=None):
     """
     Checks salary payments, PF deduction, and Professional Tax from the trial balance.
     Works entirely from ledger balances — no daybook needed.
@@ -1119,39 +1125,93 @@ def audit_salary_compliance(ledgers):
             'severity': 'Important',
         })
 
-    # PT check
-    if not pt_ledgers and total_salary > 0:
-        # Estimate PT: assume average salary = total/12 months, use WB slab
-        avg_monthly = total_salary / 12
-        est_pt_per_emp = calc_pt(avg_monthly)
-        # Estimate number of employees from salary ledgers (rough: 1 per ledger or salary/15000)
-        est_employees = max(1, round(avg_monthly / 15000))
-        est_annual_pt = est_pt_per_emp * 12 * est_employees
+    # ── PT check — 3 levels ──────────────────────────────────────────────────
+    # Level 1: Does PT ledger exist?
+    # Level 2: Was PT deducted from employees (daybook salary vouchers)?
+    # Level 3: Was deducted PT paid to government (daybook payment to PT/govt)?
+    avg_monthly    = total_salary / 12
+    est_employees  = max(1, round(avg_monthly / 15000))
+    est_pt_per_emp = calc_pt(avg_monthly / max(est_employees, 1))
+    est_annual_pt  = est_pt_per_emp * 12 * est_employees
+
+    if not pt_ledgers:
         findings.append({
-            'type':         'pt_missing',
-            'total_salary': total_salary,
-            'est_monthly_avg': avg_monthly,
-            'est_pt_per_emp': est_pt_per_emp,
-            'est_annual_pt': est_annual_pt,
+            'type':           'pt_missing',
+            'total_salary':   total_salary,
+            'est_annual_pt':  est_annual_pt,
             'issue': (
-                f"No Professional Tax (PT) ledger found. PT is mandatory for all employees in West Bengal. "
+                f"No Professional Tax (PT) ledger found. PT is mandatory for all salaried employees. "
                 f"Based on salary of Rs.{total_salary:,.0f}, estimated PT liability = Rs.{est_annual_pt:,.0f}/year."
             ),
             'impact': (
-                f"WB PT slabs: ₹0 (≤₹10K/month), ₹110 (≤₹15K), ₹130 (≤₹25K), ₹150 (≤₹40K), ₹200 (>₹40K). "
-                f"Deposit by 21st every month via Grips portal (wbifms.gov.in). "
-                f"Employer PT registration also required separately."
+                "Two separate PT obligations: "
+                "(1) EMPLOYEE PT — deduct from each employee's salary monthly per slab. "
+                "(2) EMPLOYER PT — Rs.2,500/year flat, pay separately. "
+                "WB PT slabs: ₹0 (≤₹10K/month), ₹110 (≤₹15K), ₹130 (≤₹25K), ₹150 (≤₹40K), ₹200 (>₹40K). "
+                "Deposit by 21st every month via Grips portal (wbifms.gov.in). "
+                "Non-payment attracts interest @ 2% per month + penalty."
             ),
+            'law': 'West Bengal State Tax on Professions, Trades, Callings and Employments Act, 1979',
             'severity': 'Important',
         })
-    elif pt_ledgers:
-        total_pt = sum(abs(l['balance']) for l in pt_ledgers)
-        if total_pt == 0:
+    else:
+        # PT ledger exists — now check if it was deducted AND paid
+        pt_ledger      = pt_ledgers[0]
+        pt_balance     = pt_ledger['balance']   # Dr - Cr
+        pt_cr_total    = pt_ledger['credit']     # total PT collected (deducted from employees)
+        pt_dr_total    = pt_ledger['debit']      # total PT paid to govt
+
+        # Check daybook for PT payment to government
+        pt_paid_to_govt = 0
+        if daybook is not None and not daybook.empty:
+            pt_payments = daybook[
+                (daybook['VchType'] == 'Payment') &
+                (daybook['Particulars'].str.lower().str.contains('professional tax|pt payable|p\.tax|grips|wbifms', na=False))
+            ]
+            pt_paid_to_govt = pt_payments['Debit'].sum()
+
+        if pt_cr_total == 0 and pt_dr_total == 0:
+            # Ledger exists but no transactions
             findings.append({
-                'type':    'pt_zero_balance',
-                'issue':   f"PT ledger found ({pt_ledgers[0]['name']}) but balance is ₹0. Was PT collected from employees?",
-                'impact':  "PT should be deducted monthly and deposited to state govt. Nil balance may mean PT was not deducted or was already deposited (verify deposit challan).",
+                'type':    'pt_no_transactions',
+                'amount':  est_annual_pt,
+                'issue':   f"PT ledger '{pt_ledger['name']}' exists but has NO entries — PT was never deducted from employees.",
+                'impact':  (
+                    f"PT deduction is mandatory every month. "
+                    f"Estimated annual PT = Rs.{est_annual_pt:,.0f}. "
+                    "Pass monthly journal: Dr Salary Expense / Cr PT Payable (deduction). "
+                    "Then pay: Dr PT Payable / Cr Bank (by 21st each month)."
+                ),
+                'law': 'WB PT Act 1979 — employer must deduct PT from salary and deposit to state govt',
                 'severity': 'Important',
+            })
+        elif pt_balance > 0:
+            # PT deducted but not fully paid to govt — balance is outstanding
+            findings.append({
+                'type':    'pt_deducted_not_paid',
+                'amount':  pt_balance,
+                'issue':   (
+                    f"PT deducted from employees (Cr Rs.{pt_cr_total:,.0f}) "
+                    f"but PT paid to govt (Dr Rs.{pt_dr_total:,.0f}). "
+                    f"Outstanding PT payable = Rs.{pt_balance:,.0f} — NOT yet deposited to government."
+                ),
+                'impact':  (
+                    "PT collected from employees must be deposited to state govt by 21st of the following month. "
+                    f"Late payment attracts interest @ 2% per month on Rs.{pt_balance:,.0f}. "
+                    "Pay immediately via Grips portal (wbifms.gov.in)."
+                ),
+                'law': 'WB PT Act 1979 Sec 7 — employer liable for deposit; interest @ 2%/month on delay',
+                'severity': 'Critical',
+            })
+        else:
+            # PT looks clean — deducted and paid
+            findings.append({
+                'type':     'pt_ok',
+                'amount':   pt_dr_total,
+                'issue':    f"PT ledger found. Total PT deducted = Rs.{pt_cr_total:,.0f}. Total paid to govt = Rs.{pt_dr_total:,.0f}. Balance = Rs.{abs(pt_balance):,.0f}.",
+                'impact':   "Verify PT challans for each month. Ensure employer PT (Rs.2,500/year) is also paid separately.",
+                'law':      'WB PT Act 1979',
+                'severity': 'Info',
             })
 
     return findings
@@ -1219,7 +1279,7 @@ def run_full_audit(tb_path, db_path=None):
     results['tds_compliance'] = audit_tds_compliance(ledgers, daybook)
 
     print("Module 9: Salary / PF / PT Compliance...")
-    results['salary_compliance'] = audit_salary_compliance(ledgers)
+    results['salary_compliance'] = audit_salary_compliance(ledgers, daybook)
 
     # Score
     critical = (
