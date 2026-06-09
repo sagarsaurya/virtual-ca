@@ -720,51 +720,59 @@ def audit_fixed_assets(ledgers):
 
 
 # ── MODULE 7: BANK ACCOUNT DETECTION ─────────────────────────────────────────
-# Detection is GROUP-based only — same approach as Tally, QuickBooks, Zoho Books.
-# Name-based detection removed: unreliable, causes false positives/negatives.
 BANK_GROUPS = ('Bank Accounts', 'Bank OD A/c')
+
+# These keywords definitively mean NOT a bank account — regardless of which group
+# the ledger sits in. Used only to catch obvious misplacements (e.g. "Advance to Staff"
+# wrongly placed under "Bank Accounts" group in Tally).
+DEFINITELY_NOT_BANK = [
+    'advance', 'staff', 'salary', 'wages', 'receivable', 'payable',
+    'tds', 'gst', 'tax', 'income tax', 'deposit refund', 'security deposit',
+    'investment', 'mutual fund', 'insurance', 'loan', 'capital', 'drawings',
+    'expense', 'income', 'sales', 'purchase', 'sundry', 'creditor', 'debtor',
+    'provision', 'reserve', 'suspense', 'opening stock', 'closing stock',
+]
+
+GENERIC_BANK_NAMES = {'bank accounts', 'bank account', 'bank', 'banks'}
 
 def audit_bank_accounts(ledgers, transactions=None):
     """
-    Detects bank accounts using ONLY the Tally GROUP — exactly how Tally, QuickBooks,
-    and Zoho Books do it. Account name is irrelevant.
-
-    Rule: Any ledger under 'Bank Accounts' or 'Bank OD A/c' group = bank account.
-    If it has a Credit balance under 'Bank Accounts' = misclassified income/liability ledger.
-
-    Name-based detection is intentionally removed — it causes false positives and false
-    negatives. If a bank account is not under the correct group, that is a ledger
-    classification issue (Module 1), not something to work around here.
+    Primary detection: GROUP-based (Bank Accounts / Bank OD A/c) — same as Tally/QuickBooks.
+    Safety filter: if ledger name clearly indicates it is NOT a bank (advance, staff, TDS etc.)
+                   → flag as misclassification, do not show as bank account.
     """
-    findings        = []
+    findings             = []
     misclassified_as_bank = []
-    GENERIC_BANK_NAMES    = {'bank accounts', 'bank account', 'bank', 'banks'}
 
     for ledger in ledgers:
-        grp = ledger['group']
+        grp  = ledger['group']
         if grp not in BANK_GROUPS:
             continue
 
-        bal  = ledger['balance']   # debit - credit
+        bal  = ledger['balance']
         name = ledger['name']
         nl   = name.lower()
 
-        # Credit balance under Bank Accounts group = income/liability ledger wrongly grouped
+        # Credit balance under Bank Accounts = income/liability ledger wrongly grouped
         if bal < 0 and grp == 'Bank Accounts':
             misclassified_as_bank.append(ledger)
             continue
 
-        # Build reconciliation note
+        # Definitively not a bank account — misplaced in wrong group
+        if any(kw in nl for kw in DEFINITELY_NOT_BANK):
+            misclassified_as_bank.append(ledger)
+            continue
+
+        # Build note
         note_parts = []
         if grp == 'Bank OD A/c':
             note_parts.append('Overdraft account')
         if nl in GENERIC_BANK_NAMES:
             note_parts.append(
-                '⚠️ Ledger name is too generic — rename to actual bank name '
-                '(e.g. "HDFC Current A/c", "SBI Savings A/c") so it can be identified'
+                '⚠️ Rename to actual bank name (e.g. "HDFC Current A/c") '
+                'so it can be identified during reconciliation'
             )
-
-        note = ' | '.join(note_parts)
+        note    = ' | '.join(note_parts)
         bal_abs = abs(bal)
         dr_cr   = 'Cr (OD)' if bal < 0 else 'Dr'
 
@@ -776,7 +784,7 @@ def audit_bank_accounts(ledgers, transactions=None):
             'question': (
                 f"Bank account '{name}' — book balance ₹{bal_abs:,.0f} ({dr_cr}). "
                 + (f"{note}. " if note else '')
-                + "Please reconcile with the actual bank statement."
+                + "Reconcile with actual bank statement."
             ),
         })
 
