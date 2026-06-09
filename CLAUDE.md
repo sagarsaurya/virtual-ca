@@ -264,6 +264,9 @@ GROQ_API_KEY=your_groq_key_here
 8. `renderTDSPage()` must be called from both `renderAuditResults()` AND `showPage('tdsanalysis')`
 9. Always check JS template literals for hardcoded light colors — they bypass CSS overrides
 10. Push to GitHub after every fix — Render auto-deploys
+11. **AUTONOMOUS RULE (PERMANENT):** For ANY audit logic issue — wrong rule, missing check, incorrect law reference, new compliance requirement — DO NOT ask Sagar. He is not the accounting expert. Use WebSearch to find the correct Indian law/act/section, verify it, then implement the fix directly. Sagar's job is product decisions only.
+12. TB parser uses INDENTATION to detect groups vs ledgers (not a hardcoded list) — `raw != name` means indented = ledger
+13. Every audit finding must include a `law` field citing the specific section/act (e.g. "Sec 43B(h) IT Act")
 
 ---
 *Owner: Sagar Pathak | Built with Claude | June 2026*
