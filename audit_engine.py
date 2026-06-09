@@ -184,17 +184,24 @@ def parse_daybook(filepath):
     df['Particulars'] = df['Particulars'].astype(str).str.strip()
     df['VchType']     = df['VchType'].astype(str).str.strip()
 
-    # Assign voucher_id to all rows (continuation rows inherit from header row)
+    # Assign voucher_id AND propagate VchType to all continuation rows
+    # so every row in a voucher knows what type it belongs to.
     VOUCHER_TYPES = {'Payment','Receipt','Journal','Contra','Sales','Purchase',
                      'Credit Note','Debit Note','Memo'}
-    vid = 0
-    vids = []
+    vid          = 0
+    vids         = []
+    vtypes_prop  = []   # propagated VchType for every row
+    current_vtype = ''
     for _, row in df.iterrows():
-        vt = row['VchType']
+        vt = str(row['VchType']).strip() if pd.notna(row['VchType']) else ''
         if vt in VOUCHER_TYPES:
             vid += 1
+            current_vtype = vt
         vids.append(vid)
-    df['_vid'] = vids
+        vtypes_prop.append(current_vtype)   # continuation rows get parent's type
+
+    df['_vid']   = vids
+    df['VchType'] = vtypes_prop   # overwrite — now every row has its voucher type
 
     return df
 
@@ -763,7 +770,11 @@ def audit_bank_accounts(ledgers, transactions=None):
 
     for ledger in ledgers:
         grp = ledger['group']
-        if grp not in BANK_GROUPS:
+        # Also catch ledgers literally named "Bank Accounts" placed under any group
+        # (some companies use "Bank Accounts" as the ledger name itself)
+        is_bank_group = grp in BANK_GROUPS
+        is_named_bank_accounts = ledger['name'].lower() in GENERIC_BANK_NAMES and ledger['balance'] > 0
+        if not is_bank_group and not is_named_bank_accounts:
             continue
         bal  = ledger['balance']
         name = ledger['name']
@@ -829,18 +840,14 @@ def audit_bank_accounts(ledgers, transactions=None):
         CASH_KEYWORDS = ['cash', 'petty cash', 'cash in hand', 'cash-in-hand']
 
         for acc_lower, count in funding_counts.items():
-            # Skip if already found in Pass 1
             if acc_lower in found_in_pass1:
                 continue
-            # Skip if clearly NOT a bank (advance, salary, TDS etc.)
             if any(kw in acc_lower for kw in DEFINITELY_NOT_BANK):
                 continue
-            # Skip physical cash — it's Cash-in-Hand, not a bank
             if any(kw in acc_lower for kw in CASH_KEYWORDS):
                 continue
-            # Must have been used as funding account at least 2 times
-            # (avoids flagging one-off journal entries)
-            if count < 2:
+            # Must appear as funding account at least 3 times to be confident
+            if count < 3:
                 continue
 
             total_amt = funding_amounts[acc_lower]
