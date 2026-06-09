@@ -66,74 +66,79 @@ def calc_pt(salary):
 
 # ── PARSE TRIAL BALANCE ──────────────────────────────────────────────────────
 def parse_trial_balance(filepath):
+    # Read raw (no header) — preserve original cell text including leading spaces
     df = pd.read_excel(filepath, header=None)
     ledgers = []
     current_group = None
     company_name = ''
     period_str   = ''
 
-    GROUP_NAMES = [
-        'Capital Account','Loans (Liability)','Current Liabilities','Duties & Taxes',
-        'Sundry Creditors','Fixed Assets','Investments','Current Assets',
-        'Deposits (Asset)','Loans & Advances (Asset)','Sundry Debtors',
-        'Cash-in-Hand','Bank Accounts','Bank OD A/c','Direct Incomes','Direct Expenses',
-        'Indirect Incomes','Indirect Expenses','Suspense A/c','Suspense',
-        'Sales Accounts','Purchase Accounts','Stock-in-Hand','Misc. Expenses (ASSET)',
-        'Branch / Divisions','Reserves & Surplus'
-    ]
-    SKIP_NAMES = {'nan','Particulars','Grand Total','Debit','Credit',
-                  'Closing Balance','Trial Balance',''}
+    SKIP_NAMES = {'nan','particulars','grand total','debit','credit',
+                  'closing balance','trial balance','opening balance',''}
 
-    # Scan first 10 rows for company name and period
-    for i, row in df.head(10).iterrows():
-        val = str(row[0]).strip() if pd.notna(row[0]) else ''
-        if not val or val in SKIP_NAMES:
+    # ── INDENTATION-BASED DETECTION ──────────────────────────────────────────
+    # Tally exports group headers WITHOUT leading spaces and ledgers WITH leading spaces.
+    # Strategy:
+    #   - Raw cell value (row[0] before strip) has leading whitespace → LEDGER
+    #   - No leading whitespace + no numeric balance → GROUP HEADER
+    #   - No leading whitespace + has numeric balance → LEDGER (used as ledger name, e.g. "Bank Accounts")
+    # This works for ANY company without a hardcoded list.
+
+    # Scan first 12 rows for company name and period
+    for i, row in df.head(12).iterrows():
+        raw = str(row[0]) if pd.notna(row[0]) else ''
+        val = raw.strip()
+        if not val or val.lower() in SKIP_NAMES:
             continue
-        # Period pattern: contains "to" and a year (e.g. "1-Apr-25 to 31-Mar-26")
         if ' to ' in val and any(c.isdigit() for c in val):
             period_str = val
-        elif not company_name and val not in GROUP_NAMES and len(val) > 3:
-            company_name = val  # first meaningful non-group text = company name
+        elif not company_name and len(val) > 3:
+            company_name = val
 
     for _, row in df.iterrows():
-        name = str(row[0]).strip() if pd.notna(row[0]) else ''
+        raw  = str(row[0]) if pd.notna(row[0]) else ''
+        name = raw.strip()
         try:
             debit  = float(row[1]) if pd.notna(row[1]) else 0.0
         except: debit = 0.0
         try:
             credit = float(row[2]) if pd.notna(row[2]) else 0.0
         except: credit = 0.0
-        if not name or name in SKIP_NAMES or name == period_str or name == company_name:
+
+        if not name or name.lower() in SKIP_NAMES:
             continue
-        # skip rows where col1 is text (header rows)
+        if name == period_str or name == company_name:
+            continue
+        # Skip header rows (col1 is non-numeric text like "Debit")
         try:
             if pd.notna(row[1]) and not str(row[1]).replace('.','').replace('-','').isnumeric():
                 continue
         except: pass
-        if name in GROUP_NAMES:
-            # If the row also carries a balance, it's being used as a LEDGER name
-            # (e.g. a single "Bank Accounts" ledger under Current Assets).
-            # Add it as a ledger under the PREVIOUS group, then update current_group.
-            if (debit != 0 or credit != 0) and current_group:
-                ledgers.append({
-                    'name': name,
-                    'group': current_group,
-                    'debit': debit,
-                    'credit': credit,
-                    'balance': debit - credit
-                })
-            current_group = name
-            continue
-        if current_group:
-            ledgers.append({
-                'name': name,
-                'group': current_group,
-                'debit': debit,
-                'credit': credit,
-                'balance': debit - credit
-            })
 
-    # Attach metadata to return alongside ledgers
+        has_balance = (debit != 0 or credit != 0)
+        is_indented = raw != name  # raw has leading whitespace
+
+        if is_indented:
+            # Definitely a ledger
+            if current_group:
+                ledgers.append({
+                    'name': name, 'group': current_group,
+                    'debit': debit, 'credit': credit, 'balance': debit - credit
+                })
+        elif not has_balance:
+            # No indentation, no balance → GROUP HEADER
+            current_group = name
+        else:
+            # No indentation but has balance → ledger used directly as name
+            # (e.g. company created ledger called "Bank Accounts" under Current Assets)
+            if current_group:
+                ledgers.append({
+                    'name': name, 'group': current_group,
+                    'debit': debit, 'credit': credit, 'balance': debit - credit
+                })
+            # Also treat as potential new group for anything that follows
+            current_group = name
+
     return ledgers, company_name, period_str
 
 # ── PARSE DAYBOOK ─────────────────────────────────────────────────────────────
