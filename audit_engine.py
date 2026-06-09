@@ -737,56 +737,139 @@ GENERIC_BANK_NAMES = {'bank accounts', 'bank account', 'bank', 'banks'}
 
 def audit_bank_accounts(ledgers, transactions=None):
     """
-    Primary detection: GROUP-based (Bank Accounts / Bank OD A/c) — same as Tally/QuickBooks.
-    Safety filter: if ledger name clearly indicates it is NOT a bank (advance, staff, TDS etc.)
-                   → flag as misclassification, do not show as bank account.
+    TWO-PASS detection:
+
+    Pass 1 — TB GROUP (primary, authoritative):
+        Any ledger under 'Bank Accounts' or 'Bank OD A/c' group = bank account.
+        Same logic as Tally, QuickBooks, Zoho Books.
+        Safety filter: if name clearly indicates NOT a bank → misclassification.
+
+    Pass 2 — DAYBOOK BEHAVIOUR (catches banks in wrong group):
+        In Tally's daybook:
+          - Payment voucher  → account Credited   = the bank used to pay
+          - Receipt voucher  → account Debited     = the bank that received money
+          - Contra voucher   → both sides are bank/cash transfers
+        Accounts that consistently fund payments / receive receipts = bank accounts.
+        Exclude Cash-in-Hand (physical cash) and accounts already found in Pass 1.
+        Cross-reference TB for closing balance.
+        Flag as "wrong group" if found here but not under Bank Accounts group in TB.
     """
-    findings             = []
+    findings              = []
     misclassified_as_bank = []
+    found_in_pass1        = set()   # ledger names confirmed as banks from TB group
+
+    # ── Pass 1: TB group-based ──────────────────────────────────────────────
+    tb_lookup = {l['name'].lower(): l for l in ledgers}
 
     for ledger in ledgers:
-        grp  = ledger['group']
+        grp = ledger['group']
         if grp not in BANK_GROUPS:
             continue
-
         bal  = ledger['balance']
         name = ledger['name']
         nl   = name.lower()
 
-        # Credit balance under Bank Accounts = income/liability ledger wrongly grouped
         if bal < 0 and grp == 'Bank Accounts':
             misclassified_as_bank.append(ledger)
             continue
-
-        # Definitively not a bank account — misplaced in wrong group
         if any(kw in nl for kw in DEFINITELY_NOT_BANK):
             misclassified_as_bank.append(ledger)
             continue
 
-        # Build note
         note_parts = []
         if grp == 'Bank OD A/c':
             note_parts.append('Overdraft account')
         if nl in GENERIC_BANK_NAMES:
-            note_parts.append(
-                '⚠️ Rename to actual bank name (e.g. "HDFC Current A/c") '
-                'so it can be identified during reconciliation'
-            )
-        note    = ' | '.join(note_parts)
+            note_parts.append('⚠️ Rename to actual bank name e.g. "HDFC Current A/c"')
+
         bal_abs = abs(bal)
         dr_cr   = 'Cr (OD)' if bal < 0 else 'Dr'
+        found_in_pass1.add(nl)
 
         findings.append({
-            'ledger':   name,
-            'balance':  bal_abs,
-            'dr_cr':    dr_cr,
-            'group':    grp,
-            'question': (
+            'ledger':    name,
+            'balance':   bal_abs,
+            'dr_cr':     dr_cr,
+            'group':     grp,
+            'source':    'TB Group',
+            'question':  (
                 f"Bank account '{name}' — book balance ₹{bal_abs:,.0f} ({dr_cr}). "
-                + (f"{note}. " if note else '')
+                + (' | '.join(note_parts) + '. ' if note_parts else '')
                 + "Reconcile with actual bank statement."
             ),
         })
+
+    # ── Pass 2: Daybook behaviour-based ────────────────────────────────────
+    if transactions:
+        # Count how many times each account is used as a funding account
+        # Payment → Cr side = bank;  Receipt → Dr side = bank;  Contra → both sides
+        funding_counts  = {}   # account_name_lower → count of times used as bank
+        funding_amounts = {}   # account_name_lower → total amount transacted
+
+        for txn in transactions:
+            vtype = str(txn.get('VchType', '')).strip()
+            party = str(txn.get('Particulars', '') or '').strip()
+            if not party or party.lower() in ('nan', ''):
+                continue
+            pl  = party.lower()
+            amt = float(txn.get('Debit', 0) or 0) + float(txn.get('Credit', 0) or 0)
+
+            if vtype == 'Payment' and float(txn.get('Credit', 0) or 0) > 0:
+                # Credited account in payment = bank used to pay
+                funding_counts[pl]  = funding_counts.get(pl, 0) + 1
+                funding_amounts[pl] = funding_amounts.get(pl, 0) + float(txn.get('Credit', 0))
+            elif vtype == 'Receipt' and float(txn.get('Debit', 0) or 0) > 0:
+                # Debited account in receipt = bank that received money
+                funding_counts[pl]  = funding_counts.get(pl, 0) + 1
+                funding_amounts[pl] = funding_amounts.get(pl, 0) + float(txn.get('Debit', 0))
+            elif vtype == 'Contra':
+                funding_counts[pl]  = funding_counts.get(pl, 0) + 1
+                funding_amounts[pl] = funding_amounts.get(pl, 0) + amt
+
+        CASH_KEYWORDS = ['cash', 'petty cash', 'cash in hand', 'cash-in-hand']
+
+        for acc_lower, count in funding_counts.items():
+            # Skip if already found in Pass 1
+            if acc_lower in found_in_pass1:
+                continue
+            # Skip if clearly NOT a bank (advance, salary, TDS etc.)
+            if any(kw in acc_lower for kw in DEFINITELY_NOT_BANK):
+                continue
+            # Skip physical cash — it's Cash-in-Hand, not a bank
+            if any(kw in acc_lower for kw in CASH_KEYWORDS):
+                continue
+            # Must have been used as funding account at least 2 times
+            # (avoids flagging one-off journal entries)
+            if count < 2:
+                continue
+
+            total_amt = funding_amounts[acc_lower]
+            # Look up TB for closing balance and actual name
+            tb_entry = tb_lookup.get(acc_lower)
+            bal_abs  = abs(tb_entry['balance']) if tb_entry else 0
+            dr_cr    = ('Dr' if tb_entry['balance'] >= 0 else 'Cr') if tb_entry else 'Dr'
+            disp_name = tb_entry['name'] if tb_entry else acc_lower.title()
+            tb_group  = tb_entry['group'] if tb_entry else 'Unknown'
+
+            note = (
+                f"⚠️ Found in daybook ({count} transactions, ₹{total_amt:,.0f} total) "
+                f"but placed under '{tb_group}' group in Tally — should be under 'Bank Accounts'."
+                if tb_entry else
+                f"Found in daybook ({count} transactions) — not in Trial Balance. Verify."
+            )
+
+            findings.append({
+                'ledger':   disp_name,
+                'balance':  bal_abs,
+                'dr_cr':    dr_cr,
+                'group':    tb_group,
+                'source':   'Daybook',
+                'question': (
+                    f"'{disp_name}' appears to be a bank account (used in {count} payment/receipt entries). "
+                    f"Book balance = ₹{bal_abs:,.0f}. {note} "
+                    f"Move to 'Bank Accounts' group in Tally for correct classification."
+                ),
+            })
 
     findings.append({'_misclassified_as_bank': misclassified_as_bank})
     return findings
