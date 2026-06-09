@@ -69,33 +69,46 @@ def parse_trial_balance(filepath):
     # Read raw (no header) — preserve original cell text including leading spaces
     df = pd.read_excel(filepath, header=None)
     ledgers = []
-    current_group = None
+    current_group  = None
+    current_level1 = None
     company_name = ''
     period_str   = ''
 
     SKIP_NAMES = {'nan','particulars','grand total','debit','credit',
                   'closing balance','trial balance','opening balance',''}
 
-    # ── INDENTATION-BASED DETECTION ──────────────────────────────────────────
-    # Tally exports group headers WITHOUT leading spaces and ledgers WITH leading spaces.
-    # Strategy:
-    #   - Raw cell value (row[0] before strip) has leading whitespace → LEDGER
-    #   - No leading whitespace + no numeric balance → GROUP HEADER
-    #   - No leading whitespace + has numeric balance → LEDGER (used as ledger name, e.g. "Bank Accounts")
-    # This works for ANY company without a hardcoded list.
+    # ── FIND DATA START ROW ───────────────────────────────────────────────────
+    # Tally TB Excel has several header rows: company name, address, period, column headers.
+    # Data starts AFTER the row containing "Debit" / "Credit" column labels.
+    # We scan up to row 20 to find this boundary.
+    data_start = 0
+    for i, row in df.head(20).iterrows():
+        vals = [str(v).strip().lower() for v in row if pd.notna(v) and str(v).strip()]
+        # Row that says "Debit" or "Credit" = column header row → data starts next row
+        if 'debit' in vals or 'credit' in vals:
+            data_start = i + 1
 
-    # Scan first 12 rows for company name and period
-    for i, row in df.head(12).iterrows():
+    # Scan header rows for company name and period (before data starts)
+    for i, row in df.iloc[:data_start].iterrows():
         raw = str(row[0]) if pd.notna(row[0]) else ''
         val = raw.strip()
         if not val or val.lower() in SKIP_NAMES:
             continue
         if ' to ' in val and any(c.isdigit() for c in val):
             period_str = val
-        elif not company_name and len(val) > 3:
-            company_name = val
+        elif not company_name and len(val) > 3 and val.lower() not in SKIP_NAMES:
+            # First meaningful non-skip row = company name
+            # Skip address-like rows (numbers, floor, unit, road, pincode)
+            looks_like_address = any(word in val.lower() for word in
+                ['road', 'floor', 'unit', 'street', 'nagar', 'colony', 'tower',
+                 'building', 'plot', 'sector', 'phase', 'near', 'opp'])
+            looks_like_pincode = val.replace(' ','').isdigit() or (
+                len(val.split()) <= 2 and any(p.isdigit() for p in val.split()))
+            if not looks_like_address and not looks_like_pincode:
+                company_name = val
 
-    for _, row in df.iterrows():
+    # Parse only data rows (skip all header rows)
+    for _, row in df.iloc[data_start:].iterrows():
         raw  = str(row[0]) if pd.notna(row[0]) else ''
         name = raw.strip()
         try:
@@ -115,27 +128,54 @@ def parse_trial_balance(filepath):
                 continue
         except: pass
 
-        has_balance = (debit != 0 or credit != 0)
-        is_indented = raw != name  # raw has leading whitespace
+        is_indented = raw != name  # leading whitespace = indented
 
-        if is_indented:
-            # Definitely a ledger
-            if current_group:
+        # Tally group hierarchy — two levels
+        # Level 1: top-level Balance Sheet / P&L groups
+        # Level 2: sub-groups (sit under a Level 1 group)
+        # Anything else = ledger (individual account)
+        LEVEL1 = {
+            'capital account','loans (liability)','fixed assets','investments',
+            'current assets','current liabilities',
+            'direct incomes','indirect incomes','sales accounts',
+            'direct expenses','indirect expenses','purchase accounts',
+            'stock-in-hand','branch / divisions','reserves & surplus',
+            'profit & loss a/c','misc. expenses (asset)',
+        }
+        LEVEL2 = {
+            'duties & taxes','sundry creditors','sundry debtors',
+            'cash-in-hand','bank accounts','bank od a/c',
+            'loans & advances (asset)','deposits (asset)',
+            'suspense a/c','suspense',
+        }
+
+        nl = name.lower()
+
+        if nl in LEVEL1:
+            # Top-level group — reset both levels, never add as ledger
+            current_group  = name
+            current_level1 = name
+
+        elif nl in LEVEL2:
+            # Sub-group — add as ledger under Level 1 (if it has a balance = condensed export)
+            # Then reset current_group back to Level 1 so subsequent items don't fall under
+            # this sub-group incorrectly (e.g. Advance to Staff after Bank Accounts)
+            if (debit != 0 or credit != 0) and current_level1:
                 ledgers.append({
-                    'name': name, 'group': current_group,
+                    'name': name, 'group': current_level1,
                     'debit': debit, 'credit': credit, 'balance': debit - credit
                 })
-        elif not has_balance:
-            # No indentation, no balance → GROUP HEADER → update current_group
-            current_group = name
+            # Keep current_group as this sub-group name so Pass 1 bank detection still works
+            # (items appearing INSIDE this group in a detailed TB will get sub-group name)
+            # But for condensed TBs with no sub-items, this is overridden by Level 1 fallback
+            current_group = current_level1  # reset → subsequent items go under Level 1
+
         else:
-            # No indentation but has balance → standalone ledger (e.g. "Bank Accounts" Dr ₹36,876)
-            # Add as ledger under the CURRENT group — do NOT change current_group.
-            # Changing current_group here would cause the next indented ledger (e.g. "Advance to Staff")
-            # to inherit this ledger's name as its group, which is wrong.
-            if current_group:
+            # Ledger — add under current_group (or current_level1 as fallback)
+            grp = current_group or current_level1
+            if grp:
                 ledgers.append({
-                    'name': name, 'group': current_group,
+                    'name': name, 'group': grp,
                     'debit': debit, 'credit': credit, 'balance': debit - credit
                 })
 
