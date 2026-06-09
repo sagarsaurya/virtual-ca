@@ -208,8 +208,24 @@ def run_audit():
 @app.route('/api/audit/last', methods=['GET'])
 def last_audit():
     if os.path.exists(RESULT_FILE):
-        with open(RESULT_FILE) as f: return jsonify(json.load(f))
+        with open(RESULT_FILE) as f:
+            data = json.load(f)
+        # Safety: if saved result has 0 issues but files exist, flag it as stale
+        s = data.get('summary', {})
+        if (s.get('critical', 0) == 0 and s.get('warnings', 0) == 0
+                and s.get('questions', 0) == 0 and s.get('score', 0) == 0
+                and os.path.exists(CURRENT_TB)):
+            data['_stale_warning'] = 'Saved result shows 0 issues — please re-run audit to get fresh results.'
+        return jsonify(data)
     return jsonify({'error': 'No audit run yet'}), 404
+
+# ── DELETE /api/audit/clear ───────────────────────────────────────────────────
+@app.route('/api/audit/clear', methods=['POST'])
+def clear_audit():
+    """Clears saved audit result so next page load starts fresh."""
+    if os.path.exists(RESULT_FILE):
+        os.remove(RESULT_FILE)
+    return jsonify({'ok': True})
 
 # ── GET /api/audit/history ────────────────────────────────────────────────────
 @app.route('/api/audit/history', methods=['GET'])
