@@ -720,124 +720,67 @@ def audit_fixed_assets(ledgers):
 
 
 # ── MODULE 7: BANK ACCOUNT DETECTION ─────────────────────────────────────────
+# Detection is GROUP-based only — same approach as Tally, QuickBooks, Zoho Books.
+# Name-based detection removed: unreliable, causes false positives/negatives.
 BANK_GROUPS = ('Bank Accounts', 'Bank OD A/c')
-
-# Words that disqualify a ledger from being a bank account
-NOT_A_BANK = [
-    'loan', 'advance', 'tax', 'tds', 'gst', 'income tax', 'investment',
-    'redemption', 'deposit', 'fd', 'fixed deposit', 'mutual fund', 'shares',
-    'capital', 'salary', 'payable', 'receivable', 'creditor', 'debtor',
-    'expense', 'income', 'profit', 'loss', 'reserve', 'drawings',
-    'insurance', 'rent', 'interest payable',
-    # Bank-related expenses — NOT actual bank accounts
-    'bank interest', 'bank charges', 'bank od interest', 'bank commission',
-    'bank fee', 'bank penalty', 'bank processing', 'interest received',
-    'interest paid', 'charges', 'processing fee',
-    # Credit/debit cards and investment/insurance products — NOT bank accounts
-    'credit card', 'debit card',
-    'fund', 'prudential', 'bluechip', 'flexi', 'liquid', 'growth', 'dividend',
-    'insurance', 'policy', 'lic',
-]
-
-BANK_NAME_PATTERNS = [
-    'hdfc', 'icici', 'sbi', 'axis bank', 'kotak', 'pnb', 'canara', 'bob',
-    'union bank', 'idbi', 'yes bank', 'indusind', 'rbl', 'federal bank',
-    'current a/c', 'savings a/c', 'current account', 'savings account',
-    'cash credit', 'cc a/c', 'od account', 'overdraft a/c',
-]
-
-def _is_real_bank(name_lower):
-    """Returns True if name looks like an actual bank account."""
-    if any(bad in name_lower for bad in NOT_A_BANK):
-        return False
-    # Must contain 'bank' OR a known bank name pattern
-    return 'bank' in name_lower or any(p in name_lower for p in BANK_NAME_PATTERNS)
 
 def audit_bank_accounts(ledgers, transactions=None):
     """
-    Detects bank accounts from THREE sources:
-    1. TB ledgers in 'Bank Accounts' or 'Bank OD A/c' group
-    2. TB ledgers in any group whose name matches bank patterns
-    3. Daybook transactions — unique party/ledger names that look like bank accounts
-       (Payment/Receipt vouchers credit/debit the bank account)
+    Detects bank accounts using ONLY the Tally GROUP — exactly how Tally, QuickBooks,
+    and Zoho Books do it. Account name is irrelevant.
+
+    Rule: Any ledger under 'Bank Accounts' or 'Bank OD A/c' group = bank account.
+    If it has a Credit balance under 'Bank Accounts' = misclassified income/liability ledger.
+
+    Name-based detection is intentionally removed — it causes false positives and false
+    negatives. If a bank account is not under the correct group, that is a ledger
+    classification issue (Module 1), not something to work around here.
     """
-    seen     = set()
-    findings = []
+    findings        = []
+    misclassified_as_bank = []
+    GENERIC_BANK_NAMES    = {'bank accounts', 'bank account', 'bank', 'banks'}
 
-    # Build a case-insensitive balance lookup from TB for daybook-discovered banks
-    tb_balance = {l['name']: l for l in ledgers}
-    tb_balance_ci = {l['name'].lower(): l for l in ledgers}  # case-insensitive fallback
+    for ledger in ledgers:
+        grp = ledger['group']
+        if grp not in BANK_GROUPS:
+            continue
 
-    def _add(name, balance=0, dr_cr='Dr', group='', note=''):
-        if name in seen:
-            return
-        seen.add(name)
-        bal_abs = abs(balance)
+        bal  = ledger['balance']   # debit - credit
+        name = ledger['name']
+        nl   = name.lower()
+
+        # Credit balance under Bank Accounts group = income/liability ledger wrongly grouped
+        if bal < 0 and grp == 'Bank Accounts':
+            misclassified_as_bank.append(ledger)
+            continue
+
+        # Build reconciliation note
+        note_parts = []
+        if grp == 'Bank OD A/c':
+            note_parts.append('Overdraft account')
+        if nl in GENERIC_BANK_NAMES:
+            note_parts.append(
+                '⚠️ Ledger name is too generic — rename to actual bank name '
+                '(e.g. "HDFC Current A/c", "SBI Savings A/c") so it can be identified'
+            )
+
+        note = ' | '.join(note_parts)
+        bal_abs = abs(bal)
+        dr_cr   = 'Cr (OD)' if bal < 0 else 'Dr'
+
         findings.append({
             'ledger':   name,
             'balance':  bal_abs,
             'dr_cr':    dr_cr,
-            'debit':    0,
-            'credit':   0,
-            'group':    group,
+            'group':    grp,
             'question': (
-                f"Bank account '{name}'{note} — balance ₹{bal_abs:,.0f} ({dr_cr}). "
-                f"Please reconcile with the bank statement."
+                f"Bank account '{name}' — book balance ₹{bal_abs:,.0f} ({dr_cr}). "
+                + (f"{note}. " if note else '')
+                + "Please reconcile with the actual bank statement."
             ),
         })
 
-    GENERIC_BANK_NAMES = {'bank accounts', 'bank account', 'bank', 'banks'}
-
-    # Pass 1 — TB group-based
-    misclassified_as_bank = []   # income/expense ledgers wrongly under Bank Accounts group
-    for ledger in ledgers:
-        n   = ledger['name'].lower()
-        grp = ledger['group']
-        if grp in BANK_GROUPS:
-            if not any(bad in n for bad in NOT_A_BANK):
-                bal = ledger['balance']
-                # Credit balance under Bank Accounts = income/liability ledger wrongly grouped
-                if bal < 0 and grp == 'Bank Accounts':
-                    misclassified_as_bank.append(ledger)
-                    continue
-                od   = ' (OD Account)' if grp == 'Bank OD A/c' else ''
-                note = od
-                # Flag generic names — ledger should have actual bank name
-                if n in GENERIC_BANK_NAMES:
-                    note = (od or '') + ' ⚠️ Generic name — rename to actual bank (e.g. "HDFC Current A/c"). '
-                    note += 'Cannot identify which bank this is.'
-                _add(ledger['name'], bal, 'Dr' if bal >= 0 else 'Cr', grp, note)
-
     findings.append({'_misclassified_as_bank': misclassified_as_bank})
-
-    # Pass 2 — TB name-based (any group)
-    for ledger in ledgers:
-        n = ledger['name'].lower()
-        if ledger['group'] not in BANK_GROUPS and _is_real_bank(n):
-            bal = ledger['balance']
-            _add(ledger['name'], bal, 'Dr' if bal >= 0 else 'Cr',
-                 ledger['group'], f' [under: {ledger["group"]}]')
-
-    # Pass 3 — Daybook scan: collect unique ledger names from Payment/Receipt/Contra vouchers
-    if transactions:
-        for txn in transactions:
-            vtype = str(txn.get('VchType', '')).strip().lower()
-            if vtype not in ('payment', 'receipt', 'contra'):
-                continue
-            party = str(txn.get('Particulars', '') or '').strip()
-            if not party or party in seen or party.lower() in ('nan', ''):
-                continue
-            n = party.lower()
-            if _is_real_bank(n):
-                # Try to get balance from TB — exact match first, then case-insensitive
-                tb = tb_balance.get(party) or tb_balance_ci.get(party.lower())
-                if tb:
-                    bal = tb['balance']
-                    _add(tb['name'], bal, 'Dr' if bal >= 0 else 'Cr',
-                         tb.get('group', ''), '')
-                else:
-                    _add(party, 0, 'Dr', '', ' (found in daybook — verify balance)')
-
     return findings
 
 
