@@ -77,7 +77,9 @@ def parse_trial_balance(filepath):
         'Sundry Creditors','Fixed Assets','Investments','Current Assets',
         'Deposits (Asset)','Loans & Advances (Asset)','Sundry Debtors',
         'Cash-in-Hand','Bank Accounts','Bank OD A/c','Direct Incomes','Direct Expenses',
-        'Indirect Incomes','Indirect Expenses','Suspense A/c','Suspense'
+        'Indirect Incomes','Indirect Expenses','Suspense A/c','Suspense',
+        'Sales Accounts','Purchase Accounts','Stock-in-Hand','Misc. Expenses (ASSET)',
+        'Branch / Divisions','Reserves & Surplus'
     ]
     SKIP_NAMES = {'nan','Particulars','Grand Total','Debit','Credit',
                   'Closing Balance','Trial Balance',''}
@@ -109,6 +111,17 @@ def parse_trial_balance(filepath):
                 continue
         except: pass
         if name in GROUP_NAMES:
+            # If the row also carries a balance, it's being used as a LEDGER name
+            # (e.g. a single "Bank Accounts" ledger under Current Assets).
+            # Add it as a ledger under the PREVIOUS group, then update current_group.
+            if (debit != 0 or credit != 0) and current_group:
+                ledgers.append({
+                    'name': name,
+                    'group': current_group,
+                    'debit': debit,
+                    'credit': credit,
+                    'balance': debit - credit
+                })
             current_group = name
             continue
         if current_group:
