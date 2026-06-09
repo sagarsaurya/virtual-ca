@@ -3432,8 +3432,16 @@ const _aRow = (cells, extra='') =>
 const _aTd = (content, style='') =>
   `<td class="py-3 px-4" style="color:#e2e8f0;${style}">${content}</td>`;
 
-const _aEmpty = (msg) =>
-  `<div class="p-5 text-sm font-medium" style="color:#34d399;">✅ ${msg}</div>`;
+const _aEmpty = (msg, detail='', law='') => {
+  const detailHtml = detail ? `<div class="mt-1 text-xs" style="color:#64748b;">${detail}</div>` : '';
+  const lawHtml    = law    ? `<div class="mt-1 text-xs font-medium" style="color:#34d399;opacity:0.7;">📋 ${law}</div>` : '';
+  return `<div class="rounded-xl p-4 m-3" style="background:rgba(52,211,153,0.07);border:1px solid rgba(52,211,153,0.2);">
+    <div class="flex items-center gap-2 text-sm font-semibold" style="color:#34d399;">
+      <i class="fas fa-check-circle"></i> ${msg}
+    </div>
+    ${detailHtml}${lawHtml}
+  </div>`;
+};
 
 const _secTag = (text, color='#93c5fd', bg='rgba(96,165,250,0.15)') =>
   `<span class="font-bold px-2 py-0.5 rounded-md" style="font-size:10px;background:${bg};color:${color};">${text}</span>`;
@@ -3456,7 +3464,7 @@ function renderCashViolations(violations, personalMarks) {
   const el = document.getElementById('audit-cash-real');
   const badge = document.getElementById('audit-cash-badge');
   const totalEl = document.getElementById('audit-cash-total');
-  if (!violations.length) { el.innerHTML = _aEmpty('No cash violations found'); return; }
+  if (!violations.length) { el.innerHTML = _aEmpty('No cash violations found', 'All payments scanned — none exceed ₹10,000 in cash (Sec 40A(3)) or ₹2,00,000 cash receipt (Sec 269ST). No tax disallowance risk.', 'Sec 40A(3) & Sec 269ST — Income Tax Act 1961'); return; }
 
   badge.textContent = violations.length + ' items';
   const total = violations.reduce((s,v)=>s+v.amount,0);
@@ -3578,7 +3586,7 @@ function filterCashParties(q) {
 function renderLedgerFindings(findings) {
   const el = document.getElementById('audit-ledger-real');
   const badge = document.getElementById('audit-ledger-badge');
-  if (!findings.length) { el.innerHTML = _aEmpty('No ledger misclassifications found'); return; }
+  if (!findings.length) { el.innerHTML = _aEmpty('All ledger groups are correct', 'Every ledger checked against ICAI Chart of Accounts standards — TDS, GST, bank interest, drawings, prepaid expenses all correctly grouped.', 'ICAI Accounting Standards + Tally CoA conventions'); return; }
   badge.textContent = findings.length + ' Issues';
   const rows = findings.map(f => _aRow(
     _aTd(`<span class="font-semibold">${escapeHtml(f.ledger)}</span><div class="text-xs mt-0.5" style="color:var(--ink-muted);">${escapeHtml(f.rule||'')}</div>`) +
@@ -3599,7 +3607,7 @@ function renderTDSSection(data) {
   const el = document.getElementById('audit-tds-real');
   const badge = document.getElementById('audit-tds-badge');
   const totalEl = document.getElementById('audit-tds-total');
-  if (!items.length) { if(el) el.innerHTML = _aEmpty('No TDS issues detected'); return; }
+  if (!items.length) { if(el) el.innerHTML = _aEmpty('No TDS compliance issues detected', 'Payments to contractors, professionals, landlords and commission agents are within TDS threshold limits — or TDS has been correctly deducted.', 'Sec 194C / 194J / 194I / 194H — Income Tax Act 1961'); return; }
   if (badge) badge.textContent = items.length + ' parties';
   const totalExp = items.reduce((s,t)=>s+(t.tds_expected||0),0);
   if (totalEl) totalEl.textContent = '₹'+Number(totalExp).toLocaleString('en-IN')+' exposure';
@@ -3617,7 +3625,7 @@ function renderTDSSection(data) {
 function renderOutstanding(items) {
   const el = document.getElementById('audit-outstanding-real');
   const badge = document.getElementById('audit-outstanding-badge');
-  if (!items.length) { el.innerHTML = _aEmpty('No outstanding issues found'); return; }
+  if (!items.length) { el.innerHTML = _aEmpty('No abnormal balances found', 'Suspense accounts are nil. Debtor and creditor balances are normal — no credit balance debtors or debit balance creditors detected.', 'SA 500 (Audit Evidence) + SA 505 (External Confirmations) — ICAI'); return; }
   badge.textContent = items.length + ' Items';
   const rows = items.map(f => _aRow(
     _aTd(`<span class="font-semibold">${escapeHtml(f.ledger)}</span>`) +
@@ -3634,7 +3642,7 @@ function renderOutstanding(items) {
 function renderLargeExpenses(expenses, personalMarks) {
   const el = document.getElementById('audit-large-real');
   const badge = document.getElementById('audit-large-badge');
-  if (!expenses.length) { el.innerHTML = _aEmpty('No unverified large expenses'); return; }
+  if (!expenses.length) { el.innerHTML = _aEmpty('No large unverified expenses', 'No single payment above ₹1,00,000 found in daybook — or all large payments have been verified with supporting bills.', 'Sec 37(1) Income Tax Act — CGST Act Sec 16(2) for ITC'); return; }
   badge.textContent = expenses.length + ' Entries';
   const rows = expenses.map((e,i) => _aRow(
     _aTd(`<span style="color:var(--ink-muted);">${e.date||'—'}</span>`) +
@@ -3651,7 +3659,7 @@ function renderLargeExpenses(expenses, personalMarks) {
 function renderLoans(loans) {
   const el = document.getElementById('audit-loan-real');
   const badge = document.getElementById('audit-loan-badge');
-  if (!loans.length) { el.innerHTML = _aEmpty('No loan issues found'); return; }
+  if (!loans.length) { el.innerHTML = _aEmpty('No loan accounts requiring documentation', 'No loans or director advances found above ₹10,000 in books — or all loans are already documented.', 'Sec 269SS / 269T — Income Tax Act 1961 | Companies Act 2013 Sec 185'); return; }
   badge.textContent = loans.length + ' Loans';
   const rows = loans.map(f => _aRow(
     _aTd(`<span class="font-semibold">${escapeHtml(f.ledger)}</span>`) +
@@ -3719,7 +3727,7 @@ function renderSalaryCompliance(items) {
     }
   }
 
-  if (!items || !items.length) { if(el) el.innerHTML = _aEmpty('No salary compliance issues'); return; }
+  if (!items || !items.length) { if(el) el.innerHTML = _aEmpty('No salary or payroll compliance issues', 'No salary entries found, or PF/ESI/PT deductions are correctly recorded in books.', 'EPF Act 1952 | ESI Act 1948 | WB PT Act 1979'); return; }
   if (badge) badge.textContent = items.length + ' issues';
   const rows = items.map(s => {
     const isCrit = s.severity === 'Critical';

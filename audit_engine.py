@@ -69,6 +69,9 @@ def parse_trial_balance(filepath):
     df = pd.read_excel(filepath, header=None)
     ledgers = []
     current_group = None
+    company_name = ''
+    period_str   = ''
+
     GROUP_NAMES = [
         'Capital Account','Loans (Liability)','Current Liabilities','Duties & Taxes',
         'Sundry Creditors','Fixed Assets','Investments','Current Assets',
@@ -76,6 +79,20 @@ def parse_trial_balance(filepath):
         'Cash-in-Hand','Bank Accounts','Bank OD A/c','Direct Incomes','Direct Expenses',
         'Indirect Incomes','Indirect Expenses','Suspense A/c','Suspense'
     ]
+    SKIP_NAMES = {'nan','Particulars','Grand Total','Debit','Credit',
+                  'Closing Balance','Trial Balance',''}
+
+    # Scan first 10 rows for company name and period
+    for i, row in df.head(10).iterrows():
+        val = str(row[0]).strip() if pd.notna(row[0]) else ''
+        if not val or val in SKIP_NAMES:
+            continue
+        # Period pattern: contains "to" and a year (e.g. "1-Apr-25 to 31-Mar-26")
+        if ' to ' in val and any(c.isdigit() for c in val):
+            period_str = val
+        elif not company_name and val not in GROUP_NAMES and len(val) > 3:
+            company_name = val  # first meaningful non-group text = company name
+
     for _, row in df.iterrows():
         name = str(row[0]).strip() if pd.notna(row[0]) else ''
         try:
@@ -84,9 +101,7 @@ def parse_trial_balance(filepath):
         try:
             credit = float(row[2]) if pd.notna(row[2]) else 0.0
         except: credit = 0.0
-        if not name or name in ['nan','Particulars','Grand Total','Debit','Credit',
-                                 'Closing Balance','1-Apr-25 to 31-Mar-26',
-                                 'AJAY KUMAR LADDHA','Trial Balance']:
+        if not name or name in SKIP_NAMES or name == period_str or name == company_name:
             continue
         # skip rows where col1 is text (header rows)
         try:
@@ -104,7 +119,9 @@ def parse_trial_balance(filepath):
                 'credit': credit,
                 'balance': debit - credit
             })
-    return ledgers
+
+    # Attach metadata to return alongside ledgers
+    return ledgers, company_name, period_str
 
 # ── PARSE DAYBOOK ─────────────────────────────────────────────────────────────
 def parse_daybook(filepath):
@@ -769,9 +786,10 @@ def audit_salary_compliance(ledgers):
 # ── MAIN AUDIT RUNNER ─────────────────────────────────────────────────────────
 def run_full_audit(tb_path, db_path=None):
     print("Parsing files...")
-    ledgers = parse_trial_balance(tb_path)
+    ledgers, company_name, period_str = parse_trial_balance(tb_path)
     daybook = parse_daybook(db_path) if db_path else pd.DataFrame(
         columns=['Date','Particulars','VchType','VchNo','Debit','Credit'])
+    print(f"  Company: {company_name} | Period: {period_str}")
     print(f"  Ledgers: {len(ledgers)} | Daybook entries: {len(daybook)}")
 
     results = {}
@@ -825,9 +843,50 @@ def run_full_audit(tb_path, db_path=None):
     score = max(0, 100 - (critical * 8) - (warnings * 1) - (questions * 2)
                       - (tds_critical * 6) - (salary_issues * 3) - cash_penalty)
 
+    # Module status — green confirmation when a module finds zero issues
+    module_status = {
+        'ledger_classification': {
+            'count': len(results['ledger_classification']),
+            'ok_msg': f'All {len(ledgers)} ledgers checked — no mis-classification found. Groups are correct as per ICAI standards.',
+        },
+        'cash_violations': {
+            'count': cash_violations_count,
+            'ok_msg': 'No cash violations found — all payments appear to be within Sec 40A(3) limits or made via bank.',
+        },
+        'tds_compliance': {
+            'count': tds_critical,
+            'ok_msg': 'No TDS compliance issues detected — payments to contractors/professionals appear within threshold limits.',
+        },
+        'outstanding': {
+            'count': len(results['outstanding']),
+            'ok_msg': 'No abnormal balances — suspense accounts are nil, debtors/creditors look normal.',
+        },
+        'large_expenses': {
+            'count': len(results['large_expenses']),
+            'ok_msg': 'No payments above ₹1L found in daybook — or all large payments already verified.',
+        },
+        'loans': {
+            'count': len(results['loans']),
+            'ok_msg': 'No loan accounts found requiring documentation.',
+        },
+        'itr': {
+            'count': len(results['itr']),
+            'ok_msg': 'No personal expenses detected in business books — books appear clean for ITR filing.',
+        },
+        'salary_compliance': {
+            'count': salary_issues,
+            'ok_msg': 'No salary/PF/PT issues found — compliance appears in order.',
+        },
+        'bank_accounts': {
+            'count': len(results['bank_accounts']),
+            'ok_msg': 'No bank accounts detected in books — upload daybook to enable bank detection.',
+        },
+    }
+
+    results['module_status'] = module_status
     results['summary'] = {
-        'company': 'AJAY KUMAR LADDHA',
-        'period': '1-Apr-25 to 31-Mar-26',
+        'company': company_name or 'Your Company',
+        'period':  period_str  or 'FY 2025-26',
         'total_ledgers': len(ledgers),
         'total_vouchers': len(daybook),
         'critical': critical,
