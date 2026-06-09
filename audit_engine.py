@@ -126,14 +126,39 @@ def parse_trial_balance(filepath):
 # ── PARSE DAYBOOK ─────────────────────────────────────────────────────────────
 def parse_daybook(filepath):
     """
-    Parses Tally daybook export. Handles two formats:
-    - Standard (single row per voucher): only party name visible
-    - Detailed / Alt+F5 (multiple rows per voucher): bank/cash account also visible
+    Parses Tally daybook export. Auto-detects header row and column layout.
+    Handles both 6-column and 8-column Tally exports.
+
+    6-col format: Date | Particulars | VchType | VchNo | Debit | Credit
+    8-col format: Date | Particulars | (blank) | (blank) | VchType | VchNo | Debit | Credit
 
     Adds '_vid' (voucher id) to every row so continuation rows can be grouped.
     """
     df = pd.read_excel(filepath, header=None)
-    df = df[5:].reset_index(drop=True)
+
+    # Auto-detect header row — find the row where col0='Date' or col1='Particulars'
+    header_row = None
+    for i, row in df.head(12).iterrows():
+        vals = [str(v).strip().lower() for v in row if pd.notna(v)]
+        if 'date' in vals and 'particulars' in vals:
+            header_row = i
+            break
+
+    if header_row is None:
+        header_row = 5  # fallback: skip first 5 rows (AJKL format)
+
+    df = df[header_row + 1:].reset_index(drop=True)
+
+    # Map columns by position based on total count
+    ncols = len(df.columns)
+    if ncols >= 8:
+        # 8-col: Date(0) Particulars(1) ?(2) ?(3) VchType(4) VchNo(5) Debit(6) Credit(7)
+        df = df.iloc[:, [0, 1, 4, 5, 6, 7]]
+    elif ncols == 7:
+        # 7-col: Date(0) Particulars(1) ?(2) VchType(3) VchNo(4) Debit(5) Credit(6)
+        df = df.iloc[:, [0, 1, 3, 4, 5, 6]]
+    # else 6-col: keep as is
+
     df.columns = ['Date','Particulars','VchType','VchNo','Debit','Credit']
     df['Debit']       = pd.to_numeric(df['Debit'],  errors='coerce').fillna(0)
     df['Credit']      = pd.to_numeric(df['Credit'], errors='coerce').fillna(0)
