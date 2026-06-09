@@ -484,14 +484,22 @@ def audit_bank_accounts(ledgers, transactions=None):
         })
 
     # Pass 1 — TB group-based
+    misclassified_as_bank = []   # income/expense ledgers wrongly under Bank Accounts group
     for ledger in ledgers:
         n   = ledger['name'].lower()
         grp = ledger['group']
         if grp in BANK_GROUPS:
             if not any(bad in n for bad in NOT_A_BANK):
-                od = ' (OD Account)' if grp == 'Bank OD A/c' else ''
                 bal = ledger['balance']
+                # Credit balance under Bank Accounts = income/liability ledger wrongly grouped
+                # Real bank accounts (not OD) should have Debit balance
+                if bal < 0 and grp == 'Bank Accounts':
+                    misclassified_as_bank.append(ledger)
+                    continue   # don't show as bank — will be flagged in ledger_classification
+                od = ' (OD Account)' if grp == 'Bank OD A/c' else ''
                 _add(ledger['name'], bal, 'Dr' if bal >= 0 else 'Cr', grp, od)
+
+    findings.append({'_misclassified_as_bank': misclassified_as_bank})
 
     # Pass 2 — TB name-based (any group)
     for ledger in ledgers:
@@ -789,10 +797,27 @@ def audit_salary_compliance(ledgers):
 
     # PT check
     if not pt_ledgers and total_salary > 0:
+        # Estimate PT: assume average salary = total/12 months, use WB slab
+        avg_monthly = total_salary / 12
+        est_pt_per_emp = calc_pt(avg_monthly)
+        # Estimate number of employees from salary ledgers (rough: 1 per ledger or salary/15000)
+        est_employees = max(1, round(avg_monthly / 15000))
+        est_annual_pt = est_pt_per_emp * 12 * est_employees
         findings.append({
-            'type':    'pt_missing',
-            'issue':   "No Professional Tax (PT) ledger found. PT is mandatory for all employees in West Bengal (and most states).",
-            'impact':  "WB PT slabs: ₹0 (≤10K), ₹110 (≤15K), ₹130 (≤25K), ₹150 (≤40K), ₹200 (>40K). Annual employer PT registration also required.",
+            'type':         'pt_missing',
+            'total_salary': total_salary,
+            'est_monthly_avg': avg_monthly,
+            'est_pt_per_emp': est_pt_per_emp,
+            'est_annual_pt': est_annual_pt,
+            'issue': (
+                f"No Professional Tax (PT) ledger found. PT is mandatory for all employees in West Bengal. "
+                f"Based on salary of Rs.{total_salary:,.0f}, estimated PT liability = Rs.{est_annual_pt:,.0f}/year."
+            ),
+            'impact': (
+                f"WB PT slabs: ₹0 (≤₹10K/month), ₹110 (≤₹15K), ₹130 (≤₹25K), ₹150 (≤₹40K), ₹200 (>₹40K). "
+                f"Deposit by 21st every month via Grips portal (wbifms.gov.in). "
+                f"Employer PT registration also required separately."
+            ),
             'severity': 'Important',
         })
     elif pt_ledgers:
@@ -840,7 +865,28 @@ def run_full_audit(tb_path, db_path=None):
     print("Module 7: Bank Account Detection...")
     # Convert daybook DataFrame to list of dicts for bank scanning
     txn_list = daybook.to_dict('records') if not daybook.empty else []
-    results['bank_accounts'] = audit_bank_accounts(ledgers, txn_list)
+    bank_result = audit_bank_accounts(ledgers, txn_list)
+
+    # Separate out misclassified-as-bank ledgers and add to ledger_classification
+    misclassified = []
+    real_banks = []
+    for item in bank_result:
+        if '_misclassified_as_bank' in item:
+            for ledger in item['_misclassified_as_bank']:
+                misclassified.append({
+                    'severity': 'Critical',
+                    'ledger': ledger['name'],
+                    'current_group': ledger['group'],
+                    'correct_group': 'Direct Incomes or Indirect Incomes',
+                    'balance': abs(ledger['balance']),
+                    'rule': f"'{ledger['name']}' has a Credit balance under Bank Accounts group — this is an income ledger placed in the wrong group",
+                    'fix': f"Gateway → Accounts Info → Ledgers → Alter → {ledger['name']} → Change Group to Direct Incomes or Indirect Incomes"
+                })
+        else:
+            real_banks.append(item)
+
+    results['bank_accounts'] = real_banks
+    results['ledger_classification'].extend(misclassified)
 
     print("Module 8: TDS Compliance...")
     results['tds_compliance'] = audit_tds_compliance(ledgers, daybook)
