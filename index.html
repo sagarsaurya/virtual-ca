@@ -3749,9 +3749,15 @@ window.addEventListener('load', async () => {
         console.warn('Stale audit result detected — ignoring saved result, user must re-run.');
         // Clear the stale file on server so it doesn't keep loading
         fetch(API_BASE + '/api/audit/clear', { method: 'POST' }).catch(()=>{});
-      } else {
+      } else if (d && d.summary) {
         auditData = d;
         updateCABanner(d);
+        // Restore full Quick Audit results view from saved data
+        if (d.audit_type !== 'full') {
+          document.getElementById('auditStep1').classList.add('hidden');
+          document.getElementById('auditStep3').classList.remove('hidden');
+          renderAuditResults(d);
+        }
         renderTDSPage(d);
         renderSalaryCompliance(d.salary_compliance || []);
         _renderPTSummary(d.salary_compliance || []);
