@@ -3041,6 +3041,23 @@ function renderFullAuditResults(data, container) {
 
   if (critRows) html += _section('fas fa-circle-exclamation', '#f87171', 'Critical Issues', critical, critRows);
 
+  // ── SECTION 1b: BANK-CLEARED (auto cross-checked) ────────────────────────────
+  const bankCleared = data.cash_violations_bank_cleared || [];
+  if (bankCleared.length) {
+    let clrRows = '';
+    for (const v of bankCleared) {
+      clrRows += `<div class="p-3 rounded-xl mb-2 flex items-start gap-3" style="background:rgba(52,211,153,0.07);border:1px solid rgba(52,211,153,0.2);">
+        <span class="text-xs font-bold px-2 py-0.5 rounded-full mt-0.5 shrink-0" style="background:rgba(52,211,153,0.15);color:#34d399;">Cleared</span>
+        <div class="min-w-0">
+          <div class="text-sm font-semibold" style="color:#e2e8f0;">₹${Number(v.amount||0).toLocaleString('en-IN')} — ${v.party || ''}</div>
+          <div class="text-xs mt-0.5" style="color:#94a3b8;">Date: ${v.date || ''} · Matching bank debit found — not a cash violation</div>
+          <div class="text-xs mt-1 font-medium" style="color:#34d399;"><i class="fas fa-check-circle mr-1"></i>Auto-verified against bank statement</div>
+        </div>
+      </div>`;
+    }
+    html += _section('fas fa-check-circle', '#34d399', 'Auto-Cleared — Bank Statement Match', bankCleared.length, clrRows);
+  }
+
   // ── SECTION 2: WARNINGS ──────────────────────────────────────────────────────
   let warnRows = '';
 

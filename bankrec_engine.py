@@ -820,6 +820,15 @@ def reconcile(bank_txns: List[Dict], tally_txns: List[Dict],
 # MAIN ENTRY POINT
 # ══════════════════════════════════════════════════════════════════════════════
 
+def parse_bank_statement(bank_path: str, bank_filename: str = '') -> List[Dict]:
+    """Parse bank statement and return list of transactions. Used for cross-checks."""
+    ext = bank_filename.lower() if bank_filename else bank_path.lower()
+    if ext.endswith('.pdf'):
+        txns, _ = parse_pdf_statement(bank_path)
+        return txns or []
+    return parse_csv_excel_statement(bank_path) or []
+
+
 def run_bankrec(bank_path: str, tally_path: str, bank_filename: str = '') -> Dict:
     # Parse bank statement
     ext = bank_filename.lower() if bank_filename else bank_path.lower()
