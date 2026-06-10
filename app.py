@@ -512,10 +512,7 @@ def run_full_audit_all():
         results['audited_at']           = datetime.datetime.now().isoformat()
         results['audit_type']           = 'full'
 
-        # Save full result
-        with open(FULL_RESULT, 'w') as f:
-            json.dump(results, f, indent=2, default=str)
-
+        sb.save_audit_result(results)
         return jsonify(results)
 
     except Exception as e:

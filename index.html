@@ -2031,31 +2031,31 @@
 
         <!-- Checklist: are the other two already done? -->
         <div id="faChecklist" class="rounded-2xl mb-5 p-5" style="background:var(--navy-800);border:1px solid var(--navy-600);">
-          <div class="text-sm font-semibold mb-4" style="color:var(--ink);">
+          <div class="text-sm font-semibold mb-4" style="color:#e2e8f0;">
             <i class="fas fa-list-check mr-2" style="color:var(--gold-400);"></i>Pre-flight checklist — Full Audit needs all 3 sources
           </div>
           <div class="space-y-3">
             <div class="flex items-center gap-3 p-3 rounded-xl" style="background:var(--navy-700);">
-              <div id="fa-check-tb" class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold" style="background:var(--navy-600);color:#64748b;">1</div>
+              <div id="fa-check-tb" class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold" style="background:var(--navy-600);color:#94a3b8;">1</div>
               <div class="flex-1">
-                <div class="text-sm font-semibold" style="color:var(--ink);">Quick Audit — TB + Daybook</div>
-                <div class="text-xs mt-0.5" id="fa-check-tb-detail" style="color:var(--ink-muted);">Not uploaded yet — run Quick Audit first</div>
+                <div class="text-sm font-semibold" style="color:#e2e8f0;">Quick Audit — TB + Daybook</div>
+                <div class="text-xs mt-0.5" id="fa-check-tb-detail" style="color:#94a3b8;">Not uploaded yet — run Quick Audit first</div>
               </div>
-              <button onclick="showPage('fullaudit')" class="text-xs px-3 py-1.5 rounded-lg font-semibold" style="background:var(--navy-600);color:var(--ink-muted);border:1px solid var(--navy-500);">Go →</button>
+              <button onclick="showPage('fullaudit')" class="text-xs px-3 py-1.5 rounded-lg font-semibold" style="background:var(--navy-600);color:#94a3b8;border:1px solid var(--navy-500);">Go →</button>
             </div>
             <div class="flex items-center gap-3 p-3 rounded-xl" style="background:var(--navy-700);">
-              <div id="fa-check-bank" class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold" style="background:var(--navy-600);color:#64748b;">2</div>
+              <div id="fa-check-bank" class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold" style="background:var(--navy-600);color:#94a3b8;">2</div>
               <div class="flex-1">
-                <div class="text-sm font-semibold" style="color:var(--ink);">Bank Reconciliation — Bank Stmt + Ledger</div>
-                <div class="text-xs mt-0.5" id="fa-check-bank-detail" style="color:var(--ink-muted);">Optional — adds bank recon findings to Full Audit</div>
+                <div class="text-sm font-semibold" style="color:#e2e8f0;">Bank Reconciliation — Bank Stmt + Ledger</div>
+                <div class="text-xs mt-0.5" id="fa-check-bank-detail" style="color:#94a3b8;">Optional — adds bank recon findings to Full Audit</div>
               </div>
-              <button onclick="showPage('bankrec')" class="text-xs px-3 py-1.5 rounded-lg font-semibold" style="background:var(--navy-600);color:var(--ink-muted);border:1px solid var(--navy-500);">Go →</button>
+              <button onclick="showPage('bankrec')" class="text-xs px-3 py-1.5 rounded-lg font-semibold" style="background:var(--navy-600);color:#94a3b8;border:1px solid var(--navy-500);">Go →</button>
             </div>
             <div class="flex items-center gap-3 p-3 rounded-xl" style="background:var(--navy-700);border:1px solid var(--navy-500);">
               <div class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold" style="background:rgba(201,168,76,0.2);color:var(--gold-400);">3</div>
               <div class="flex-1">
-                <div class="text-sm font-semibold" style="color:var(--ink);">Balance Sheet + P&L — upload below</div>
-                <div class="text-xs mt-0.5" style="color:var(--ink-muted);">Export from Tally → Display → Balance Sheet / P&L</div>
+                <div class="text-sm font-semibold" style="color:#e2e8f0;">Balance Sheet + P&L — upload below</div>
+                <div class="text-xs mt-0.5" style="color:#94a3b8;">Export from Tally → Display → Balance Sheet / P&L</div>
               </div>
             </div>
           </div>
@@ -2068,26 +2068,26 @@
               <i class="fas fa-file-invoice" style="color:var(--gold-400);"></i>
             </div>
             <div>
-              <div class="font-semibold" style="color:var(--ink);">Upload Balance Sheet &amp; P&amp;L</div>
-              <div class="text-xs" style="color:var(--ink-muted);">Export from Tally as Excel (.xlsx)</div>
+              <div class="font-semibold" style="color:#e2e8f0;">Upload Balance Sheet &amp; P&amp;L</div>
+              <div class="text-xs" style="color:#94a3b8;">Export from Tally as Excel (.xlsx)</div>
             </div>
           </div>
           <div class="grid grid-cols-2 gap-4 mb-4">
             <label class="rounded-xl p-5 text-center cursor-pointer block transition hover:brightness-110" style="border:2px dashed var(--navy-500);background:var(--navy-700);" for="faBSFile">
               <i class="fas fa-scale-balanced text-2xl mb-2 block" style="color:#818cf8;"></i>
-              <div class="font-semibold text-sm mb-1" style="color:var(--ink);">Balance Sheet</div>
-              <div class="text-xs mb-3" id="faBSFileName" style="color:var(--ink-muted);">Click to browse</div>
+              <div class="font-semibold text-sm mb-1" style="color:#e2e8f0;">Balance Sheet</div>
+              <div class="text-xs mb-3" id="faBSFileName" style="color:#94a3b8;">Click to browse</div>
               <input type="file" accept=".xlsx,.xls" id="faBSFile" class="hidden" onchange="faOnFileSelected(this,'faBSFileName','bs')">
               <span class="text-xs font-semibold px-3 py-1.5 rounded-lg" style="background:rgba(129,140,248,0.15);color:#818cf8;">Choose .xlsx</span>
-              <p class="text-xs mt-2" style="color:var(--ink-muted);">Tally → Balance Sheet → Alt+E</p>
+              <p class="text-xs mt-2" style="color:#94a3b8;">Tally → Balance Sheet → Alt+E</p>
             </label>
             <label class="rounded-xl p-5 text-center cursor-pointer block transition hover:brightness-110" style="border:2px dashed var(--navy-500);background:var(--navy-700);" for="faPNLFile">
               <i class="fas fa-chart-line text-2xl mb-2 block" style="color:#34d399;"></i>
-              <div class="font-semibold text-sm mb-1" style="color:var(--ink);">Profit &amp; Loss</div>
-              <div class="text-xs mb-3" id="faPNLFileName" style="color:var(--ink-muted);">Click to browse</div>
+              <div class="font-semibold text-sm mb-1" style="color:#e2e8f0;">Profit &amp; Loss</div>
+              <div class="text-xs mb-3" id="faPNLFileName" style="color:#94a3b8;">Click to browse</div>
               <input type="file" accept=".xlsx,.xls" id="faPNLFile" class="hidden" onchange="faOnFileSelected(this,'faPNLFileName','pnl')">
               <span class="text-xs font-semibold px-3 py-1.5 rounded-lg" style="background:rgba(52,211,153,0.15);color:#34d399;">Choose .xlsx</span>
-              <p class="text-xs mt-2" style="color:var(--ink-muted);">Tally → P&amp;L Account → Alt+E</p>
+              <p class="text-xs mt-2" style="color:#94a3b8;">Tally → P&amp;L Account → Alt+E</p>
             </label>
           </div>
           <button id="faRunBtn" onclick="startCompleteAudit()" class="w-full py-3 rounded-xl text-sm font-bold transition" style="background:var(--gold-500);color:var(--navy-900);">
