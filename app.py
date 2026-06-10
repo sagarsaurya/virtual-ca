@@ -488,9 +488,10 @@ def run_full_audit_all():
                 bs_findings  = [{'type': 'error', 'message': f'BS/P&L audit error: {e}', 'severity': 'Info'}]
 
         # Run bank recon if files present
-        if os.path.exists(CURRENT_BSTMT):
+        if _ensure_local('current_bank_stmt.xlsx', CURRENT_BSTMT):
             try:
                 from bankrec_engine import run_bankrec
+                _ensure_local('current_bank_tally.xlsx', CURRENT_BTALLY)
                 tally_path = CURRENT_BTALLY if os.path.exists(CURRENT_BTALLY) else CURRENT_DB
                 bankrec_result = run_bankrec(CURRENT_BSTMT, tally_path, meta.get('bstmt', {}).get('filename', 'bank_statement.xlsx'))
             except Exception as e:
