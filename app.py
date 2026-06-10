@@ -7,9 +7,11 @@ try:
     from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
-    pass  # python-dotenv not installed — use system env vars (Render sets them directly)
+    pass
+
 from audit_engine import run_full_audit
 from bankrec_engine import run_bankrec
+import supabase_client as sb
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
@@ -17,42 +19,38 @@ CORS(app)
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 os.makedirs(DATA_DIR, exist_ok=True)
 
-PERSONAL_FILE  = os.path.join(DATA_DIR, 'personal_marks.json')
-HISTORY_FILE   = os.path.join(DATA_DIR, 'audit_history.json')
-RESULT_FILE    = os.path.join(DATA_DIR, 'audit_result.json')
-FILES_META     = os.path.join(DATA_DIR, 'uploaded_files.json')   # tracks what's saved
-CURRENT_TB     = os.path.join(DATA_DIR, 'current_tb.xlsx')       # persistent trial balance
-CURRENT_DB     = os.path.join(DATA_DIR, 'current_db.xlsx')       # persistent daybook
-CURRENT_BS     = os.path.join(DATA_DIR, 'current_bs.xlsx')       # persistent balance sheet
-CURRENT_PNL    = os.path.join(DATA_DIR, 'current_pnl.xlsx')      # persistent P&L
-CURRENT_BSTMT  = os.path.join(DATA_DIR, 'current_bank_stmt.xlsx')# persistent bank statement
-CURRENT_BTALLY = os.path.join(DATA_DIR, 'current_bank_tally.xlsx')# persistent bank tally ledger
-FULL_RESULT    = os.path.join(DATA_DIR, 'full_audit_result.json') # full audit result
+# Local temp paths — used during request only, then uploaded to Supabase
+CURRENT_TB     = os.path.join(DATA_DIR, 'current_tb.xlsx')
+CURRENT_DB     = os.path.join(DATA_DIR, 'current_db.xlsx')
+CURRENT_BS     = os.path.join(DATA_DIR, 'current_bs.xlsx')
+CURRENT_PNL    = os.path.join(DATA_DIR, 'current_pnl.xlsx')
+CURRENT_BSTMT  = os.path.join(DATA_DIR, 'current_bank_stmt.xlsx')
+CURRENT_BTALLY = os.path.join(DATA_DIR, 'current_bank_tally.xlsx')
 
-# ── helpers ───────────────────────────────────────────────────────────────────
+def _ensure_local(remote_name, local_path):
+    """Download from Supabase if local copy missing."""
+    if not os.path.exists(local_path):
+        sb.download_file(remote_name, local_path)
+    return os.path.exists(local_path)
+
+# ── helpers — now Supabase-backed ─────────────────────────────────────────────
 def load_personal():
-    if os.path.exists(PERSONAL_FILE):
-        with open(PERSONAL_FILE) as f: return json.load(f)
-    return []
+    return sb.load_personal()
 
 def save_personal(marks):
-    with open(PERSONAL_FILE, 'w') as f: json.dump(marks, f, indent=2)
+    pass  # handled individually via save_personal_mark / delete_personal_mark
 
 def load_history():
-    if os.path.exists(HISTORY_FILE):
-        with open(HISTORY_FILE) as f: return json.load(f)
-    return []
+    return sb.load_history()
 
 def save_history(h):
-    with open(HISTORY_FILE, 'w') as f: json.dump(h, f, indent=2, default=str)
+    pass  # handled individually via save_history_entry
 
 def load_files_meta():
-    if os.path.exists(FILES_META):
-        with open(FILES_META) as f: return json.load(f)
-    return {}
+    return sb.load_files_meta()
 
 def save_files_meta(m):
-    with open(FILES_META, 'w') as f: json.dump(m, f, indent=2)
+    sb.save_files_meta(m)
 
 def compute_score(results):
     critical = (
@@ -87,6 +85,7 @@ def upload_files():
     tb_file = request.files.get('trial_balance')
     if tb_file and tb_file.filename:
         tb_file.save(CURRENT_TB)
+        sb.upload_file(CURRENT_TB, 'current_tb.xlsx')
         meta['tb'] = {
             'filename':    tb_file.filename,
             'uploaded_at': datetime.datetime.now().isoformat(),
@@ -97,6 +96,7 @@ def upload_files():
     db_file = request.files.get('daybook')
     if db_file and db_file.filename:
         db_file.save(CURRENT_DB)
+        sb.upload_file(CURRENT_DB, 'current_db.xlsx')
         meta['db'] = {
             'filename':    db_file.filename,
             'uploaded_at': datetime.datetime.now().isoformat(),
@@ -116,12 +116,13 @@ def upload_files():
 def files_status():
     """Returns what files are currently saved on the server."""
     meta = load_files_meta()
-    meta['tb_exists']    = os.path.exists(CURRENT_TB)
-    meta['db_exists']    = os.path.exists(CURRENT_DB)
-    meta['bs_exists']    = os.path.exists(CURRENT_BS)
-    meta['pnl_exists']   = os.path.exists(CURRENT_PNL)
-    meta['bstmt_exists'] = os.path.exists(CURRENT_BSTMT)
-    meta['btally_exists']= os.path.exists(CURRENT_BTALLY)
+    # Existence = file was uploaded (tracked in meta), not local disk presence
+    meta['tb_exists']    = bool(meta.get('tb'))
+    meta['db_exists']    = bool(meta.get('db'))
+    meta['bs_exists']    = bool(meta.get('bs'))
+    meta['pnl_exists']   = bool(meta.get('pnl'))
+    meta['bstmt_exists'] = bool(meta.get('bstmt'))
+    meta['btally_exists']= bool(meta.get('btally'))
     return jsonify(meta)
 
 
@@ -138,37 +139,39 @@ def run_audit():
     tmp_tb   = None
     tmp_db   = None
 
+    meta = load_files_meta()
+
     if tb_file and tb_file.filename:
-        # new file sent — save permanently AND use for this audit
         tb_file.save(CURRENT_TB)
-        meta = load_files_meta()
+        sb.upload_file(CURRENT_TB, 'current_tb.xlsx')
         meta['tb'] = {'filename': tb_file.filename,
                       'uploaded_at': datetime.datetime.now().isoformat(),
                       'size': os.path.getsize(CURRENT_TB)}
         save_files_meta(meta)
         tb_path = CURRENT_TB
         tb_name = tb_file.filename
-    elif os.path.exists(CURRENT_TB):
+    elif _ensure_local('current_tb.xlsx', CURRENT_TB):
         tb_path = CURRENT_TB
-        tb_name = load_files_meta().get('tb', {}).get('filename', 'trial_balance.xlsx')
+        tb_name = meta.get('tb', {}).get('filename', 'trial_balance.xlsx')
     else:
         return jsonify({'error': 'No Trial Balance uploaded. Please upload a file first.'}), 400
 
     if db_file and db_file.filename:
         db_file.save(CURRENT_DB)
-        meta = load_files_meta()
+        sb.upload_file(CURRENT_DB, 'current_db.xlsx')
         meta['db'] = {'filename': db_file.filename,
                       'uploaded_at': datetime.datetime.now().isoformat(),
                       'size': os.path.getsize(CURRENT_DB)}
         save_files_meta(meta)
         db_path = CURRENT_DB
-    elif os.path.exists(CURRENT_DB):
+    elif _ensure_local('current_db.xlsx', CURRENT_DB):
         db_path = CURRENT_DB
+    else:
+        db_path = None
 
     try:
         results = run_full_audit(tb_path, db_path)
 
-        # apply personal marks
         personal_marks = load_personal()
         results['cash_violations'] = [
             v for v in results['cash_violations']
@@ -188,24 +191,17 @@ def run_audit():
         results['tb_filename']          = tb_name
         results['audited_at']           = datetime.datetime.now().isoformat()
 
-        # save as last result
-        with open(RESULT_FILE, 'w') as f:
-            json.dump(results, f, indent=2, default=str)
-
-        # append to history
-        history = load_history()
-        history.insert(0, {
-            'id':          len(history) + 1,
-            'filename':    tb_name,
-            'audited_at':  results['audited_at'],
-            'company':     results['summary'].get('company', ''),
-            'period':      results['summary'].get('period', ''),
-            'score':       score,
-            'critical':    critical,
-            'warnings':    warnings,
-            'questions':   questions,
+        sb.save_audit_result(results)
+        sb.save_history_entry({
+            'filename':   tb_name,
+            'audited_at': results['audited_at'],
+            'company':    results['summary'].get('company', ''),
+            'period':     results['summary'].get('period', ''),
+            'score':      score,
+            'critical':   critical,
+            'warnings':   warnings,
+            'questions':  questions,
         })
-        save_history(history[:50])   # keep last 50
 
         return jsonify(results)
 
@@ -216,14 +212,12 @@ def run_audit():
 # ── GET /api/audit/last ───────────────────────────────────────────────────────
 @app.route('/api/audit/last', methods=['GET'])
 def last_audit():
-    if os.path.exists(RESULT_FILE):
-        with open(RESULT_FILE) as f:
-            data = json.load(f)
-        # Safety: if saved result has 0 issues but files exist, flag it as stale
+    data = sb.load_audit_result()
+    if data:
         s = data.get('summary', {})
         if (s.get('critical', 0) == 0 and s.get('warnings', 0) == 0
                 and s.get('questions', 0) == 0 and s.get('score', 0) == 0
-                and os.path.exists(CURRENT_TB)):
+                and sb.load_files_meta().get('tb')):
             data['_stale_warning'] = 'Saved result shows 0 issues — please re-run audit to get fresh results.'
         return jsonify(data)
     return jsonify({'error': 'No audit run yet'}), 404
@@ -231,9 +225,7 @@ def last_audit():
 # ── DELETE /api/audit/clear ───────────────────────────────────────────────────
 @app.route('/api/audit/clear', methods=['POST'])
 def clear_audit():
-    """Clears saved audit result so next page load starts fresh."""
-    if os.path.exists(RESULT_FILE):
-        os.remove(RESULT_FILE)
+    sb.save_audit_result({})
     return jsonify({'ok': True})
 
 # ── GET /api/audit/history ────────────────────────────────────────────────────
@@ -245,9 +237,7 @@ def audit_history():
 @app.route('/api/dashboard', methods=['GET'])
 def dashboard():
     history = load_history()
-    last = {}
-    if os.path.exists(RESULT_FILE):
-        with open(RESULT_FILE) as f: last = json.load(f)
+    last    = sb.load_audit_result() or {}
     return jsonify({
         'total_audits': len(history),
         'last_score':   last.get('summary', {}).get('score'),
@@ -347,20 +337,17 @@ def compliance():
 # ── mark/unmark personal ──────────────────────────────────────────────────────
 @app.route('/api/audit/mark-personal', methods=['POST'])
 def mark_personal():
-    data   = request.json
-    marks  = load_personal()
-    entry  = {'date': data['date'], 'party': data['party'], 'amount': data['amount'], 'reason': data.get('reason', 'Personal')}
+    data  = request.json
+    marks = load_personal()
+    entry = {'date': data['date'], 'party': data['party'], 'amount': data['amount'], 'reason': data.get('reason', 'Personal')}
     if not any(m['date'] == entry['date'] and m['party'] == entry['party'] for m in marks):
-        marks.append(entry)
-        save_personal(marks)
-    return jsonify({'success': True, 'total_marks': len(marks)})
+        sb.save_personal_mark(entry)
+    return jsonify({'success': True, 'total_marks': len(marks) + 1})
 
 @app.route('/api/audit/mark-personal', methods=['DELETE'])
 def unmark_personal():
-    data  = request.json
-    marks = load_personal()
-    marks = [m for m in marks if not (m['date'] == data['date'] and m['party'] == data['party'])]
-    save_personal(marks)
+    data = request.json
+    sb.delete_personal_mark(data['date'], data['party'])
     return jsonify({'success': True})
 
 @app.route('/api/audit/personal-marks', methods=['GET'])
@@ -385,13 +372,22 @@ def bank_reconciliation():
     tmp_tl      = None
     tl_filename = ''
 
+    # Save bank stmt to Supabase
+    sb.upload_file(bs_path, 'current_bank_stmt.xlsx')
+    meta = load_files_meta()
+    meta['bstmt'] = {'filename': bs_file.filename, 'uploaded_at': datetime.datetime.now().isoformat()}
+    save_files_meta(meta)
+
     if tl_file and tl_file.filename:
         tl_ext = os.path.splitext(tl_file.filename)[1] or '.xlsx'
         with tempfile.NamedTemporaryFile(suffix=tl_ext, delete=False) as tmp:
             tl_path = tmp.name; tl_file.save(tl_path)
             tmp_tl  = tl_path
+        sb.upload_file(tl_path, 'current_bank_tally.xlsx')
+        meta['btally'] = {'filename': tl_file.filename, 'uploaded_at': datetime.datetime.now().isoformat()}
+        save_files_meta(meta)
         tl_filename = tl_file.filename
-    elif os.path.exists(CURRENT_DB):
+    elif _ensure_local('current_db.xlsx', CURRENT_DB):
         tl_path     = CURRENT_DB
         tl_filename = load_files_meta().get('db', {}).get('filename', 'daybook.xlsx')
     else:
@@ -418,14 +414,7 @@ def ca_chat():
     if not user_msg:
         return jsonify({'error': 'message required'}), 400
 
-    # Load last audit result as context (may be None if no audit run yet)
-    audit_data = None
-    if os.path.exists(RESULT_FILE):
-        try:
-            with open(RESULT_FILE) as f:
-                audit_data = json.load(f)
-        except Exception:
-            pass
+    audit_data = sb.load_audit_result() or None
 
     try:
         from ca_agent import chat as ca_chat_fn
@@ -461,10 +450,10 @@ def run_full_audit_all():
 
     save_files_meta(meta)
 
-    # Check TB + DB exist
-    if not os.path.exists(CURRENT_TB):
+    # Ensure local copies (download from Supabase if needed)
+    if not _ensure_local('current_tb.xlsx', CURRENT_TB):
         return jsonify({'error': 'Trial Balance not found. Run Quick Audit first to upload TB + Daybook.'}), 400
-    if not os.path.exists(CURRENT_DB):
+    if not _ensure_local('current_db.xlsx', CURRENT_DB):
         return jsonify({'error': 'Daybook not found. Run Quick Audit first to upload TB + Daybook.'}), 400
 
     try:

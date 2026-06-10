@@ -5,3 +5,4 @@ openpyxl
 pdfplumber
 groq
 python-dotenv
+supabase
