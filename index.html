@@ -2415,16 +2415,17 @@ function logout() {
 }
 function showPage(page) {
   document.querySelectorAll('.page').forEach(p => { p.classList.remove('active'); p.style.display=''; });
-  document.querySelectorAll('.nav-item').forEach(n => {
-    n.classList.remove('active');
-    n.querySelector('i')?.classList.replace('text-blue-400','text-slate-400');
-    if(n.querySelector('span')) n.querySelector('span').classList.replace('text-slate-200','text-slate-400');
-  });
+  document.querySelectorAll('.nav-item').forEach(n => { n.classList.remove('active'); });
   const pg = document.getElementById('page-'+page);
   if(pg) {
     if(page === 'askca') { pg.style.display = 'flex'; }
     else { pg.classList.add('active'); }
   }
+  // Highlight matching nav item
+  document.querySelectorAll('.nav-item').forEach(n => {
+    const fn = n.getAttribute('onclick') || '';
+    if (fn.includes("'"+page+"'")) n.classList.add('active');
+  });
   const titles = {
     dashboard:'Dashboard', upload:'Upload & Analyze', results:'Analysis Results',
     history:'History', askca:'Ask Your CA', journal:'Journal Entry Guide',
@@ -2810,6 +2811,17 @@ function faOnFileSelected(input, labelId, type) {
   }
 }
 
+function faResetToUpload() {
+  document.getElementById('faStep3').classList.add('hidden');
+  document.getElementById('faStep3').innerHTML = '';
+  document.getElementById('faStep2').classList.add('hidden');
+  const checklist = document.getElementById('faChecklist');
+  const uploadBox = checklist?.nextElementSibling;
+  if (checklist) checklist.style.display = '';
+  if (uploadBox) uploadBox.style.display = '';
+  loadCompleteAuditChecklist();
+}
+
 async function loadCompleteAuditChecklist() {
   try {
     const resp = await fetch(API_BASE + '/api/files/status');
@@ -2930,6 +2942,12 @@ function renderFullAuditResults(data, container) {
 
   // ── SCORE BANNER ────────────────────────────────────────────────────────────
   let html = `
+  <div class="flex items-center justify-between mb-4">
+    <div class="text-sm font-semibold" style="color:#e2e8f0;">Full Audit Report</div>
+    <button onclick="faResetToUpload()" class="text-xs px-4 py-2 rounded-xl font-semibold" style="background:var(--navy-700);color:#94a3b8;border:1px solid var(--navy-600);">
+      <i class="fas fa-upload mr-1.5"></i>Upload New Files
+    </button>
+  </div>
   <div class="rounded-2xl p-6 mb-5" style="background:var(--navy-800);border-top:3px solid ${scoreColor};border:1px solid var(--navy-600);">
     <div class="flex items-start justify-between flex-wrap gap-4">
       <div>
