@@ -2464,6 +2464,9 @@ function showPage(page) {
   if (page === 'completeaudit') {
     loadCompleteAuditChecklist();
   }
+  if (page === 'bankrec') {
+    loadBankRecStatus();
+  }
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
@@ -4284,6 +4287,66 @@ function markResolved(btn, id) {
   btn.className = btn.className.replace('bg-green-600','bg-gray-400').replace('hover:bg-green-700','');
   btn.disabled = true;
 }
+async function loadBankRecStatus() {
+  try {
+    const resp = await fetch(API_BASE + '/api/files/status');
+    if (!resp.ok) return;
+    const meta = await resp.json();
+    const bsName = meta.bank_stmt_name;
+    const tlName = meta.bank_tally_name;
+    if (bsName) {
+      document.getElementById('bankStatementName').textContent = bsName;
+      document.getElementById('bankStatementLoaded').classList.remove('hidden');
+      document.getElementById('bankStatementLoadedText').textContent = bsName + ' — already uploaded ✓';
+    }
+    if (tlName) {
+      document.getElementById('tallyLedgerName').textContent = tlName;
+      document.getElementById('tallyLedgerLoaded').classList.remove('hidden');
+      document.getElementById('tallyLedgerLoadedText').textContent = tlName + ' — already uploaded ✓';
+    }
+    if (bsName && tlName) {
+      // Show a "Run with existing files" button instead of requiring re-upload
+      document.getElementById('bancRecEmpty').classList.add('hidden');
+      let existing = document.getElementById('brExistingRunWrap');
+      if (!existing) {
+        existing = document.createElement('div');
+        existing.id = 'brExistingRunWrap';
+        existing.className = 'mb-6';
+        existing.innerHTML = `
+          <div class="p-4 rounded-2xl mb-3 flex items-center gap-3" style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);">
+            <i class="fas fa-check-circle" style="color:#34d399;font-size:1.2rem;"></i>
+            <div>
+              <div class="text-sm font-semibold" style="color:#34d399;">Bank files already uploaded</div>
+              <div class="text-xs mt-0.5" style="color:#94a3b8;">${bsName} &nbsp;·&nbsp; ${tlName}</div>
+            </div>
+          </div>
+          <button onclick="runBankRecExisting()" class="w-full py-4 rounded-2xl text-base font-bold flex items-center justify-center gap-3" style="background:#2563eb;color:#fff;">
+            <i class="fas fa-balance-scale"></i> Run Reconciliation with Existing Files
+          </button>
+          <p class="text-xs text-center mt-2" style="color:#64748b;">Or upload new files above to replace them</p>`;
+        const runWrap = document.getElementById('brRunWrap');
+        runWrap.parentNode.insertBefore(existing, runWrap);
+      }
+      existing.classList.remove('hidden');
+    }
+  } catch(e) { console.error('loadBankRecStatus', e); }
+}
+
+async function runBankRecExisting() {
+  document.getElementById('brLoading').classList.remove('hidden');
+  document.getElementById('brExistingRunWrap')?.classList.add('hidden');
+  try {
+    const r = await fetch(API_BASE + '/api/bankrec-existing', { method: 'POST' });
+    if (!r.ok) { const e = await r.json(); throw new Error(e.error || 'Server error'); }
+    const data = await r.json();
+    renderBankRec(data);
+  } catch(e) {
+    document.getElementById('brLoading').classList.add('hidden');
+    document.getElementById('brExistingRunWrap')?.classList.remove('hidden');
+    alert('Error: ' + e.message);
+  }
+}
+
 function handleBankStatementUpload(input) {
   const file = input.files[0];
   if (!file) return;

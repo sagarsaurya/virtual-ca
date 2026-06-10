@@ -123,6 +123,8 @@ def files_status():
     meta['pnl_exists']   = bool(meta.get('pnl'))
     meta['bstmt_exists'] = bool(meta.get('bstmt'))
     meta['btally_exists']= bool(meta.get('btally'))
+    meta['bank_stmt_name']  = meta.get('bstmt', {}).get('filename', '')
+    meta['bank_tally_name'] = meta.get('btally', {}).get('filename', '')
     return jsonify(meta)
 
 
@@ -353,6 +355,37 @@ def unmark_personal():
 @app.route('/api/audit/personal-marks', methods=['GET'])
 def get_personal_marks():
     return jsonify(load_personal())
+
+# ── POST /api/bankrec-existing ────────────────────────────────────────────────
+@app.route('/api/bankrec-existing', methods=['POST'])
+def bank_reconciliation_existing():
+    """Run bank recon using already-saved bank files (no re-upload needed)."""
+    meta = load_files_meta()
+    if not meta.get('bstmt'):
+        return jsonify({'error': 'No bank statement uploaded yet. Upload files first.'}), 400
+
+    bs_ok = _ensure_local('current_bank_stmt.xlsx', CURRENT_BSTMT)
+    if not bs_ok:
+        return jsonify({'error': 'Bank statement file not found. Please re-upload.'}), 400
+
+    tl_path     = None
+    tl_filename = ''
+    if meta.get('btally') and _ensure_local('current_bank_tally.xlsx', CURRENT_BTALLY):
+        tl_path     = CURRENT_BTALLY
+        tl_filename = meta['btally'].get('filename', 'tally_ledger.xlsx')
+    elif _ensure_local('current_db.xlsx', CURRENT_DB):
+        tl_path     = CURRENT_DB
+        tl_filename = meta.get('db', {}).get('filename', 'daybook.xlsx')
+    else:
+        return jsonify({'error': 'No Tally ledger or Daybook found. Upload files first.'}), 400
+
+    try:
+        result = run_bankrec(CURRENT_BSTMT, tl_path, meta['bstmt'].get('filename', 'bank_statement.xlsx'))
+        return jsonify(result)
+    except Exception as e:
+        import traceback; traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
 
 # ── POST /api/bankrec ─────────────────────────────────────────────────────────
 @app.route('/api/bankrec', methods=['POST'])
