@@ -1692,9 +1692,14 @@
                     <div class="text-xs text-orange-100">Questions</div>
                   </div>
                 </div>
-                <button onclick="exportAuditExcel()" class="mt-3 bg-white text-orange-600 px-5 py-2 rounded-xl text-sm font-bold hover:bg-orange-50 transition">
-                  <i class="fas fa-file-excel mr-2"></i>Download Audit Report (Excel)
-                </button>
+                <div class="flex gap-2 mt-3">
+                  <button onclick="resetAudit()" class="bg-white/20 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-white/30 transition">
+                    <i class="fas fa-arrow-left mr-1.5"></i>Change Files
+                  </button>
+                  <button onclick="exportAuditExcel()" class="bg-white text-orange-600 px-5 py-2 rounded-xl text-sm font-bold hover:bg-orange-50 transition">
+                    <i class="fas fa-file-excel mr-2"></i>Download Report
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1957,6 +1962,12 @@
 
       <!-- Reconciliation Summary -->
       <div id="bancRecSummary" class="hidden">
+        <!-- Back button -->
+        <div class="flex justify-between items-center mb-4">
+          <button onclick="brResetToUpload()" class="text-xs px-4 py-2 rounded-xl font-semibold flex items-center gap-2" style="background:var(--navy-700);color:#94a3b8;border:1px solid var(--navy-500);">
+            <i class="fas fa-arrow-left"></i> Change Files
+          </button>
+        </div>
         <!-- Closing balance banner -->
         <div id="br-closing-balance-banner" class="hidden mb-4"></div>
         <div class="grid grid-cols-5 gap-4 mb-6">
@@ -2062,7 +2073,7 @@
         </div>
 
         <!-- BS + P&L Upload -->
-        <div class="rounded-2xl mb-5 p-6" style="background:var(--navy-800);border:1px solid var(--navy-600);">
+        <div id="faUploadBox" class="rounded-2xl mb-5 p-6" style="background:var(--navy-800);border:1px solid var(--navy-600);">
           <div class="flex items-center gap-3 mb-5">
             <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(201,168,76,0.15);">
               <i class="fas fa-file-invoice" style="color:var(--gold-400);"></i>
@@ -2818,10 +2829,8 @@ function faResetToUpload() {
   document.getElementById('faStep3').classList.add('hidden');
   document.getElementById('faStep3').innerHTML = '';
   document.getElementById('faStep2').classList.add('hidden');
-  const checklist = document.getElementById('faChecklist');
-  const uploadBox = checklist?.nextElementSibling;
-  if (checklist) checklist.style.display = '';
-  if (uploadBox) uploadBox.style.display = '';
+  document.getElementById('faChecklist').style.display = '';
+  document.getElementById('faUploadBox').style.display = '';
   loadCompleteAuditChecklist();
 }
 
@@ -2861,8 +2870,8 @@ async function startCompleteAudit() {
   if (faPNLFile) fd.append('pnl', faPNLFile);
 
   // Show progress
-  document.querySelector('#page-completeaudit .max-w-4xl > div:nth-child(1)').style.display = 'none';
-  document.querySelector('#page-completeaudit .max-w-4xl > div:nth-child(2)').style.display = 'none';
+  document.getElementById('faChecklist').style.display = 'none';
+  document.getElementById('faUploadBox').style.display = 'none';
   const step2 = document.getElementById('faStep2');
   const step3 = document.getElementById('faStep3');
   step2.classList.remove('hidden');
@@ -4330,6 +4339,19 @@ async function loadBankRecStatus() {
       existing.classList.remove('hidden');
     }
   } catch(e) { console.error('loadBankRecStatus', e); }
+}
+
+function brResetToUpload() {
+  document.getElementById('bancRecSummary').classList.add('hidden');
+  document.getElementById('bancRecEmpty').classList.remove('hidden');
+  document.getElementById('brRunWrap').classList.add('hidden');
+  document.getElementById('brExistingRunWrap')?.classList.remove('hidden');
+  // Clear file inputs so user can re-select
+  const bsInput = document.getElementById('bankStatementInput');
+  const tlInput = document.getElementById('tallyLedgerInput');
+  if (bsInput) bsInput.value = '';
+  if (tlInput) tlInput.value = '';
+  loadBankRecStatus();
 }
 
 async function runBankRecExisting() {
