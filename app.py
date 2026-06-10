@@ -33,6 +33,51 @@ def _ensure_local(remote_name, local_path):
         sb.download_file(remote_name, local_path)
     return os.path.exists(local_path)
 
+def _cross_check_bank(violations, bstmt_path, bstmt_filename):
+    """Remove cash violations that have a matching debit in the bank statement.
+    Returns (remaining, cleared) tuple."""
+    try:
+        from bankrec_engine import parse_bank_statement
+        from datetime import timedelta
+        bank_txns  = parse_bank_statement(bstmt_path, bstmt_filename)
+        bank_debits = [t for t in bank_txns if t.get('dr_cr') in ('Dr', 'Debit', 'DR')]
+    except Exception as e:
+        print(f'[cross-check] parse error: {e}')
+        return violations, []
+
+    remaining, cleared = [], []
+    for v in violations:
+        v_amount = float(v.get('amount', 0))
+        v_date = None
+        try:
+            v_date = datetime.datetime.strptime(v['date'], '%Y-%m-%d').date() if v.get('date') else None
+        except Exception:
+            pass
+
+        matched = False
+        for bt in bank_debits:
+            bt_amount = float(bt.get('amount', 0))
+            if bt_amount == 0 or abs(bt_amount - v_amount) / max(bt_amount, v_amount) > 0.01:
+                continue
+            if v_date and bt.get('date'):
+                try:
+                    bt_date = bt['date'].date() if hasattr(bt['date'], 'date') else bt['date']
+                    if abs((bt_date - v_date).days) <= 3:
+                        matched = True; break
+                except Exception:
+                    pass
+            elif not v_date:
+                matched = True; break
+
+        if matched:
+            v['_cleared_by_bank'] = True
+            cleared.append(v)
+        else:
+            remaining.append(v)
+
+    return remaining, cleared
+
+
 # ── helpers — now Supabase-backed ─────────────────────────────────────────────
 def load_personal():
     return sb.load_personal()
@@ -184,6 +229,14 @@ def run_audit():
             if not any(m['date'] == e['date'] and m['party'] == e['party'] for m in personal_marks)
         ]
         results['personal_marks'] = personal_marks
+
+        # Cross-check cash violations against saved bank statement (if available)
+        meta = load_files_meta()
+        if _ensure_local('current_bank_stmt.xlsx', CURRENT_BSTMT):
+            bstmt_fn = meta.get('bstmt', {}).get('filename', 'bank_statement.xlsx')
+            remaining, cleared = _cross_check_bank(results['cash_violations'], CURRENT_BSTMT, bstmt_fn)
+            results['cash_violations']              = remaining
+            results['cash_violations_bank_cleared'] = cleared
 
         score, critical, warnings, questions = compute_score(results)
         results['summary']['score']     = score
@@ -530,51 +583,10 @@ def run_full_audit_all():
                 bankrec_result = run_bankrec(CURRENT_BSTMT, tally_path, bstmt_filename)
 
                 # ── Cross-check cash violations against bank statement ──────────
-                # If a "cash violation" entry has a matching bank debit (same amount
-                # within ±1% and within ±3 days) it was actually paid via bank.
                 try:
-                    bank_txns = parse_bank_statement(CURRENT_BSTMT, bstmt_filename)
-                    bank_debits = [t for t in bank_txns if t.get('dr_cr') in ('Dr', 'Debit', 'DR')]
-
-                    cleared_by_bank = []
-                    remaining_violations = []
-
-                    for v in results['cash_violations']:
-                        v_amount = float(v.get('amount', 0))
-                        v_date   = None
-                        try:
-                            from datetime import date as dt_date, timedelta
-                            v_date = datetime.datetime.strptime(v['date'], '%Y-%m-%d').date() if v.get('date') else None
-                        except Exception:
-                            pass
-
-                        matched = False
-                        for bt in bank_debits:
-                            bt_amount = float(bt.get('amount', 0))
-                            # Amount match within 1%
-                            if bt_amount == 0 or abs(bt_amount - v_amount) / max(bt_amount, v_amount) > 0.01:
-                                continue
-                            # Date match within ±3 days
-                            if v_date and bt.get('date'):
-                                try:
-                                    bt_date = bt['date'].date() if hasattr(bt['date'], 'date') else bt['date']
-                                    if abs((bt_date - v_date).days) <= 3:
-                                        matched = True
-                                        break
-                                except Exception:
-                                    pass
-                            elif not v_date:
-                                matched = True  # no date to compare — give benefit of doubt
-                                break
-
-                        if matched:
-                            v['_cleared_by_bank'] = True
-                            cleared_by_bank.append(v)
-                        else:
-                            remaining_violations.append(v)
-
-                    results['cash_violations']           = remaining_violations
-                    results['cash_violations_bank_cleared'] = cleared_by_bank
+                    remaining, cleared = _cross_check_bank(results['cash_violations'], CURRENT_BSTMT, bstmt_filename)
+                    results['cash_violations']              = remaining
+                    results['cash_violations_bank_cleared'] = cleared
                 except Exception as e:
                     print(f'[cross-check] bank cross-check error: {e}')
 
