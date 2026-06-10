@@ -428,6 +428,11 @@ def audit_cash_violations(daybook):
         'pnb', 'punjab national', 'current a/c', 'savings a/c', 'bank account',
         'zerodha', 'anand rathi', 'tapinvest', 'icici prudential', 'mutual fund',
         'nps', 'ppf', 'epf', 'neft', 'rtgs', 'upi', 'imps', 'online transfer',
+        # Bank income/charges — always a bank transaction, never cash
+        'bank interest', 'interest received', 'interest on od', 'od interest',
+        'bank charges', 'bank commission', 'bank fees', 'bank service',
+        'interest on loan', 'interest on cc', 'interest on overdraft',
+        'processing fee', 'gst on bank', 'cash deposit', 'cheque deposit',
     ]
 
     # ── Step 1: assign voucher_id to every row (continuation rows get same id) ──
@@ -484,6 +489,11 @@ def audit_cash_violations(daybook):
 
         party  = str(row['Particulars']).strip()
         date   = str(row['Date'].date()) if pd.notna(row['Date']) else ''
+
+        # Skip if the party name itself is a bank-type ledger (bank interest, charges, etc.)
+        party_lower = party.lower()
+        if any(kw in party_lower for kw in BANK_ACCOUNT_KEYWORDS):
+            continue
 
         # Sec 40A(3) — payment > ₹10,000 (verify if cash or bank)
         if row['Debit'] > CASH_EXPENSE_LIMIT:
