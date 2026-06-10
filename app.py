@@ -23,6 +23,11 @@ RESULT_FILE    = os.path.join(DATA_DIR, 'audit_result.json')
 FILES_META     = os.path.join(DATA_DIR, 'uploaded_files.json')   # tracks what's saved
 CURRENT_TB     = os.path.join(DATA_DIR, 'current_tb.xlsx')       # persistent trial balance
 CURRENT_DB     = os.path.join(DATA_DIR, 'current_db.xlsx')       # persistent daybook
+CURRENT_BS     = os.path.join(DATA_DIR, 'current_bs.xlsx')       # persistent balance sheet
+CURRENT_PNL    = os.path.join(DATA_DIR, 'current_pnl.xlsx')      # persistent P&L
+CURRENT_BSTMT  = os.path.join(DATA_DIR, 'current_bank_stmt.xlsx')# persistent bank statement
+CURRENT_BTALLY = os.path.join(DATA_DIR, 'current_bank_tally.xlsx')# persistent bank tally ledger
+FULL_RESULT    = os.path.join(DATA_DIR, 'full_audit_result.json') # full audit result
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 def load_personal():
@@ -111,8 +116,12 @@ def upload_files():
 def files_status():
     """Returns what files are currently saved on the server."""
     meta = load_files_meta()
-    meta['tb_exists'] = os.path.exists(CURRENT_TB)
-    meta['db_exists'] = os.path.exists(CURRENT_DB)
+    meta['tb_exists']    = os.path.exists(CURRENT_TB)
+    meta['db_exists']    = os.path.exists(CURRENT_DB)
+    meta['bs_exists']    = os.path.exists(CURRENT_BS)
+    meta['pnl_exists']   = os.path.exists(CURRENT_PNL)
+    meta['bstmt_exists'] = os.path.exists(CURRENT_BSTMT)
+    meta['btally_exists']= os.path.exists(CURRENT_BTALLY)
     return jsonify(meta)
 
 
@@ -425,6 +434,130 @@ def ca_chat():
     except Exception as e:
         import traceback; traceback.print_exc()
         return jsonify({'error': str(e)}), 500
+
+
+# ── POST /api/full-audit ──────────────────────────────────────────────────────
+@app.route('/api/full-audit', methods=['POST'])
+def run_full_audit_all():
+    """
+    Full Audit — accepts BS + P&L uploads, auto-pulls TB/DB/bank files.
+    Runs all 9 existing modules + BS/P&L compliance modules.
+    """
+    meta = load_files_meta()
+
+    # Save BS if uploaded
+    bs_file = request.files.get('balance_sheet')
+    if bs_file and bs_file.filename:
+        bs_ext = os.path.splitext(bs_file.filename)[1] or '.xlsx'
+        bs_save = CURRENT_BS if bs_ext in ('.xlsx','.xls') else CURRENT_BS.replace('.xlsx', bs_ext)
+        bs_file.save(CURRENT_BS)
+        meta['bs'] = {'filename': bs_file.filename, 'uploaded_at': datetime.datetime.now().isoformat(), 'size': os.path.getsize(CURRENT_BS)}
+
+    # Save P&L if uploaded
+    pnl_file = request.files.get('pnl')
+    if pnl_file and pnl_file.filename:
+        pnl_file.save(CURRENT_PNL)
+        meta['pnl'] = {'filename': pnl_file.filename, 'uploaded_at': datetime.datetime.now().isoformat(), 'size': os.path.getsize(CURRENT_PNL)}
+
+    save_files_meta(meta)
+
+    # Check TB + DB exist
+    if not os.path.exists(CURRENT_TB):
+        return jsonify({'error': 'Trial Balance not found. Run Quick Audit first to upload TB + Daybook.'}), 400
+    if not os.path.exists(CURRENT_DB):
+        return jsonify({'error': 'Daybook not found. Run Quick Audit first to upload TB + Daybook.'}), 400
+
+    try:
+        from audit_engine import run_full_audit
+        results = run_full_audit(CURRENT_TB, CURRENT_DB)
+
+        # Apply personal marks
+        personal_marks = load_personal()
+        results['cash_violations'] = [
+            v for v in results['cash_violations']
+            if not any(m['date'] == v['date'] and m['party'] == v['party'] for m in personal_marks)
+        ]
+        results['large_expenses'] = [
+            e for e in results['large_expenses']
+            if not any(m['date'] == e['date'] and m['party'] == e['party'] for m in personal_marks)
+        ]
+
+        # Run BS + P&L audit if files present
+        bs_findings   = []
+        pnl_findings  = []
+        bankrec_result = None
+
+        if os.path.exists(CURRENT_BS) or os.path.exists(CURRENT_PNL):
+            try:
+                from bs_pnl_audit import audit_bs_pnl
+                bs_findings, pnl_findings = audit_bs_pnl(
+                    CURRENT_BS   if os.path.exists(CURRENT_BS)    else None,
+                    CURRENT_PNL  if os.path.exists(CURRENT_PNL)   else None,
+                    results,
+                )
+            except Exception as e:
+                bs_findings  = [{'type': 'error', 'message': f'BS/P&L audit error: {e}', 'severity': 'Info'}]
+
+        # Run bank recon if files present
+        if os.path.exists(CURRENT_BSTMT):
+            try:
+                from bankrec_engine import run_bankrec
+                tally_path = CURRENT_BTALLY if os.path.exists(CURRENT_BTALLY) else CURRENT_DB
+                bankrec_result = run_bankrec(CURRENT_BSTMT, tally_path, meta.get('bstmt', {}).get('filename', 'bank_statement.xlsx'))
+            except Exception as e:
+                bankrec_result = {'error': str(e)}
+
+        score, critical, warnings, questions = compute_score(results)
+        # Deduct for BS/P&L findings
+        for f in bs_findings + pnl_findings:
+            if f.get('severity') == 'Critical': critical += 1; score = max(0, score - 5)
+            elif f.get('severity') == 'Review':  warnings += 1; score = max(0, score - 2)
+
+        results['summary']['score']     = score
+        results['summary']['critical']  = critical
+        results['summary']['warnings']  = warnings
+        results['summary']['questions'] = questions
+        results['bs_findings']          = bs_findings
+        results['pnl_findings']         = pnl_findings
+        results['bankrec']              = bankrec_result
+        results['audited_at']           = datetime.datetime.now().isoformat()
+        results['audit_type']           = 'full'
+
+        # Save full result
+        with open(FULL_RESULT, 'w') as f:
+            json.dump(results, f, indent=2, default=str)
+
+        return jsonify(results)
+
+    except Exception as e:
+        import traceback; traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+# ── POST /api/upload/bank-files ───────────────────────────────────────────────
+@app.route('/api/upload/bank-files', methods=['POST'])
+def upload_bank_files():
+    """Save bank statement and/or bank tally ledger persistently."""
+    meta = load_files_meta()
+    saved = []
+
+    bstmt = request.files.get('bank_statement')
+    if bstmt and bstmt.filename:
+        bstmt.save(CURRENT_BSTMT)
+        meta['bstmt'] = {'filename': bstmt.filename, 'uploaded_at': datetime.datetime.now().isoformat(), 'size': os.path.getsize(CURRENT_BSTMT)}
+        saved.append('bank_statement')
+
+    btally = request.files.get('tally_ledger')
+    if btally and btally.filename:
+        btally.save(CURRENT_BTALLY)
+        meta['btally'] = {'filename': btally.filename, 'uploaded_at': datetime.datetime.now().isoformat(), 'size': os.path.getsize(CURRENT_BTALLY)}
+        saved.append('tally_ledger')
+
+    if not saved:
+        return jsonify({'error': 'No files received'}), 400
+
+    save_files_meta(meta)
+    return jsonify({'saved': saved, 'status': meta})
 
 
 if __name__ == '__main__':

@@ -313,6 +313,10 @@
       <div class="nav-section-label">Analysis</div>
       <a onclick="showPage('fullaudit')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer mb-0.5">
         <i class="fas fa-magnifying-glass-dollar nav-icon w-4 text-sm"></i>
+        <span class="nav-label">Quick Audit</span>
+      </a>
+      <a onclick="showPage('completeaudit')" class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer mb-0.5">
+        <i class="fas fa-clipboard-check nav-icon w-4 text-sm"></i>
         <span class="nav-label">Full Audit</span>
         <span class="ml-auto text-xs font-bold px-2 py-0.5 rounded-full" style="background:rgba(201,168,76,0.15);color:var(--gold-400);">New</span>
       </a>
@@ -1629,7 +1633,7 @@
             </div>
 
             <button id="auditRunBtn" onclick="startFullAudit()" class="w-full py-3 rounded-xl text-sm font-bold transition" style="background:var(--gold-500);color:var(--navy-900);">
-              <i class="fas fa-play mr-2"></i>Run Full Audit
+              <i class="fas fa-play mr-2"></i>Run Quick Audit
             </button>
           </div>
 
@@ -2021,6 +2025,95 @@
       </div>
     </div>
 
+    <!-- ===== FULL AUDIT PAGE ===== -->
+    <div id="page-completeaudit" class="page p-8">
+      <div class="max-w-4xl mx-auto">
+
+        <!-- Checklist: are the other two already done? -->
+        <div id="faChecklist" class="rounded-2xl mb-5 p-5" style="background:var(--navy-800);border:1px solid var(--navy-600);">
+          <div class="text-sm font-semibold mb-4" style="color:var(--ink);">
+            <i class="fas fa-list-check mr-2" style="color:var(--gold-400);"></i>Pre-flight checklist — Full Audit needs all 3 sources
+          </div>
+          <div class="space-y-3">
+            <div class="flex items-center gap-3 p-3 rounded-xl" style="background:var(--navy-700);">
+              <div id="fa-check-tb" class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold" style="background:var(--navy-600);color:#64748b;">1</div>
+              <div class="flex-1">
+                <div class="text-sm font-semibold" style="color:var(--ink);">Quick Audit — TB + Daybook</div>
+                <div class="text-xs mt-0.5" id="fa-check-tb-detail" style="color:var(--ink-muted);">Not uploaded yet — run Quick Audit first</div>
+              </div>
+              <button onclick="showPage('fullaudit')" class="text-xs px-3 py-1.5 rounded-lg font-semibold" style="background:var(--navy-600);color:var(--ink-muted);border:1px solid var(--navy-500);">Go →</button>
+            </div>
+            <div class="flex items-center gap-3 p-3 rounded-xl" style="background:var(--navy-700);">
+              <div id="fa-check-bank" class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold" style="background:var(--navy-600);color:#64748b;">2</div>
+              <div class="flex-1">
+                <div class="text-sm font-semibold" style="color:var(--ink);">Bank Reconciliation — Bank Stmt + Ledger</div>
+                <div class="text-xs mt-0.5" id="fa-check-bank-detail" style="color:var(--ink-muted);">Optional — adds bank recon findings to Full Audit</div>
+              </div>
+              <button onclick="showPage('bankrec')" class="text-xs px-3 py-1.5 rounded-lg font-semibold" style="background:var(--navy-600);color:var(--ink-muted);border:1px solid var(--navy-500);">Go →</button>
+            </div>
+            <div class="flex items-center gap-3 p-3 rounded-xl" style="background:var(--navy-700);border:1px solid var(--navy-500);">
+              <div class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold" style="background:rgba(201,168,76,0.2);color:var(--gold-400);">3</div>
+              <div class="flex-1">
+                <div class="text-sm font-semibold" style="color:var(--ink);">Balance Sheet + P&L — upload below</div>
+                <div class="text-xs mt-0.5" style="color:var(--ink-muted);">Export from Tally → Display → Balance Sheet / P&L</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BS + P&L Upload -->
+        <div class="rounded-2xl mb-5 p-6" style="background:var(--navy-800);border:1px solid var(--navy-600);">
+          <div class="flex items-center gap-3 mb-5">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(201,168,76,0.15);">
+              <i class="fas fa-file-invoice" style="color:var(--gold-400);"></i>
+            </div>
+            <div>
+              <div class="font-semibold" style="color:var(--ink);">Upload Balance Sheet &amp; P&amp;L</div>
+              <div class="text-xs" style="color:var(--ink-muted);">Export from Tally as Excel (.xlsx)</div>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4 mb-4">
+            <label class="rounded-xl p-5 text-center cursor-pointer block transition hover:brightness-110" style="border:2px dashed var(--navy-500);background:var(--navy-700);" for="faBSFile">
+              <i class="fas fa-scale-balanced text-2xl mb-2 block" style="color:#818cf8;"></i>
+              <div class="font-semibold text-sm mb-1" style="color:var(--ink);">Balance Sheet</div>
+              <div class="text-xs mb-3" id="faBSFileName" style="color:var(--ink-muted);">Click to browse</div>
+              <input type="file" accept=".xlsx,.xls" id="faBSFile" class="hidden" onchange="faOnFileSelected(this,'faBSFileName','bs')">
+              <span class="text-xs font-semibold px-3 py-1.5 rounded-lg" style="background:rgba(129,140,248,0.15);color:#818cf8;">Choose .xlsx</span>
+              <p class="text-xs mt-2" style="color:var(--ink-muted);">Tally → Balance Sheet → Alt+E</p>
+            </label>
+            <label class="rounded-xl p-5 text-center cursor-pointer block transition hover:brightness-110" style="border:2px dashed var(--navy-500);background:var(--navy-700);" for="faPNLFile">
+              <i class="fas fa-chart-line text-2xl mb-2 block" style="color:#34d399;"></i>
+              <div class="font-semibold text-sm mb-1" style="color:var(--ink);">Profit &amp; Loss</div>
+              <div class="text-xs mb-3" id="faPNLFileName" style="color:var(--ink-muted);">Click to browse</div>
+              <input type="file" accept=".xlsx,.xls" id="faPNLFile" class="hidden" onchange="faOnFileSelected(this,'faPNLFileName','pnl')">
+              <span class="text-xs font-semibold px-3 py-1.5 rounded-lg" style="background:rgba(52,211,153,0.15);color:#34d399;">Choose .xlsx</span>
+              <p class="text-xs mt-2" style="color:var(--ink-muted);">Tally → P&amp;L Account → Alt+E</p>
+            </label>
+          </div>
+          <button id="faRunBtn" onclick="startCompleteAudit()" class="w-full py-3 rounded-xl text-sm font-bold transition" style="background:var(--gold-500);color:var(--navy-900);">
+            <i class="fas fa-play mr-2"></i>Run Full Audit
+          </button>
+        </div>
+
+        <!-- Running state -->
+        <div id="faStep2" class="hidden rounded-2xl p-10 text-center mb-5" style="background:var(--navy-800);border:1px solid var(--navy-600);">
+          <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5" style="background:rgba(201,168,76,0.15);">
+            <i class="fas fa-magnifying-glass text-2xl" style="color:var(--gold-400);animation:spin 1.5s linear infinite;"></i>
+          </div>
+          <div class="font-bold text-lg mb-1" style="color:var(--ink);">Running Full Audit…</div>
+          <div class="text-sm mb-6" style="color:var(--ink-muted);">Combining all 6 data sources</div>
+          <div class="progress-bar max-w-sm mx-auto mb-2">
+            <div id="faProgressBar" style="height:100%;border-radius:99px;background:linear-gradient(90deg,var(--gold-500),#f59e0b);width:0%;transition:width 0.4s ease;"></div>
+          </div>
+          <div class="text-xs" id="faProgressText" style="color:var(--ink-muted);">0%</div>
+        </div>
+
+        <!-- Results -->
+        <div id="faStep3" class="hidden"></div>
+
+      </div>
+    </div>
+
     <!-- ===== TDS ANALYSIS PAGE ===== -->
     <div id="page-tdsanalysis" class="page p-8">
       <div id="tds-real-data"><!-- filled by renderTDSPage() --></div>
@@ -2336,7 +2429,8 @@ function showPage(page) {
     dashboard:'Dashboard', upload:'Upload & Analyze', results:'Analysis Results',
     history:'History', askca:'Ask Your CA', journal:'Journal Entry Guide',
     compliance:'Compliance Calendar', admin:'Admin Panel',
-    bankrec:'Bank Reconciliation', tdsanalysis:'TDS Analysis', fullaudit:'Full Audit'
+    bankrec:'Bank Reconciliation', tdsanalysis:'TDS Analysis',
+    fullaudit:'Quick Audit', completeaudit:'Full Audit'
   };
   const subs = {
     dashboard:'Welcome back, Sagar', upload:'Upload Tally Trial Balance Excel',
@@ -2345,7 +2439,8 @@ function showPage(page) {
     compliance:'TDS, PT, GST, Advance Tax — real due dates', admin:'Audit history and stats',
     bankrec:'Match bank statement vs Tally — find unmatched & duplicate entries',
     tdsanalysis:'Section-wise TDS payable, deposited, pending & return mismatches',
-    fullaudit:'Complete CA-level audit — ledgers, TDS, GST, loans, cash violations & compliance'
+    fullaudit:'Ledgers, TDS, GST, loans, cash violations & compliance — TB + Daybook',
+    completeaudit:'All 6 files — TB, Daybook, BS, P&L, Bank Statement, Bank Ledger'
   };
   document.getElementById('pageTitle').textContent = titles[page]||'';
   document.getElementById('pageSubtitle').textContent = subs[page]||'';
@@ -2364,6 +2459,9 @@ function showPage(page) {
   // Re-render Full Audit results when navigating back
   if (page === 'fullaudit' && auditData) {
     loadFilesStatus();
+  }
+  if (page === 'completeaudit') {
+    loadCompleteAuditChecklist();
   }
 }
 
@@ -2698,6 +2796,221 @@ async function loadFilesStatus() {
 async function runSavedAudit() {
   // Run audit using already-saved files (no new upload)
   await runAuditWithFiles(null, null);
+}
+
+// ── FULL AUDIT (all 6 files) ──────────────────────────────────────────────────
+let faBSFile = null, faPNLFile = null;
+
+function faOnFileSelected(input, labelId, type) {
+  const label = document.getElementById(labelId);
+  if (input.files[0]) {
+    if (type === 'bs')  faBSFile  = input.files[0];
+    if (type === 'pnl') faPNLFile = input.files[0];
+    if (label) label.textContent = input.files[0].name;
+  }
+}
+
+async function loadCompleteAuditChecklist() {
+  try {
+    const resp = await fetch(API_BASE + '/api/files/status');
+    if (!resp.ok) return;
+    const meta = await resp.json();
+
+    const tbOk   = meta.tb_exists && meta.tb;
+    const dbOk   = meta.db_exists && meta.db;
+    const bankOk = meta.bstmt_exists;
+
+    // TB/DB check
+    const tbEl  = document.getElementById('fa-check-tb');
+    const tbDet = document.getElementById('fa-check-tb-detail');
+    if (tbOk && dbOk && tbEl) {
+      tbEl.style.background = 'rgba(52,211,153,0.2)'; tbEl.style.color = '#34d399'; tbEl.textContent = '✓';
+      if (tbDet) tbDet.textContent = meta.tb.filename + ' + ' + (meta.db?.filename || 'Daybook');
+    }
+
+    // Bank check
+    const bkEl  = document.getElementById('fa-check-bank');
+    const bkDet = document.getElementById('fa-check-bank-detail');
+    if (bankOk && bkEl) {
+      bkEl.style.background = 'rgba(52,211,153,0.2)'; bkEl.style.color = '#34d399'; bkEl.textContent = '✓';
+      if (bkDet) bkDet.textContent = meta.bstmt?.filename || 'Bank statement uploaded';
+    }
+  } catch(e) {}
+}
+
+async function startCompleteAudit() {
+  const btn = document.getElementById('faRunBtn');
+
+  const fd = new FormData();
+  if (faBSFile)  fd.append('balance_sheet', faBSFile);
+  if (faPNLFile) fd.append('pnl', faPNLFile);
+
+  // Show progress
+  document.querySelector('#page-completeaudit .max-w-4xl > div:nth-child(1)').style.display = 'none';
+  document.querySelector('#page-completeaudit .max-w-4xl > div:nth-child(2)').style.display = 'none';
+  const step2 = document.getElementById('faStep2');
+  const step3 = document.getElementById('faStep3');
+  step2.classList.remove('hidden');
+  step3.classList.add('hidden');
+  step3.innerHTML = '';
+
+  const bar  = document.getElementById('faProgressBar');
+  const text = document.getElementById('faProgressText');
+
+  const steps = [10, 25, 45, 60, 75, 90];
+  let si = 0;
+  const ticker = setInterval(() => {
+    if (si < steps.length) { bar.style.width = steps[si] + '%'; text.textContent = steps[si] + '%'; si++; }
+  }, 600);
+
+  try {
+    const resp = await fetch(API_BASE + '/api/full-audit', { method: 'POST', body: fd });
+    clearInterval(ticker);
+    bar.style.width = '100%'; text.textContent = '100%';
+
+    const data = await resp.json();
+    setTimeout(() => {
+      step2.classList.add('hidden');
+      step3.classList.remove('hidden');
+      renderFullAuditResults(data, step3);
+    }, 400);
+  } catch(e) {
+    clearInterval(ticker);
+    step2.classList.add('hidden');
+    step3.classList.remove('hidden');
+    step3.innerHTML = `<div class="rounded-xl p-5 text-center" style="background:var(--navy-800);border:1px solid var(--navy-600);color:#f87171;">Error: ${e.message}</div>`;
+  }
+}
+
+function renderFullAuditResults(data, container) {
+  if (data.error) {
+    container.innerHTML = `<div class="rounded-xl p-5" style="background:var(--navy-800);border:1px solid #f87171;color:#f87171;"><i class="fas fa-exclamation-circle mr-2"></i>${data.error}</div>`;
+    return;
+  }
+
+  const score    = data.summary?.score ?? 0;
+  const critical = data.summary?.critical ?? 0;
+  const warnings = data.summary?.warnings ?? 0;
+  const company  = data.summary?.company || '';
+  const bsF      = data.bs_findings   || [];
+  const pnlF     = data.pnl_findings  || [];
+  const recon    = data.bankrec;
+
+  const scoreColor = score >= 75 ? '#34d399' : score >= 50 ? '#f59e0b' : '#f87171';
+
+  let html = `
+    <div class="rounded-2xl p-6 mb-5" style="background:var(--navy-800);border-top:3px solid ${scoreColor};border:1px solid var(--navy-600);">
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <div class="text-xs mb-1" style="color:var(--ink-muted);">Full Audit Score ${company ? '— ' + company : ''}</div>
+          <div class="text-5xl font-black" style="color:${scoreColor};">${score}<span class="text-xl font-semibold" style="color:var(--ink-muted);">/100</span></div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 text-center">
+          <div class="px-4 py-3 rounded-xl" style="background:var(--navy-700);">
+            <div class="text-2xl font-black" style="color:#f87171;">${critical}</div>
+            <div class="text-xs" style="color:var(--ink-muted);">Critical</div>
+          </div>
+          <div class="px-4 py-3 rounded-xl" style="background:var(--navy-700);">
+            <div class="text-2xl font-black" style="color:#f59e0b;">${warnings}</div>
+            <div class="text-xs" style="color:var(--ink-muted);">Warnings</div>
+          </div>
+        </div>
+      </div>
+      <div class="text-xs" style="color:var(--ink-muted);">
+        Sources used: TB + Daybook
+        ${bsF.length || pnlF.length ? ' + Balance Sheet + P&L' : ''}
+        ${recon && !recon.error ? ' + Bank Statement' : ''}
+      </div>
+    </div>`;
+
+  // BS Findings
+  if (bsF.length) {
+    html += `<div class="rounded-2xl p-5 mb-4" style="background:var(--navy-800);border:1px solid var(--navy-600);">
+      <div class="font-semibold mb-3" style="color:var(--ink);"><i class="fas fa-scale-balanced mr-2" style="color:#818cf8;"></i>Balance Sheet Findings (${bsF.length})</div>
+      <div class="space-y-2">`;
+    for (const f of bsF) {
+      const col = f.severity === 'Critical' ? '#f87171' : '#f59e0b';
+      html += `<div class="p-3 rounded-xl" style="background:var(--navy-700);">
+        <div class="flex items-start gap-2">
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full mt-0.5" style="background:rgba(${f.severity==='Critical'?'248,113,113':'245,158,11'},0.15);color:${col};white-space:nowrap;">${f.severity}</span>
+          <div>
+            <div class="text-sm font-semibold" style="color:var(--ink);">${f.ledger}${f.amount ? ' — ₹' + f.amount.toLocaleString('en-IN') : ''}</div>
+            <div class="text-xs mt-0.5" style="color:var(--ink-muted);">${f.message}</div>
+            <div class="text-xs mt-1" style="color:${col};">${f.law}</div>
+          </div>
+        </div>
+      </div>`;
+    }
+    html += `</div></div>`;
+  }
+
+  // P&L Findings
+  if (pnlF.length) {
+    html += `<div class="rounded-2xl p-5 mb-4" style="background:var(--navy-800);border:1px solid var(--navy-600);">
+      <div class="font-semibold mb-3" style="color:var(--ink);"><i class="fas fa-chart-line mr-2" style="color:#34d399;"></i>P&L Findings (${pnlF.length})</div>
+      <div class="space-y-2">`;
+    for (const f of pnlF) {
+      const col = f.severity === 'Critical' ? '#f87171' : '#f59e0b';
+      html += `<div class="p-3 rounded-xl" style="background:var(--navy-700);">
+        <div class="flex items-start gap-2">
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full mt-0.5" style="background:rgba(${f.severity==='Critical'?'248,113,113':'245,158,11'},0.15);color:${col};white-space:nowrap;">${f.severity}</span>
+          <div>
+            <div class="text-sm font-semibold" style="color:var(--ink);">${f.ledger}${f.amount ? ' — ₹' + f.amount.toLocaleString('en-IN') : ''}</div>
+            <div class="text-xs mt-0.5" style="color:var(--ink-muted);">${f.message}</div>
+            <div class="text-xs mt-1" style="color:${col};">${f.law}</div>
+          </div>
+        </div>
+      </div>`;
+    }
+    html += `</div></div>`;
+  }
+
+  // Bank recon summary
+  if (recon && !recon.error) {
+    const missing = recon.missing_in_tally?.length || 0;
+    const extra   = recon.extra_in_tally?.length   || 0;
+    html += `<div class="rounded-2xl p-5 mb-4" style="background:var(--navy-800);border:1px solid var(--navy-600);">
+      <div class="font-semibold mb-3" style="color:var(--ink);"><i class="fas fa-right-left mr-2" style="color:#60a5fa;"></i>Bank Reconciliation Summary</div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="p-3 rounded-xl text-center" style="background:var(--navy-700);">
+          <div class="text-2xl font-black" style="color:#f87171;">${missing}</div>
+          <div class="text-xs" style="color:var(--ink-muted);">Missing in Tally</div>
+        </div>
+        <div class="p-3 rounded-xl text-center" style="background:var(--navy-700);">
+          <div class="text-2xl font-black" style="color:#f59e0b;">${extra}</div>
+          <div class="text-xs" style="color:var(--ink-muted);">Extra in Tally</div>
+        </div>
+      </div>
+      <button onclick="showPage('bankrec')" class="mt-3 w-full text-xs py-2 rounded-xl font-semibold" style="background:var(--navy-700);color:var(--ink-muted);border:1px solid var(--navy-500);">View Full Bank Recon →</button>
+    </div>`;
+  }
+
+  // Quick Audit findings summary
+  const cashV  = data.cash_violations?.length  || 0;
+  const tds    = data.tds_compliance?.filter(t => t.severity==='Critical')?.length || 0;
+  const loans  = data.loans?.length || 0;
+  if (cashV || tds || loans) {
+    html += `<div class="rounded-2xl p-5 mb-4" style="background:var(--navy-800);border:1px solid var(--navy-600);">
+      <div class="font-semibold mb-3" style="color:var(--ink);"><i class="fas fa-magnifying-glass-dollar mr-2" style="color:var(--gold-400);"></i>Quick Audit Highlights</div>
+      <div class="grid grid-cols-3 gap-3 text-center">
+        <div class="p-3 rounded-xl" style="background:var(--navy-700);">
+          <div class="text-xl font-black" style="color:#f87171;">${cashV}</div>
+          <div class="text-xs" style="color:var(--ink-muted);">Cash Violations</div>
+        </div>
+        <div class="p-3 rounded-xl" style="background:var(--navy-700);">
+          <div class="text-xl font-black" style="color:#f87171;">${tds}</div>
+          <div class="text-xs" style="color:var(--ink-muted);">TDS Defaults</div>
+        </div>
+        <div class="p-3 rounded-xl" style="background:var(--navy-700);">
+          <div class="text-xl font-black" style="color:#f59e0b;">${loans}</div>
+          <div class="text-xs" style="color:var(--ink-muted);">Loan Issues</div>
+        </div>
+      </div>
+      <button onclick="showPage('fullaudit')" class="mt-3 w-full text-xs py-2 rounded-xl font-semibold" style="background:var(--navy-700);color:var(--ink-muted);border:1px solid var(--navy-500);">View Full Quick Audit Details →</button>
+    </div>`;
+  }
+
+  container.innerHTML = html;
 }
 
 async function saveAndRunAudit() {
