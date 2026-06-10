@@ -2892,6 +2892,7 @@ function renderFullAuditResults(data, container) {
   const critical = data.summary?.critical ?? 0;
   const warnings = data.summary?.warnings ?? 0;
   const company  = data.summary?.company || '';
+  const period   = data.summary?.period  || '';
   const bsF      = data.bs_findings   || [];
   const pnlF     = data.pnl_findings  || [];
   const recon    = data.bankrec;
@@ -2899,116 +2900,227 @@ function renderFullAuditResults(data, container) {
   const scoreColor = score >= 75 ? '#34d399' : score >= 50 ? '#f59e0b' : '#f87171';
   const scoreLabel = score >= 75 ? 'Good' : score >= 50 ? 'Needs Attention' : 'High Risk';
 
+  // ── helper to render a finding row ──────────────────────────────────────────
+  function _fRow(sev, title, detail, law) {
+    const col = sev === 'Critical' ? '#f87171' : sev === 'Review' ? '#f59e0b' : '#60a5fa';
+    const bg  = sev === 'Critical' ? 'rgba(248,113,113,0.1)' : sev === 'Review' ? 'rgba(245,158,11,0.1)' : 'rgba(96,165,250,0.1)';
+    return `<div class="p-3 rounded-xl mb-2" style="background:var(--navy-700);">
+      <div class="flex items-start gap-3">
+        <span class="text-xs font-bold px-2 py-0.5 rounded-full mt-0.5 shrink-0" style="background:${bg};color:${col};">${sev}</span>
+        <div class="min-w-0">
+          <div class="text-sm font-semibold" style="color:#e2e8f0;">${title}</div>
+          ${detail ? `<div class="text-xs mt-0.5" style="color:#94a3b8;">${detail}</div>` : ''}
+          ${law    ? `<div class="text-xs mt-1 font-medium" style="color:${col};">${law}</div>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function _section(icon, iconColor, title, count, rows) {
+    if (!rows) return '';
+    return `<div class="rounded-2xl p-5 mb-4" style="background:var(--navy-800);border:1px solid var(--navy-600);">
+      <div class="flex items-center gap-2 mb-4">
+        <i class="${icon}" style="color:${iconColor};"></i>
+        <span class="font-semibold" style="color:#e2e8f0;">${title}</span>
+        <span class="ml-auto text-xs font-bold px-2 py-0.5 rounded-full" style="background:rgba(255,255,255,0.08);color:#94a3b8;">${count}</span>
+      </div>
+      ${rows}
+    </div>`;
+  }
+
+  // ── SCORE BANNER ────────────────────────────────────────────────────────────
   let html = `
-    <div class="rounded-2xl p-6 mb-5" style="background:var(--navy-800);border-top:3px solid ${scoreColor};border:1px solid var(--navy-600);">
-      <div class="flex items-center justify-between mb-3">
-        <div>
-          <div class="text-xs mb-1" style="color:#94a3b8;">Full Audit Score ${company ? '— ' + company : ''}</div>
-          <div class="text-5xl font-black" style="color:${scoreColor};">${score}<span class="text-xl font-semibold" style="color:#94a3b8;">/100</span></div>
-          <div class="text-xs mt-1 font-semibold" style="color:${scoreColor};">${scoreLabel}</div>
-        </div>
-        <div class="grid grid-cols-2 gap-3 text-center">
-          <div class="px-4 py-3 rounded-xl" style="background:var(--navy-700);">
-            <div class="text-2xl font-black" style="color:#f87171;">${critical}</div>
-            <div class="text-xs" style="color:var(--ink-muted);">Critical</div>
-          </div>
-          <div class="px-4 py-3 rounded-xl" style="background:var(--navy-700);">
-            <div class="text-2xl font-black" style="color:#f59e0b;">${warnings}</div>
-            <div class="text-xs" style="color:var(--ink-muted);">Warnings</div>
-          </div>
-        </div>
+  <div class="rounded-2xl p-6 mb-5" style="background:var(--navy-800);border-top:3px solid ${scoreColor};border:1px solid var(--navy-600);">
+    <div class="flex items-start justify-between flex-wrap gap-4">
+      <div>
+        <div class="text-xs mb-1" style="color:#94a3b8;">Full Audit Score ${company ? '— ' + company : ''} ${period ? '· ' + period : ''}</div>
+        <div class="text-6xl font-black mb-1" style="color:${scoreColor};">${score}<span class="text-2xl font-semibold" style="color:#64748b;">/100</span></div>
+        <div class="text-sm font-bold" style="color:${scoreColor};">${scoreLabel}</div>
       </div>
-      <div class="text-xs" style="color:var(--ink-muted);">
-        Sources used: TB + Daybook
-        ${bsF.length || pnlF.length ? ' + Balance Sheet + P&L' : ''}
-        ${recon && !recon.error ? ' + Bank Statement' : ''}
-      </div>
-    </div>`;
-
-  // BS Findings
-  if (bsF.length) {
-    html += `<div class="rounded-2xl p-5 mb-4" style="background:var(--navy-800);border:1px solid var(--navy-600);">
-      <div class="font-semibold mb-3" style="color:var(--ink);"><i class="fas fa-scale-balanced mr-2" style="color:#818cf8;"></i>Balance Sheet Findings (${bsF.length})</div>
-      <div class="space-y-2">`;
-    for (const f of bsF) {
-      const col = f.severity === 'Critical' ? '#f87171' : '#f59e0b';
-      html += `<div class="p-3 rounded-xl" style="background:var(--navy-700);">
-        <div class="flex items-start gap-2">
-          <span class="text-xs font-bold px-2 py-0.5 rounded-full mt-0.5" style="background:rgba(${f.severity==='Critical'?'248,113,113':'245,158,11'},0.15);color:${col};white-space:nowrap;">${f.severity}</span>
-          <div>
-            <div class="text-sm font-semibold" style="color:var(--ink);">${f.ledger}${f.amount ? ' — ₹' + f.amount.toLocaleString('en-IN') : ''}</div>
-            <div class="text-xs mt-0.5" style="color:var(--ink-muted);">${f.message}</div>
-            <div class="text-xs mt-1" style="color:${col};">${f.law}</div>
-          </div>
-        </div>
-      </div>`;
-    }
-    html += `</div></div>`;
-  }
-
-  // P&L Findings
-  if (pnlF.length) {
-    html += `<div class="rounded-2xl p-5 mb-4" style="background:var(--navy-800);border:1px solid var(--navy-600);">
-      <div class="font-semibold mb-3" style="color:var(--ink);"><i class="fas fa-chart-line mr-2" style="color:#34d399;"></i>P&L Findings (${pnlF.length})</div>
-      <div class="space-y-2">`;
-    for (const f of pnlF) {
-      const col = f.severity === 'Critical' ? '#f87171' : '#f59e0b';
-      html += `<div class="p-3 rounded-xl" style="background:var(--navy-700);">
-        <div class="flex items-start gap-2">
-          <span class="text-xs font-bold px-2 py-0.5 rounded-full mt-0.5" style="background:rgba(${f.severity==='Critical'?'248,113,113':'245,158,11'},0.15);color:${col};white-space:nowrap;">${f.severity}</span>
-          <div>
-            <div class="text-sm font-semibold" style="color:var(--ink);">${f.ledger}${f.amount ? ' — ₹' + f.amount.toLocaleString('en-IN') : ''}</div>
-            <div class="text-xs mt-0.5" style="color:var(--ink-muted);">${f.message}</div>
-            <div class="text-xs mt-1" style="color:${col};">${f.law}</div>
-          </div>
-        </div>
-      </div>`;
-    }
-    html += `</div></div>`;
-  }
-
-  // Bank recon summary
-  if (recon && !recon.error) {
-    const missing = recon.missing_in_tally?.length || 0;
-    const extra   = recon.extra_in_tally?.length   || 0;
-    html += `<div class="rounded-2xl p-5 mb-4" style="background:var(--navy-800);border:1px solid var(--navy-600);">
-      <div class="font-semibold mb-3" style="color:var(--ink);"><i class="fas fa-right-left mr-2" style="color:#60a5fa;"></i>Bank Reconciliation Summary</div>
-      <div class="grid grid-cols-2 gap-3">
-        <div class="p-3 rounded-xl text-center" style="background:var(--navy-700);">
-          <div class="text-2xl font-black" style="color:#f87171;">${missing}</div>
-          <div class="text-xs" style="color:var(--ink-muted);">Missing in Tally</div>
-        </div>
-        <div class="p-3 rounded-xl text-center" style="background:var(--navy-700);">
-          <div class="text-2xl font-black" style="color:#f59e0b;">${extra}</div>
-          <div class="text-xs" style="color:var(--ink-muted);">Extra in Tally</div>
-        </div>
-      </div>
-      <button onclick="showPage('bankrec')" class="mt-3 w-full text-xs py-2 rounded-xl font-semibold" style="background:var(--navy-700);color:var(--ink-muted);border:1px solid var(--navy-500);">View Full Bank Recon →</button>
-    </div>`;
-  }
-
-  // Quick Audit findings summary
-  const cashV  = data.cash_violations?.length  || 0;
-  const tds    = data.tds_compliance?.filter(t => t.severity==='Critical')?.length || 0;
-  const loans  = data.loans?.length || 0;
-  if (cashV || tds || loans) {
-    html += `<div class="rounded-2xl p-5 mb-4" style="background:var(--navy-800);border:1px solid var(--navy-600);">
-      <div class="font-semibold mb-3" style="color:#e2e8f0;"><i class="fas fa-magnifying-glass-dollar mr-2" style="color:var(--gold-400);"></i>Quick Audit Highlights</div>
       <div class="grid grid-cols-3 gap-3 text-center">
-        <div class="p-3 rounded-xl" style="background:var(--navy-700);">
-          <div class="text-xl font-black" style="color:#f87171;">${cashV}</div>
-          <div class="text-xs" style="color:var(--ink-muted);">Cash Violations</div>
+        <div class="px-5 py-3 rounded-xl" style="background:var(--navy-700);">
+          <div class="text-2xl font-black" style="color:#f87171;">${critical}</div>
+          <div class="text-xs mt-0.5" style="color:#94a3b8;">Critical</div>
         </div>
-        <div class="p-3 rounded-xl" style="background:var(--navy-700);">
-          <div class="text-xl font-black" style="color:#f87171;">${tds}</div>
-          <div class="text-xs" style="color:var(--ink-muted);">TDS Defaults</div>
+        <div class="px-5 py-3 rounded-xl" style="background:var(--navy-700);">
+          <div class="text-2xl font-black" style="color:#f59e0b;">${warnings}</div>
+          <div class="text-xs mt-0.5" style="color:#94a3b8;">Warnings</div>
         </div>
-        <div class="p-3 rounded-xl" style="background:var(--navy-700);">
-          <div class="text-xl font-black" style="color:#f59e0b;">${loans}</div>
-          <div class="text-xs" style="color:var(--ink-muted);">Loan Issues</div>
+        <div class="px-5 py-3 rounded-xl" style="background:var(--navy-700);">
+          <div class="text-2xl font-black" style="color:#60a5fa;">${(data.loans||[]).length + (data.large_expenses||[]).length}</div>
+          <div class="text-xs mt-0.5" style="color:#94a3b8;">Queries</div>
         </div>
       </div>
-      <button onclick="showPage('fullaudit')" class="mt-3 w-full text-xs py-2 rounded-xl font-semibold" style="background:var(--navy-700);color:var(--ink-muted);border:1px solid var(--navy-500);">View Full Quick Audit Details →</button>
+    </div>
+    <div class="flex flex-wrap gap-2 mt-4">
+      <span class="text-xs px-2 py-0.5 rounded-full" style="background:rgba(52,211,153,0.1);color:#34d399;">✓ TB + Daybook</span>
+      ${bsF.length || pnlF.length ? '<span class="text-xs px-2 py-0.5 rounded-full" style="background:rgba(129,140,248,0.1);color:#818cf8;">✓ Balance Sheet + P&L</span>' : '<span class="text-xs px-2 py-0.5 rounded-full" style="background:rgba(255,255,255,0.05);color:#64748b;">○ BS/P&L not uploaded</span>'}
+      ${recon && !recon.error ? '<span class="text-xs px-2 py-0.5 rounded-full" style="background:rgba(96,165,250,0.1);color:#60a5fa;">✓ Bank Statement</span>' : '<span class="text-xs px-2 py-0.5 rounded-full" style="background:rgba(255,255,255,0.05);color:#64748b;">○ Bank Recon not uploaded</span>'}
+    </div>
+  </div>`;
+
+  // ── SECTION 1: CRITICAL ISSUES ───────────────────────────────────────────────
+  let critRows = '';
+
+  // Cash violations
+  for (const v of (data.cash_violations || [])) {
+    critRows += _fRow('Critical',
+      `Cash payment ₹${Number(v.amount||0).toLocaleString('en-IN')} — ${v.party || ''}`,
+      `Date: ${v.date || ''} | Voucher: ${v.voucher_type || ''}`,
+      'Sec 40A(3) IT Act — cash payment >₹10,000 disallowed as expense');
+  }
+
+  // TDS compliance critical
+  for (const t of (data.tds_compliance || [])) {
+    if (t.severity !== 'Critical') continue;
+    critRows += _fRow('Critical',
+      `TDS not deducted — ${t.party || t.ledger || ''}`,
+      `Amount: ₹${Number(t.amount||0).toLocaleString('en-IN')}${t.section ? ' | ' + t.section : ''}`,
+      t.law || t.rule || 'TDS compliance violation');
+  }
+
+  // Ledger classification critical
+  for (const l of (data.ledger_classification || [])) {
+    if (l.severity !== 'Critical') continue;
+    critRows += _fRow('Critical',
+      `Wrong classification — ${l.ledger || l.name || ''}`,
+      `Currently under: ${l.current_group || ''} → Should be: ${l.correct_group || ''}`,
+      l.rule || l.law || '');
+  }
+
+  // Outstanding critical
+  for (const o of (data.outstanding || [])) {
+    if (o.severity !== 'Critical') continue;
+    critRows += _fRow('Critical',
+      `${o.ledger || o.name || ''} — ₹${Number(o.balance||0).toLocaleString('en-IN')}`,
+      o.issue || o.message || '',
+      o.law || o.rule || '');
+  }
+
+  // BS critical findings
+  for (const f of bsF) {
+    if (f.severity !== 'Critical') continue;
+    critRows += _fRow('Critical', `${f.ledger}${f.amount ? ' — ₹' + Number(f.amount).toLocaleString('en-IN') : ''}`, f.message, f.law);
+  }
+
+  // P&L critical findings
+  for (const f of pnlF) {
+    if (f.severity !== 'Critical') continue;
+    critRows += _fRow('Critical', `${f.ledger}${f.amount ? ' — ₹' + Number(f.amount).toLocaleString('en-IN') : ''}`, f.message, f.law);
+  }
+
+  if (critRows) html += _section('fas fa-circle-exclamation', '#f87171', 'Critical Issues', critical, critRows);
+
+  // ── SECTION 2: WARNINGS ──────────────────────────────────────────────────────
+  let warnRows = '';
+
+  for (const l of (data.ledger_classification || [])) {
+    if (l.severity !== 'Review') continue;
+    warnRows += _fRow('Review',
+      `Wrong classification — ${l.ledger || l.name || ''}`,
+      `Currently under: ${l.current_group || ''} → Should be: ${l.correct_group || ''}`,
+      l.rule || '');
+  }
+
+  for (const o of (data.outstanding || [])) {
+    if (o.severity !== 'Review') continue;
+    warnRows += _fRow('Review',
+      `${o.ledger || o.name || ''} — ₹${Number(o.balance||0).toLocaleString('en-IN')}`,
+      o.issue || o.message || '', o.law || '');
+  }
+
+  for (const f of [...bsF, ...pnlF]) {
+    if (f.severity !== 'Review') continue;
+    warnRows += _fRow('Review', `${f.ledger}${f.amount ? ' — ₹' + Number(f.amount).toLocaleString('en-IN') : ''}`, f.message, f.law);
+  }
+
+  if (warnRows) html += _section('fas fa-triangle-exclamation', '#f59e0b', 'Warnings', warnings, warnRows);
+
+  // ── SECTION 3: LOANS / LARGE EXPENSES ────────────────────────────────────────
+  let loanRows = '';
+  for (const l of (data.loans || [])) {
+    loanRows += _fRow('Review',
+      `${l.ledger || l.name || ''} — ₹${Number(l.balance||0).toLocaleString('en-IN')}`,
+      l.issue || l.message || '',
+      l.law || 'Sec 185 / 269SS — document loan properly');
+  }
+  for (const e of (data.large_expenses || [])) {
+    loanRows += _fRow('Review',
+      `Large payment ₹${Number(e.amount||0).toLocaleString('en-IN')} — ${e.party || ''}`,
+      `Date: ${e.date || ''} | Verify bill + TDS`,
+      e.law || 'Sec 194C/194J — check TDS deduction');
+  }
+  if (loanRows) html += _section('fas fa-file-invoice-dollar', '#f59e0b', 'Loans & Large Payments — Verify', (data.loans||[]).length + (data.large_expenses||[]).length, loanRows);
+
+  // ── SECTION 4: ITR / PERSONAL EXPENSES ───────────────────────────────────────
+  let itrRows = '';
+  for (const i of (data.itr || [])) {
+    itrRows += _fRow('Critical',
+      `Personal expense in books — ${i.party || i.ledger || ''}`,
+      `₹${Number(i.amount||0).toLocaleString('en-IN')} | Date: ${i.date || ''}`,
+      i.law || 'Sec 37 IT Act — personal expenses not deductible');
+  }
+  if (itrRows) html += _section('fas fa-user-xmark', '#f87171', 'Personal Expenses in Business Books', (data.itr||[]).length, itrRows);
+
+  // ── SECTION 5: SALARY / PT ───────────────────────────────────────────────────
+  let salRows = '';
+  for (const s of (data.salary_compliance || [])) {
+    if (s.type === 'pt_not_deducted' || s.type === 'pt_not_paid_govt') {
+      salRows += _fRow('Critical', s.message || s.issue || '', s.detail || '', s.law || 'PT Act / PF Act');
+    } else if (s.type === 'pt_deducted_ok' || s.type === 'pt_paid_govt_ok') {
+      salRows += _fRow('Info', s.message || '', '', '');
+    }
+  }
+  if (salRows) html += _section('fas fa-users', '#60a5fa', 'Salary / PF / PT Compliance', (data.salary_compliance||[]).length, salRows);
+
+  // ── SECTION 6: BANK RECON ────────────────────────────────────────────────────
+  if (recon && !recon.error) {
+    const missing = recon.missing_in_tally || [];
+    const extra   = recon.extra_in_tally   || [];
+    let reconRows = '';
+    for (const r of missing.slice(0, 10)) {
+      reconRows += _fRow('Review',
+        `Missing in Tally — ₹${Number(r.amount||0).toLocaleString('en-IN')}`,
+        `Date: ${r.date || ''} | ${r.description || ''}`, '');
+    }
+    for (const r of extra.slice(0, 10)) {
+      reconRows += _fRow('Review',
+        `Extra in Tally — ₹${Number(r.amount||0).toLocaleString('en-IN')}`,
+        `Date: ${r.date || ''} | ${r.description || ''}`, '');
+    }
+    if (missing.length > 10 || extra.length > 10) {
+      reconRows += `<div class="text-xs text-center py-2" style="color:#64748b;">Showing first 10 of each. <button onclick="showPage('bankrec')" style="color:#60a5fa;background:none;border:none;cursor:pointer;">View all in Bank Recon →</button></div>`;
+    }
+    html += _section('fas fa-right-left', '#60a5fa',
+      `Bank Reconciliation — ${missing.length} missing, ${extra.length} extra`,
+      missing.length + extra.length, reconRows);
+  }
+
+  // ── ACTION LIST ──────────────────────────────────────────────────────────────
+  const allActions = [
+    ...(data.cash_violations||[]).slice(0,5).map((v,i) => ({n:i+1, text:`Cash payment ₹${Number(v.amount||0).toLocaleString('en-IN')} to ${v.party||''} — provide business justification`, sev:'Critical'})),
+    ...(data.tds_compliance||[]).filter(t=>t.severity==='Critical').slice(0,5).map((t,i) => ({n:i+1, text:`TDS not deducted on payment to ${t.party||t.ledger||''} — deposit with interest`, sev:'Critical'})),
+    ...(data.loans||[]).slice(0,3).map((l,i) => ({n:i+1, text:`Loan from ${l.ledger||l.name||''} — submit documentation / agreement`, sev:'Review'})),
+    ...bsF.filter(f=>f.severity==='Critical').map((f,i) => ({n:i+1, text:`${f.ledger} — ${f.message}`, sev:'Critical'})),
+    ...pnlF.filter(f=>f.severity==='Critical').map((f,i) => ({n:i+1, text:`${f.ledger} — ${f.message}`, sev:'Critical'})),
+  ].slice(0, 10);
+
+  if (allActions.length) {
+    let actRows = '';
+    allActions.forEach((a, idx) => {
+      const col = a.sev === 'Critical' ? '#f87171' : '#f59e0b';
+      actRows += `<div class="flex items-start gap-3 p-3 rounded-xl mb-2" style="background:var(--navy-700);">
+        <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shrink-0" style="background:rgba(255,255,255,0.08);color:#94a3b8;">${idx+1}</span>
+        <div class="flex-1 text-sm" style="color:#e2e8f0;">${a.text}</div>
+        <span class="text-xs font-bold shrink-0" style="color:${col};">${a.sev}</span>
+      </div>`;
+    });
+    html += `<div class="rounded-2xl p-5 mb-4" style="background:var(--navy-800);border:1px solid var(--navy-600);">
+      <div class="flex items-center gap-2 mb-4">
+        <i class="fas fa-list-check" style="color:var(--gold-400);"></i>
+        <span class="font-semibold" style="color:#e2e8f0;">Action List — What to do next</span>
+      </div>
+      ${actRows}
     </div>`;
   }
 
