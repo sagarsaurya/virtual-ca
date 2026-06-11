@@ -423,107 +423,213 @@
     </div>
 
     <!-- ===== DASHBOARD PAGE ===== -->
-    <div id="page-dashboard" class="page active p-8">
+    <div id="page-dashboard" class="page active" style="padding:0;overflow-y:auto;height:calc(100vh - 64px);">
+      <div style="padding:24px 28px;">
 
-      <!-- Stats row -->
-      <div class="grid grid-cols-4 gap-5 mb-7">
+        <!-- ── ROW 1: AI Audit Manager banner + Auditor Status + Next Action ── -->
+        <div class="grid gap-5 mb-5" style="grid-template-columns:1fr 1fr 1fr;">
 
-        <div class="stat-card" style="border-top:2px solid var(--navy-500);">
-          <div class="flex items-center justify-between mb-4">
-            <span class="text-xs font-semibold uppercase tracking-wider" style="color:var(--ink-muted);">Total Audits</span>
-            <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:var(--navy-800);">
-              <i class="fas fa-file-lines text-xs" style="color:var(--gold-400);"></i>
+          <!-- AI Audit Manager -->
+          <div class="rounded-2xl p-5" style="background:linear-gradient(135deg,var(--navy-700) 0%,var(--navy-800) 100%);border:1px solid var(--navy-500);">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-base font-bold" style="color:#f1f5f9;">AI Audit Manager</span>
+              <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:rgba(201,168,76,0.2);color:var(--gold-400);border:1px solid rgba(201,168,76,0.3);">Beta</span>
+            </div>
+            <p class="text-xs mb-4" style="color:#64748b;">Your personal AI auditor that analyzes, explains and guides you to 100% compliance</p>
+            <div class="flex gap-2">
+              <button onclick="showPage('fullaudit')" class="btn-gold px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5">
+                <i class="fas fa-play text-xs"></i> Start AI Audit
+              </button>
+              <button class="px-4 py-2 rounded-xl text-xs font-medium flex items-center gap-1.5 relative" style="background:var(--navy-600);color:#94a3b8;border:1px solid var(--navy-500);">
+                <i class="fas fa-circle-play text-xs"></i> How It Works
+                <span class="absolute -top-1.5 -right-1.5 text-xs font-bold px-1.5 py-0.5 rounded-full" style="background:#334155;color:#64748b;font-size:9px;">Soon</span>
+              </button>
             </div>
           </div>
-          <div class="text-3xl font-bold" style="color:#f1f5f9;" id="dash-total">0</div>
-          <div class="text-xs mt-1.5" style="color:#94a3b8;">Upload to begin</div>
-        </div>
 
-        <div class="stat-card" style="border-top:2px solid #DC2626;">
-          <div class="flex items-center justify-between mb-4">
-            <span class="text-xs font-semibold uppercase tracking-wider" style="color:var(--ink-muted);">Critical</span>
-            <div class="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center">
-              <i class="fas fa-triangle-exclamation text-red-500 text-xs"></i>
-            </div>
-          </div>
-          <div class="text-3xl font-bold text-red-600" id="dash-critical">—</div>
-          <div class="text-xs mt-1.5" style="color:var(--ink-muted);">Errors in last audit</div>
-        </div>
-
-        <div class="stat-card" style="border-top:2px solid #D97706;">
-          <div class="flex items-center justify-between mb-4">
-            <span class="text-xs font-semibold uppercase tracking-wider" style="color:var(--ink-muted);">For Review</span>
-            <div class="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center">
-              <i class="fas fa-eye text-amber-500 text-xs"></i>
-            </div>
-          </div>
-          <div class="text-3xl font-bold text-amber-600" id="dash-warnings">—</div>
-          <div class="text-xs mt-1.5" style="color:var(--ink-muted);">Items to verify</div>
-        </div>
-
-        <div class="stat-card" style="border-top:2px solid var(--gold-500);">
-          <div class="flex items-center justify-between mb-4">
-            <span class="text-xs font-semibold uppercase tracking-wider" style="color:var(--ink-muted);">Health Score</span>
-            <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(201,168,76,0.1);">
-              <i class="fas fa-shield-halved text-xs" style="color:var(--gold-500);"></i>
-            </div>
-          </div>
-          <div class="text-3xl font-bold" style="color:#f1f5f9;" id="dash-score">—</div>
-          <div class="progress-bar mt-3"><div class="progress-fill" id="dash-score-bar" style="width:0%"></div></div>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-3 gap-5">
-        <!-- Recent Analyses -->
-        <div class="col-span-2 rounded-2xl p-6" style="background:var(--navy-800);border:1px solid var(--navy-600);">
-          <div class="flex items-center justify-between mb-5">
-            <h3 class="text-sm font-semibold" style="color:#f1f5f9;">Recent Analyses</h3>
-            <button onclick="showPage('history')" class="text-xs font-medium transition" style="color:var(--gold-500);">View all →</button>
-          </div>
-          <div id="dash-recent-list">
-            <div class="flex flex-col items-center justify-center py-12 text-center">
-              <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style="background:var(--navy-700);">
-                <i class="fas fa-folder-open text-sm" style="color:var(--ink-muted);"></i>
+          <!-- AI Auditor Status -->
+          <div class="rounded-2xl p-5" style="background:var(--navy-800);border:1px solid var(--navy-600);">
+            <div class="text-xs font-semibold mb-3" style="color:#64748b;">AI Auditor Status</div>
+            <div class="flex items-center gap-4">
+              <div class="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0" style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);">
+                <i class="fas fa-robot text-2xl" style="color:var(--gold-400);"></i>
               </div>
-              <div class="text-sm font-medium" style="color:var(--ink-light);">No audits yet</div>
-              <div class="text-xs mt-1" style="color:var(--ink-muted);">Upload files to run your first audit</div>
-              <button onclick="showPage('fullaudit')" class="btn-gold mt-4 text-xs px-4 py-2 rounded-xl font-semibold">
-                Run Full Audit
+              <div>
+                <div class="text-sm font-semibold mb-0.5" style="color:#e2e8f0;">I have analyzed your data</div>
+                <div class="text-xs" style="color:#64748b;">and found</div>
+                <div id="dash-ai-issues" class="text-2xl font-black mt-0.5" style="color:#f87171;">— issues</div>
+              </div>
+            </div>
+            <button onclick="showPage('fullaudit')" class="mt-3 text-xs font-semibold flex items-center gap-1" style="color:var(--gold-400);">
+              View Issues <i class="fas fa-arrow-right text-xs"></i>
+            </button>
+          </div>
+
+          <!-- Next Action Required -->
+          <div class="rounded-2xl p-5" style="background:var(--navy-800);border:1px solid var(--navy-600);">
+            <div class="text-xs font-semibold mb-3" style="color:#64748b;">Next Action Required</div>
+            <div id="dash-next-action">
+              <div class="text-sm font-bold mb-1" style="color:#f1f5f9;">Run Your First Audit</div>
+              <div class="text-xs mb-3" style="color:#64748b;">Upload Trial Balance + Daybook to begin</div>
+              <button onclick="showPage('fullaudit')" class="w-full py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2" style="background:rgba(201,168,76,0.15);color:var(--gold-300);border:1px solid rgba(201,168,76,0.3);">
+                <i class="fas fa-upload text-xs"></i> Upload Now
               </button>
             </div>
           </div>
         </div>
 
-        <!-- Compliance -->
-        <div class="rounded-2xl p-6" style="background:var(--navy-800);border:1px solid var(--navy-600);">
-          <div class="flex items-center justify-between mb-5">
-            <h3 class="text-sm font-semibold" style="color:#f1f5f9;">Compliance</h3>
-            <span class="text-xs px-2 py-0.5 rounded-full" style="background:var(--navy-700); color:#94a3b8;">0 Due</span>
+        <!-- ── ROW 2: 5 Score Cards ── -->
+        <div class="grid grid-cols-5 gap-4 mb-5">
+          <!-- Health Score -->
+          <div class="rounded-2xl p-4" style="background:var(--navy-800);border:1px solid var(--navy-600);">
+            <div class="text-xs font-semibold mb-1" style="color:#64748b;">Health Score</div>
+            <div class="text-3xl font-black mb-1" id="dash-score" style="color:#f59e0b;">—</div>
+            <div class="progress-bar mb-1"><div class="progress-fill" id="dash-score-bar" style="width:0%"></div></div>
+            <div class="text-xs" id="dash-score-label" style="color:#64748b;">No audit yet</div>
           </div>
-          <div class="flex flex-col items-center justify-center py-8 text-center">
-            <i class="fas fa-calendar-check text-2xl mb-2" style="color:var(--cream-200);"></i>
-            <div class="text-xs" style="color:var(--ink-muted);">No upcoming deadlines</div>
+          <!-- Audit Status -->
+          <div class="rounded-2xl p-4" style="background:var(--navy-800);border:1px solid var(--navy-600);">
+            <div class="text-xs font-semibold mb-1" style="color:#64748b;">Audit Status</div>
+            <div class="text-xl font-black mb-1" id="dash-audit-status" style="color:#f87171;">—</div>
+            <div class="text-xs" id="dash-audit-detail" style="color:#64748b;">Not run yet</div>
           </div>
-          <button onclick="showPage('compliance')" class="w-full mt-4 text-xs font-medium py-2 rounded-xl transition" style="border:1px solid var(--navy-600); color:#94a3b8;">
-            View Calendar →
-          </button>
+          <!-- GST Readiness -->
+          <div class="rounded-2xl p-4 relative" style="background:var(--navy-800);border:1px solid var(--navy-600);">
+            <div class="text-xs font-semibold mb-1" style="color:#64748b;">GST Readiness</div>
+            <div class="text-3xl font-black mb-1" style="color:#64748b;">—</div>
+            <div class="text-xs" style="color:#475569;">Coming Soon</div>
+            <span class="absolute top-3 right-3 text-xs font-bold px-2 py-0.5 rounded-full" style="background:#1e293b;color:#475569;border:1px solid #334155;">Soon</span>
+          </div>
+          <!-- ITR Readiness -->
+          <div class="rounded-2xl p-4 relative" style="background:var(--navy-800);border:1px solid var(--navy-600);">
+            <div class="text-xs font-semibold mb-1" style="color:#64748b;">ITR Readiness</div>
+            <div class="text-3xl font-black mb-1" style="color:#64748b;">—</div>
+            <div class="text-xs" style="color:#475569;">Coming Soon</div>
+            <span class="absolute top-3 right-3 text-xs font-bold px-2 py-0.5 rounded-full" style="background:#1e293b;color:#475569;border:1px solid #334155;">Soon</span>
+          </div>
+          <!-- Data Completeness -->
+          <div class="rounded-2xl p-4" style="background:var(--navy-800);border:1px solid var(--navy-600);">
+            <div class="text-xs font-semibold mb-1" style="color:#64748b;">Data Completeness</div>
+            <div class="text-3xl font-black mb-1" id="dash-completeness" style="color:#34d399;">—</div>
+            <div class="text-xs" id="dash-completeness-label" style="color:#64748b;">No files uploaded</div>
+          </div>
         </div>
-      </div>
 
-      <!-- Ask CA banner -->
-      <div class="mt-5 rounded-2xl p-6 flex items-center justify-between" style="background:var(--navy-800); border:1px solid var(--navy-600);">
-        <div class="flex items-center gap-4">
-          <div class="w-11 h-11 rounded-xl flex items-center justify-center" style="background:rgba(201,168,76,0.15); border:1px solid rgba(201,168,76,0.25);">
-            <i class="fas fa-comments" style="color:var(--gold-400);"></i>
+        <!-- ── ROW 3: Recent Analyses + Audit Journey + AI Assistant ── -->
+        <div class="grid gap-5 mb-5" style="grid-template-columns:1.1fr 1fr 1fr;">
+
+          <!-- Recent Analyses -->
+          <div class="rounded-2xl p-5" style="background:var(--navy-800);border:1px solid var(--navy-600);">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-sm font-bold" style="color:#f1f5f9;">Recent Analyses</span>
+              <button onclick="showPage('history')" class="text-xs font-medium" style="color:var(--gold-400);">View all →</button>
+            </div>
+            <div id="dash-recent-list">
+              <div class="flex flex-col items-center justify-center py-8 text-center">
+                <i class="fas fa-folder-open text-xl mb-2" style="color:#334155;"></i>
+                <div class="text-xs" style="color:#475569;">No audits yet</div>
+                <button onclick="showPage('fullaudit')" class="btn-gold mt-3 text-xs px-4 py-2 rounded-xl font-semibold">Run First Audit</button>
+              </div>
+            </div>
           </div>
-          <div>
-            <div class="font-semibold text-sm" style="color:#F0EAD8;">Ask Your Virtual CA</div>
-            <div class="text-xs mt-0.5" style="color:#4A6A8A;">Instant answers to accounting, TDS, GST, ITR questions — based on your actual data</div>
+
+          <!-- Audit Journey -->
+          <div class="rounded-2xl p-5" style="background:var(--navy-800);border:1px solid var(--navy-600);">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-sm font-bold" style="color:#f1f5f9;">Audit Journey</span>
+              <button onclick="showPage('completeaudit')" class="text-xs font-medium" style="color:var(--gold-400);">View full →</button>
+            </div>
+            <div id="dash-journey" class="space-y-2">
+              <!-- populated by JS -->
+            </div>
+          </div>
+
+          <!-- AI Auditor Assistant -->
+          <div class="rounded-2xl p-5 flex flex-col" style="background:var(--navy-800);border:1px solid var(--navy-600);">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-lg flex items-center justify-center" style="background:rgba(96,165,250,0.15);">
+                  <i class="fas fa-robot text-xs" style="color:#60a5fa;"></i>
+                </div>
+                <span class="text-sm font-bold" style="color:#f1f5f9;">AI Auditor Assistant</span>
+              </div>
+            </div>
+            <div id="dash-ai-chat-msgs" class="flex-1 text-xs mb-3 rounded-xl p-3" style="background:var(--navy-700);min-height:80px;color:#94a3b8;">
+              <div class="flex items-start gap-2">
+                <i class="fas fa-robot mt-0.5" style="color:#60a5fa;font-size:10px;"></i>
+                <span id="dash-ai-greeting">Hi Sagar! Run an audit to get started and I'll analyze your books.</span>
+              </div>
+            </div>
+            <!-- Quick questions -->
+            <div class="space-y-1.5 mb-3" id="dash-quick-questions">
+              <button onclick="dashAskAI('Why is health score low?')" class="w-full text-left text-xs px-3 py-2 rounded-lg transition hover:brightness-110 flex items-center gap-2" style="background:var(--navy-700);color:#94a3b8;border:1px solid var(--navy-600);">
+                <i class="fas fa-circle-question text-xs" style="color:#60a5fa;"></i> Why is health score low?
+              </button>
+              <button onclick="dashAskAI('Show critical issues')" class="w-full text-left text-xs px-3 py-2 rounded-lg transition hover:brightness-110 flex items-center gap-2" style="background:var(--navy-700);color:#94a3b8;border:1px solid var(--navy-600);">
+                <i class="fas fa-triangle-exclamation text-xs" style="color:#f87171;"></i> Show critical issues
+              </button>
+              <button onclick="dashAskAI('What documents are missing?')" class="w-full text-left text-xs px-3 py-2 rounded-lg transition hover:brightness-110 flex items-center gap-2" style="background:var(--navy-700);color:#94a3b8;border:1px solid var(--navy-600);">
+                <i class="fas fa-file-circle-question text-xs" style="color:#f59e0b;"></i> What documents are missing?
+              </button>
+              <button onclick="dashAskAI('How to fix these issues?')" class="w-full text-left text-xs px-3 py-2 rounded-lg transition hover:brightness-110 flex items-center gap-2" style="background:var(--navy-700);color:#94a3b8;border:1px solid var(--navy-600);">
+                <i class="fas fa-screwdriver-wrench text-xs" style="color:#34d399;"></i> How to fix these issues?
+              </button>
+            </div>
+            <button onclick="showPage('askca')" class="w-full py-2 rounded-xl text-xs font-semibold" style="background:rgba(96,165,250,0.1);color:#60a5fa;border:1px solid rgba(96,165,250,0.2);">
+              Open Full Chat →
+            </button>
           </div>
         </div>
-        <button onclick="showPage('askca')" class="btn-gold px-5 py-2.5 rounded-xl text-sm whitespace-nowrap">
-          Ask Now →
-        </button>
+
+        <!-- ── ROW 4: Quick Actions ── -->
+        <div class="rounded-2xl p-5" style="background:var(--navy-800);border:1px solid var(--navy-600);">
+          <div class="text-sm font-bold mb-4" style="color:#f1f5f9;">Quick Actions</div>
+          <div class="grid grid-cols-5 gap-3">
+            <button onclick="showPage('completeaudit')" class="rounded-xl p-4 text-left transition hover:brightness-110" style="background:var(--navy-700);border:1px solid var(--navy-600);">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center mb-2" style="background:rgba(129,140,248,0.15);">
+                <i class="fas fa-clipboard-check text-sm" style="color:#818cf8;"></i>
+              </div>
+              <div class="text-xs font-semibold mb-0.5" style="color:#e2e8f0;">Run Full Audit</div>
+              <div class="text-xs" style="color:#475569;">Deep analysis of all transactions</div>
+              <i class="fas fa-arrow-right text-xs mt-2 block" style="color:#475569;"></i>
+            </button>
+            <button onclick="showPage('bankrec')" class="rounded-xl p-4 text-left transition hover:brightness-110" style="background:var(--navy-700);border:1px solid var(--navy-600);">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center mb-2" style="background:rgba(96,165,250,0.15);">
+                <i class="fas fa-right-left text-sm" style="color:#60a5fa;"></i>
+              </div>
+              <div class="text-xs font-semibold mb-0.5" style="color:#e2e8f0;">Bank Reconciliation</div>
+              <div class="text-xs" style="color:#475569;">Reconcile bank statements</div>
+              <i class="fas fa-arrow-right text-xs mt-2 block" style="color:#475569;"></i>
+            </button>
+            <div class="rounded-xl p-4 text-left relative" style="background:var(--navy-700);border:1px solid var(--navy-600);opacity:0.6;">
+              <span class="absolute top-2 right-2 text-xs font-bold px-1.5 py-0.5 rounded-full" style="background:#1e293b;color:#475569;border:1px solid #334155;font-size:9px;">Soon</span>
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center mb-2" style="background:rgba(52,211,153,0.15);">
+                <i class="fas fa-percent text-sm" style="color:#34d399;"></i>
+              </div>
+              <div class="text-xs font-semibold mb-0.5" style="color:#e2e8f0;">GST Analysis</div>
+              <div class="text-xs" style="color:#475569;">Check GST compliance & mismatches</div>
+              <i class="fas fa-arrow-right text-xs mt-2 block" style="color:#475569;"></i>
+            </div>
+            <div class="rounded-xl p-4 text-left relative" style="background:var(--navy-700);border:1px solid var(--navy-600);opacity:0.6;">
+              <span class="absolute top-2 right-2 text-xs font-bold px-1.5 py-0.5 rounded-full" style="background:#1e293b;color:#475569;border:1px solid #334155;font-size:9px;">Soon</span>
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center mb-2" style="background:rgba(251,191,36,0.15);">
+                <i class="fas fa-file-invoice-dollar text-sm" style="color:#fbbf24;"></i>
+              </div>
+              <div class="text-xs font-semibold mb-0.5" style="color:#e2e8f0;">Generate Reports</div>
+              <div class="text-xs" style="color:#475569;">Generate financial & compliance reports</div>
+              <i class="fas fa-arrow-right text-xs mt-2 block" style="color:#475569;"></i>
+            </div>
+            <button onclick="showPage('compliance')" class="rounded-xl p-4 text-left transition hover:brightness-110" style="background:var(--navy-700);border:1px solid var(--navy-600);">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center mb-2" style="background:rgba(248,113,113,0.15);">
+                <i class="fas fa-calendar-check text-sm" style="color:#f87171;"></i>
+              </div>
+              <div class="text-xs font-semibold mb-0.5" style="color:#e2e8f0;">Compliance Calendar</div>
+              <div class="text-xs" style="color:#475569;">View upcoming deadlines</div>
+              <i class="fas fa-arrow-right text-xs mt-2 block" style="color:#475569;"></i>
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -2534,48 +2640,150 @@ function showPage(page) {
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
 async function loadDashboard() {
   try {
-    const r = await apiFetch('/api/dashboard');
-    if (!r.ok) return;
-    const d = await r.json();
+    const [d, meta] = await Promise.all([
+      apiFetch('/api/dashboard').then(r => r.ok ? r.json() : {}),
+      apiFetch('/api/files/status').then(r => r.ok ? r.json() : {}),
+    ]);
 
-    document.getElementById('dash-total').textContent   = d.total_audits || 0;
-    document.getElementById('dash-critical').textContent = d.last_critical != null ? d.last_critical : '—';
-    document.getElementById('dash-warnings').textContent = d.last_warnings != null ? d.last_warnings : '—';
     const score = d.last_score;
-    document.getElementById('dash-score').textContent     = score != null ? score + '%' : '—';
-    document.getElementById('dash-score-bar').style.width = (score || 0) + '%';
+    const critical = d.last_critical;
+    const warnings = d.last_warnings;
+    const total = d.total_audits || 0;
+
+    // Health Score card
+    const scoreEl = document.getElementById('dash-score');
+    const scoreBar = document.getElementById('dash-score-bar');
+    const scoreLbl = document.getElementById('dash-score-label');
+    if (scoreEl) scoreEl.textContent = score != null ? score + '%' : '—';
+    if (scoreEl) scoreEl.style.color = score >= 75 ? '#34d399' : score >= 50 ? '#f59e0b' : '#f87171';
+    if (scoreBar) scoreBar.style.width = (score || 0) + '%';
+    if (scoreLbl) scoreLbl.textContent = score >= 75 ? 'Good' : score >= 50 ? 'Needs Attention' : score != null ? 'High Risk' : 'No audit yet';
+
+    // Audit Status card
+    const statusEl = document.getElementById('dash-audit-status');
+    const detailEl = document.getElementById('dash-audit-detail');
+    if (statusEl && critical != null) {
+      if (critical === 0) { statusEl.textContent = 'PASSED'; statusEl.style.color = '#34d399'; }
+      else { statusEl.textContent = 'ISSUES'; statusEl.style.color = '#f87171'; }
+      if (detailEl) detailEl.textContent = `${critical} Critical · ${warnings||0} Warnings`;
+    }
+
+    // AI Status
+    const aiIssues = document.getElementById('dash-ai-issues');
+    if (aiIssues && critical != null) {
+      const tot = (critical||0) + (warnings||0);
+      aiIssues.textContent = tot + ' issues';
+      aiIssues.style.color = tot > 0 ? '#f87171' : '#34d399';
+    }
+
+    // Data Completeness
+    const files = ['tb','db','bs','pnl','bstmt','btally'];
+    const present = files.filter(f => meta[f+'_exists'] || meta[f]).length;
+    const pct = Math.round((present / files.length) * 100);
+    const compEl = document.getElementById('dash-completeness');
+    const compLbl = document.getElementById('dash-completeness-label');
+    if (compEl) { compEl.textContent = pct + '%'; compEl.style.color = pct >= 80 ? '#34d399' : pct >= 50 ? '#f59e0b' : '#f87171'; }
+    if (compLbl) compLbl.textContent = present + ' of 6 files uploaded';
+
+    // Next Action
+    const naEl = document.getElementById('dash-next-action');
+    if (naEl) {
+      if (!meta.tb_exists) {
+        naEl.innerHTML = `<div class="text-sm font-bold mb-1" style="color:#f1f5f9;">Upload Trial Balance</div>
+          <div class="text-xs mb-3" style="color:#64748b;">Required to start audit</div>
+          <button onclick="showPage('fullaudit')" class="w-full py-2 rounded-xl text-xs font-bold" style="background:rgba(201,168,76,0.15);color:var(--gold-300);border:1px solid rgba(201,168,76,0.3);"><i class="fas fa-upload mr-1"></i>Upload Now</button>`;
+      } else if (!meta.bstmt_exists) {
+        naEl.innerHTML = `<div class="text-sm font-bold mb-1" style="color:#f1f5f9;">Upload Bank Statement</div>
+          <div class="text-xs mb-3" style="color:#64748b;">Required for bank cross-check</div>
+          <button onclick="showPage('bankrec')" class="w-full py-2 rounded-xl text-xs font-bold" style="background:rgba(96,165,250,0.15);color:#60a5fa;border:1px solid rgba(96,165,250,0.3);"><i class="fas fa-upload mr-1"></i>Upload Now</button>`;
+      } else if (critical > 0) {
+        naEl.innerHTML = `<div class="text-sm font-bold mb-1" style="color:#f87171;">${critical} Critical Issues Found</div>
+          <div class="text-xs mb-3" style="color:#64748b;">Review and resolve before filing</div>
+          <button onclick="showPage('fullaudit')" class="w-full py-2 rounded-xl text-xs font-bold" style="background:rgba(248,113,113,0.15);color:#f87171;border:1px solid rgba(248,113,113,0.3);"><i class="fas fa-eye mr-1"></i>View Issues</button>`;
+      } else {
+        naEl.innerHTML = `<div class="text-sm font-bold mb-1" style="color:#34d399;">All Clear!</div>
+          <div class="text-xs mb-3" style="color:#64748b;">No critical issues found</div>
+          <button onclick="showPage('askca')" class="w-full py-2 rounded-xl text-xs font-bold" style="background:rgba(52,211,153,0.15);color:#34d399;border:1px solid rgba(52,211,153,0.3);"><i class="fas fa-comments mr-1"></i>Ask Your CA</button>`;
+      }
+    }
+
+    // Audit Journey
+    const journeyEl = document.getElementById('dash-journey');
+    if (journeyEl) {
+      const steps = [
+        { label: 'Trial Balance Uploaded',   done: !!meta.tb,      time: meta.tb?.uploaded_at },
+        { label: 'P&L Uploaded',             done: !!meta.pnl,     time: meta.pnl?.uploaded_at },
+        { label: 'Balance Sheet Uploaded',   done: !!meta.bs,      time: meta.bs?.uploaded_at },
+        { label: 'Bank Statement Uploaded',  done: !!meta.bstmt,   time: meta.bstmt?.uploaded_at },
+        { label: 'Initial Audit Completed',  done: total > 0,      time: null },
+        { label: 'GST Analysis',             done: false,          soon: true },
+        { label: 'ITR Readiness',            done: false,          soon: true },
+      ];
+      journeyEl.innerHTML = steps.map(s => {
+        const timeStr = s.time ? new Date(s.time).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+        if (s.soon) return `<div class="flex items-center gap-2.5 py-1.5">
+          <div class="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style="background:#1e293b;border:1px solid #334155;">
+            <i class="fas fa-clock" style="color:#334155;font-size:8px;"></i>
+          </div>
+          <span class="text-xs" style="color:#334155;">${s.label}</span>
+          <span class="ml-auto text-xs font-bold px-1.5 py-0.5 rounded-full" style="background:#1e293b;color:#334155;border:1px solid #334155;font-size:9px;">Soon</span>
+        </div>`;
+        return `<div class="flex items-center gap-2.5 py-1.5" style="border-bottom:1px solid rgba(255,255,255,0.04);">
+          <div class="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style="background:${s.done ? 'rgba(52,211,153,0.2)' : 'var(--navy-700)'};border:1px solid ${s.done ? 'rgba(52,211,153,0.4)' : 'var(--navy-500)'};">
+            <i class="fas ${s.done ? 'fa-check' : 'fa-circle'}" style="color:${s.done ? '#34d399' : '#334155'};font-size:8px;"></i>
+          </div>
+          <span class="text-xs flex-1" style="color:${s.done ? '#e2e8f0' : '#475569'};">${s.label}</span>
+          ${timeStr ? `<span class="text-xs" style="color:#334155;">${timeStr}</span>` : ''}
+        </div>`;
+      }).join('');
+    }
+
+    // AI Greeting update
+    if (auditData && auditData.summary) {
+      const s = auditData.summary;
+      const g = document.getElementById('dash-ai-greeting');
+      if (g) g.textContent = `Hi Sagar! I've analyzed ${s.company||'your company'} for ${s.period||'FY 2025-26'}. Score: ${s.score}/100. ${(s.critical||0)} critical issues need attention.`;
+    }
 
     // Recent list
     const list = document.getElementById('dash-recent-list');
-    if (!d.recent || d.recent.length === 0) {
-      list.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-center">
-        <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-3" style="background:var(--navy-700);">
-          <i class="fas fa-folder-open text-2xl" style="color:#475569;"></i>
-        </div>
-        <div class="text-sm font-medium" style="color:#94a3b8;">No audits yet</div>
-        <div class="text-xs mt-1" style="color:#475569;">Run Full Audit to see results here</div>
-        <button onclick="showPage('fullaudit')" class="btn-gold mt-4 text-xs px-4 py-2 rounded-xl font-semibold">Run Full Audit</button>
-      </div>`;
-      return;
+    if (list) {
+      if (!d.recent || d.recent.length === 0) {
+        list.innerHTML = `<div class="flex flex-col items-center justify-center py-8 text-center">
+          <i class="fas fa-folder-open text-xl mb-2" style="color:#334155;"></i>
+          <div class="text-xs" style="color:#475569;">No audits yet</div>
+          <button onclick="showPage('fullaudit')" class="btn-gold mt-3 text-xs px-4 py-2 rounded-xl font-semibold">Run First Audit</button>
+        </div>`;
+      } else {
+        list.innerHTML = d.recent.map(a => {
+          const dt  = a.audited_at ? new Date(a.audited_at).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}) : '';
+          const tag = a.critical > 0
+            ? `<span class="tag-critical text-xs px-2 py-0.5 rounded-full font-medium">${a.critical} Critical</span>`
+            : `<span class="tag-ok text-xs px-2 py-0.5 rounded-full font-medium">Clear</span>`;
+          return `<div class="flex items-center gap-3 p-3 rounded-xl cursor-pointer mb-2 transition" style="border:1px solid var(--navy-600);background:var(--navy-700);" onmouseover="this.style.borderColor='var(--gold-500)'" onmouseout="this.style.borderColor='var(--navy-600)'" onclick="showPage('fullaudit')">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(201,168,76,0.15);">
+              <i class="fas fa-file-excel text-xs" style="color:var(--gold-400);"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-xs truncate" style="color:#f1f5f9;">${a.filename || 'Trial Balance'}</div>
+              <div class="text-xs mt-0.5" style="color:#475569;">${dt} ${a.period ? '· ' + a.period : ''}</div>
+            </div>
+            ${tag}
+            <i class="fas fa-chevron-right text-xs" style="color:#334155;"></i>
+          </div>`;
+        }).join('');
+      }
     }
-    list.innerHTML = '<div class="space-y-3">' + d.recent.map(a => {
-      const dt  = a.audited_at ? new Date(a.audited_at).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}) : '';
-      const tag = a.critical > 0
-        ? `<span class="tag-critical text-xs px-2.5 py-1 rounded-full font-medium">${a.critical} Critical</span>`
-        : `<span class="tag-ok text-xs px-2.5 py-1 rounded-full font-medium">All Clear</span>`;
-      return `<div class="flex items-center gap-4 p-4 rounded-xl cursor-pointer transition" style="border:1px solid var(--navy-600);background:var(--navy-700);" onmouseover="this.style.borderColor='var(--gold-500)'" onmouseout="this.style.borderColor='var(--navy-600)'" onclick="showPage('fullaudit')">
-        <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(201,168,76,0.15);">
-          <i class="fas fa-file-excel" style="color:var(--gold-400);"></i>
-        </div>
-        <div class="flex-1">
-          <div class="font-medium text-sm" style="color:#f1f5f9;">${a.filename || 'Trial Balance'}</div>
-          <div class="text-xs mt-0.5" style="color:#64748b;">${dt} ${a.period ? '• ' + a.period : ''}</div>
-        </div>
-        <div class="flex items-center gap-2">${tag}</div>
-        <i class="fas fa-chevron-right text-sm" style="color:#475569;"></i>
-      </div>`;
-    }).join('') + '</div>';
   } catch(e) { /* backend not running */ }
+}
+
+function dashAskAI(question) {
+  // Send question to CA chat page
+  showPage('askca');
+  setTimeout(() => {
+    const input = document.getElementById('chatInput');
+    if (input) { input.value = question; sendChat(); }
+  }, 300);
 }
 
 // ── HISTORY ───────────────────────────────────────────────────────────────────
