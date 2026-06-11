@@ -3,7 +3,7 @@
 **Started:** 14 March 2026
 **Owner:** Sagar Pathak
 **Status:** Prototype Complete — Ready for Real Build
-**Last Updated:** 15 March 2026
+**Last Updated:** 11 June 2026
 
 ---
 
@@ -622,6 +622,42 @@ Respond in clear English. Keep answers concise but complete.
 ---
 
 ## Change Log
+
+### 11 June 2026
+- **Dashboard redesign** — replaced old 4-card layout (Total Audits / Critical / For Review / Health Score) with new AI Audit Manager design
+  - Row 1: AI Audit Manager banner + AI Auditor Status + Next Action Required
+  - Row 2: 5 score cards (Health Score, Audit Status, GST Readiness, ITR Readiness, Data Completeness)
+  - Row 3: Recent Analyses + Audit Journey timeline + AI Auditor Assistant
+  - Row 4: Quick Actions (5 buttons)
+  - Why: mockup provided by Sagar showing professional AI-first dashboard layout
+- **Coming Soon system** — all unbuilt features locked with toast notification on click
+  - `comingSoon(featureName)` function added — shows gold animated toast, auto-dismisses in 2.5s
+  - Locked: AI Audit Manager (entire Row 1), AI Auditor Status, Next Action Required, AI Auditor Assistant panel, GST Readiness card, ITR Readiness card, GST Analysis (Quick Actions), Generate Reports (Quick Actions), How It Works button
+  - Why: these features are not yet built — user was accidentally clicking into wrong pages
+  - All locked cards show "Soon" badge, gray out, highlight gold on hover
+- **AI Audit Manager sidebar item** added with "New" badge — clicking shows Coming Soon toast
+  - Why: mockup showed it as a separate sidebar item between Dashboard and History
+- **Multi-company support** — full implementation across frontend + backend
+  - `X-Company-ID` header on every API call, `get_cid()` in Flask reads it
+  - `company_{cid}/` prefix on all Supabase file storage paths
+  - `apiFetch()` helper wraps all fetch calls with company header
+  - Company switcher UI in sidebar (gold dropdown, Add Company modal)
+  - `loadCompanies()` syncs active company name from server (fixes rename issue)
+  - Why: Sagar has multiple client companies (AJKL, Mridula Laddha etc.) — data must be isolated
+- **Bank cross-check fix** — fallback to old pre-multi-company file path for migrated files
+  - Why: existing bank statements uploaded before multi-company were at root level, new code looked in company subfolder and missed them
+- **Bank files Delete button** added on Bank Recon "already uploaded" banner
+  - `/api/clear-bank-files` endpoint added
+  - `clearBankFiles()` JS function removes banner, resets UI
+  - Why: users were blocked from re-uploading bank files once saved
+- **Full Audit endpoint** fully migrated to multi-company (`cpath()`, `rname()`, `cid`)
+  - Why: was the last endpoint still using old global file paths
+
+### 10 June 2026
+- **BS + P&L file persistence** — remembered across sessions via Supabase, no re-upload needed
+  - Why: users were frustrated uploading the same files every session
+- **`loadFilesStatus()` fix** — now hides file bar AND resets audit UI when switching to a company with no files
+  - Why: switching company still showed previous company's files
 
 ### 15 March 2026
 - Added Fix Workflow to Results page: status (Open/In Progress/Resolved/Ignored), assign to, comments, mark resolved
