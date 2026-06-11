@@ -1052,6 +1052,7 @@ def audit_tds_compliance(ledgers, daybook):
                             'interest_est': interest,
                             'type':         'payment_check',
                             'severity':     'Critical',
+                            'law':          f"Sec {rule['section']} Income Tax Act — TDS @ {rule['rate']}% on {rule['description']}. Interest u/s 201(1A) @ 1.5%/month for non-deposit.",
                             'issue': (
                                 f"Total payments to '{party}' = Rs.{total:,.0f}. "
                                 f"TDS under Sec {rule['section']} ({rule['description']}) @ "

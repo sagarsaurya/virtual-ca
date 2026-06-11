@@ -5207,6 +5207,7 @@ function brCard(t, color, label, issue) {
     </div>
     <div class="text-sm font-medium mb-1" style="color:#e2e8f0;">${t.narration || '—'}</div>
     <div class="text-xs rounded-xl p-2 mt-2" style="${issueColors[color]||issueColors.red}">${issue}</div>
+    ${t.suggestion ? `<div class="text-xs rounded-xl p-2 mt-2 flex items-start gap-2" style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);color:#c9a84c;"><i class="fas fa-journal-whills mt-0.5 shrink-0"></i><span><strong>Tally Entry:</strong> ${t.suggestion}</span></div>` : ''}
   </div>`;
 }
 

@@ -727,6 +727,7 @@ def reconcile(bank_txns: List[Dict], tally_txns: List[Dict],
                 'amount':    bt['amount'],
                 'dr_cr':     bt['dr_cr'],
                 'issue':     'In bank statement but not in Tally',
+                'suggestion': _suggest_journal(bt),
             })
 
     for j, tt in enumerate(tally_clean):
@@ -819,6 +820,35 @@ def reconcile(bank_txns: List[Dict], tally_txns: List[Dict],
 # ══════════════════════════════════════════════════════════════════════════════
 # MAIN ENTRY POINT
 # ══════════════════════════════════════════════════════════════════════════════
+
+def _suggest_journal(entry: dict) -> str:
+    """Suggest a Tally journal entry for a bank-only (unrecorded) transaction."""
+    narr  = str(entry.get('narration', '')).lower()
+    amt   = entry.get('amount', 0)
+    dr_cr = str(entry.get('dr_cr', '')).upper()
+    amt_fmt = f"₹{amt:,.0f}"
+
+    # Debit in bank = money going out
+    if 'DR' in dr_cr or entry.get('amount', 0) < 0:
+        if any(k in narr for k in ['interest', 'bank charges', 'charge', 'fee', 'gst']):
+            return f"Dr Bank Charges/Interest A/c {amt_fmt} | Cr Bank A/c {amt_fmt} — Record bank charges in Tally"
+        if any(k in narr for k in ['neft', 'rtgs', 'imps', 'transfer']):
+            return f"Dr [Payee Ledger] {amt_fmt} | Cr Bank A/c {amt_fmt} — Record the outward transfer in Tally"
+        if any(k in narr for k in ['emi', 'loan']):
+            return f"Dr Loan A/c {amt_fmt} | Cr Bank A/c {amt_fmt} — Record loan repayment"
+        if any(k in narr for k in ['tds', 'tax']):
+            return f"Dr TDS Payable A/c {amt_fmt} | Cr Bank A/c {amt_fmt} — Record TDS deposit"
+        return f"Dr [Relevant Expense/Party] {amt_fmt} | Cr Bank A/c {amt_fmt} — Create voucher in Tally for this payment"
+    # Credit in bank = money coming in
+    else:
+        if any(k in narr for k in ['interest', 'int cr', 'int on']):
+            return f"Dr Bank A/c {amt_fmt} | Cr Bank Interest A/c {amt_fmt} — Record bank interest as income (Indirect Incomes)"
+        if any(k in narr for k in ['neft', 'rtgs', 'imps', 'receipt', 'transfer']):
+            return f"Dr Bank A/c {amt_fmt} | Cr [Party/Sales A/c] {amt_fmt} — Record inward receipt in Tally"
+        if any(k in narr for k in ['refund']):
+            return f"Dr Bank A/c {amt_fmt} | Cr [Relevant Expense A/c] {amt_fmt} — Record refund received"
+        return f"Dr Bank A/c {amt_fmt} | Cr [Relevant Party/Income A/c] {amt_fmt} — Create receipt voucher in Tally"
+
 
 def parse_bank_statement(bank_path: str, bank_filename: str = '') -> List[Dict]:
     """Parse bank statement and return list of transactions. Used for cross-checks."""
