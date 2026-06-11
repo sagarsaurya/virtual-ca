@@ -3782,7 +3782,7 @@ let auditData = null;
 
 // ── Multi-company state ────────────────────────────────────────────────────────
 let activeCompanyId   = parseInt(localStorage.getItem('activeCompanyId')  || '1');
-let activeCompanyName = localStorage.getItem('activeCompanyName') || 'Default Company';
+let activeCompanyName = localStorage.getItem('activeCompanyName') || 'AJKL';
 let allCompanies      = [];
 
 function apiHeaders(extra = {}) {
@@ -3799,8 +3799,12 @@ async function loadCompanies() {
     const r = await apiFetch('/api/companies');
     if (!r.ok) return;
     allCompanies = await r.json();
-    // Ensure active company still exists
-    if (!allCompanies.find(c => c.id === activeCompanyId) && allCompanies.length) {
+    const active = allCompanies.find(c => c.id === activeCompanyId);
+    if (active) {
+      // Always sync name from server (handles renames)
+      activeCompanyName = active.name;
+      localStorage.setItem('activeCompanyName', active.name);
+    } else if (allCompanies.length) {
       setActiveCompany(allCompanies[0].id, allCompanies[0].name);
     }
     renderCompanyList();
