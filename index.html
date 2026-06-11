@@ -2774,6 +2774,32 @@ async function loadDashboard() {
   } catch(e) { /* backend not running */ }
 }
 
+async function askAIExplain(rowId, findingJson, ftype) {
+  const el = document.getElementById(rowId);
+  if (!el) return;
+  // Toggle off if already showing
+  if (!el.classList.contains('hidden')) { el.classList.add('hidden'); return; }
+  el.classList.remove('hidden');
+  el.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-2" style="color:var(--gold-400);"></i><span style="color:#64748b;">Asking AI...</span>';
+  try {
+    const finding = JSON.parse(decodeURIComponent(findingJson));
+    const res = await apiFetch('/api/ai-explain', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ finding, type: ftype })
+    });
+    const d = await res.json();
+    if (d.explanation) {
+      el.innerHTML = '<div style="color:var(--gold-300);font-weight:600;margin-bottom:6px;"><i class="fas fa-robot mr-1"></i>AI Explanation</div>' +
+        '<div style="color:#cbd5e1;">' + d.explanation.replace(/\n/g, '<br>') + '</div>';
+    } else {
+      el.innerHTML = '<span style="color:#f87171;">Error: ' + (d.error || 'Unknown error') + '</span>';
+    }
+  } catch(e) {
+    el.innerHTML = '<span style="color:#f87171;">Error: ' + e.message + '</span>';
+  }
+}
+
 function comingSoon(feature) {
   const existing = document.getElementById('coming-soon-toast');
   if (existing) existing.remove();
@@ -3227,16 +3253,24 @@ function renderFullAuditResults(data, container) {
   const scoreLabel = score >= 75 ? 'Good' : score >= 50 ? 'Needs Attention' : 'High Risk';
 
   // ── helper to render a finding row ──────────────────────────────────────────
-  function _fRow(sev, title, detail, law) {
+  const _rowId = () => 'row_' + Math.random().toString(36).slice(2, 8);
+  function _fRow(sev, title, detail, law, finding, ftype) {
     const col = sev === 'Critical' ? '#f87171' : sev === 'Review' ? '#f59e0b' : '#60a5fa';
     const bg  = sev === 'Critical' ? 'rgba(248,113,113,0.1)' : sev === 'Review' ? 'rgba(245,158,11,0.1)' : 'rgba(96,165,250,0.1)';
+    const rid = _rowId();
+    const findingJson = finding ? encodeURIComponent(JSON.stringify(finding)) : '';
+    const aiBtn = finding ? `<button onclick="askAIExplain('${rid}','${findingJson}','${ftype||'ledger'}')" class="text-xs px-2 py-0.5 rounded-lg font-medium flex items-center gap-1 mt-1.5" style="background:rgba(201,168,76,0.15);color:var(--gold-400);border:1px solid rgba(201,168,76,0.2);">
+      <i class="fas fa-robot text-xs"></i> Ask AI
+    </button>` : '';
     return `<div class="p-3 rounded-xl mb-2" style="background:var(--navy-700);">
       <div class="flex items-start gap-3">
         <span class="text-xs font-bold px-2 py-0.5 rounded-full mt-0.5 shrink-0" style="background:${bg};color:${col};">${sev}</span>
-        <div class="min-w-0">
+        <div class="min-w-0 flex-1">
           <div class="text-sm font-semibold" style="color:#e2e8f0;">${title}</div>
           ${detail ? `<div class="text-xs mt-0.5" style="color:#94a3b8;">${detail}</div>` : ''}
           ${law    ? `<div class="text-xs mt-1 font-medium" style="color:${col};">${law}</div>` : ''}
+          ${aiBtn}
+          <div id="${rid}" class="hidden mt-2 text-xs rounded-xl p-3" style="background:var(--navy-800);color:#94a3b8;border:1px solid var(--navy-600);white-space:pre-wrap;line-height:1.6;"></div>
         </div>
       </div>
     </div>`;
@@ -3299,7 +3333,7 @@ function renderFullAuditResults(data, container) {
     critRows += _fRow('Critical',
       `Cash payment ₹${Number(v.amount||0).toLocaleString('en-IN')} — ${v.party || ''}`,
       `Date: ${v.date || ''} | Voucher: ${v.voucher_type || ''}`,
-      'Sec 40A(3) IT Act — cash payment >₹10,000 disallowed as expense');
+      'Sec 40A(3) IT Act — cash payment >₹10,000 disallowed as expense', v, 'cash');
   }
 
   // TDS compliance critical
@@ -3308,7 +3342,7 @@ function renderFullAuditResults(data, container) {
     critRows += _fRow('Critical',
       `TDS not deducted — ${t.party || t.ledger || ''}`,
       `Amount: ₹${Number(t.amount||0).toLocaleString('en-IN')}${t.section ? ' | ' + t.section : ''}`,
-      t.law || t.rule || 'TDS compliance violation');
+      t.law || t.rule || 'TDS compliance violation', t, 'tds');
   }
 
   // Ledger classification critical
@@ -3317,7 +3351,7 @@ function renderFullAuditResults(data, container) {
     critRows += _fRow('Critical',
       `Wrong classification — ${l.ledger || l.name || ''}`,
       `Currently under: ${l.current_group || ''} → Should be: ${l.correct_group || ''}`,
-      l.rule || l.law || '');
+      l.rule || l.law || '', l, 'ledger');
   }
 
   // Outstanding critical
@@ -3326,19 +3360,19 @@ function renderFullAuditResults(data, container) {
     critRows += _fRow('Critical',
       `${o.ledger || o.name || ''} — ₹${Number(o.balance||0).toLocaleString('en-IN')}`,
       o.issue || o.message || '',
-      o.law || o.rule || '');
+      o.law || o.rule || '', o, 'ledger');
   }
 
   // BS critical findings
   for (const f of bsF) {
     if (f.severity !== 'Critical') continue;
-    critRows += _fRow('Critical', `${f.ledger}${f.amount ? ' — ₹' + Number(f.amount).toLocaleString('en-IN') : ''}`, f.message, f.law);
+    critRows += _fRow('Critical', `${f.ledger}${f.amount ? ' — ₹' + Number(f.amount).toLocaleString('en-IN') : ''}`, f.message, f.law, f, 'bs');
   }
 
   // P&L critical findings
   for (const f of pnlF) {
     if (f.severity !== 'Critical') continue;
-    critRows += _fRow('Critical', `${f.ledger}${f.amount ? ' — ₹' + Number(f.amount).toLocaleString('en-IN') : ''}`, f.message, f.law);
+    critRows += _fRow('Critical', `${f.ledger}${f.amount ? ' — ₹' + Number(f.amount).toLocaleString('en-IN') : ''}`, f.message, f.law, f, 'pnl');
   }
 
   if (critRows) html += _section('fas fa-circle-exclamation', '#f87171', 'Critical Issues', critical, critRows);
@@ -3368,19 +3402,19 @@ function renderFullAuditResults(data, container) {
     warnRows += _fRow('Review',
       `Wrong classification — ${l.ledger || l.name || ''}`,
       `Currently under: ${l.current_group || ''} → Should be: ${l.correct_group || ''}`,
-      l.rule || '');
+      l.rule || '', l, 'ledger');
   }
 
   for (const o of (data.outstanding || [])) {
     if (o.severity !== 'Review') continue;
     warnRows += _fRow('Review',
       `${o.ledger || o.name || ''} — ₹${Number(o.balance||0).toLocaleString('en-IN')}`,
-      o.issue || o.message || '', o.law || '');
+      o.issue || o.message || '', o.law || '', o, 'ledger');
   }
 
   for (const f of [...bsF, ...pnlF]) {
     if (f.severity !== 'Review') continue;
-    warnRows += _fRow('Review', `${f.ledger}${f.amount ? ' — ₹' + Number(f.amount).toLocaleString('en-IN') : ''}`, f.message, f.law);
+    warnRows += _fRow('Review', `${f.ledger}${f.amount ? ' — ₹' + Number(f.amount).toLocaleString('en-IN') : ''}`, f.message, f.law, f, f.type === 'bs' ? 'bs' : 'pnl');
   }
 
   if (warnRows) html += _section('fas fa-triangle-exclamation', '#f59e0b', 'Warnings', warnings, warnRows);

@@ -488,6 +488,74 @@ def bank_reconciliation():
         os.unlink(bs_path)
         if tmp_tl and os.path.exists(tmp_tl): os.unlink(tmp_tl)
 
+# ── POST /api/ai-explain ─────────────────────────────────────────────────────
+@app.route('/api/ai-explain', methods=['POST'])
+def ai_explain():
+    """
+    Explain any audit finding using the knowledge base.
+    Used by Full Audit, Quick Audit, Bank Recon to give AI explanations per finding.
+    POST body: { "finding": {...}, "type": "ledger|cash|tds|bankrec|bs|pnl" }
+    """
+    data    = request.json or {}
+    finding = data.get('finding', {})
+    ftype   = data.get('type', 'ledger')
+    cid     = get_cid()
+
+    if not finding:
+        return jsonify({'error': 'finding required'}), 400
+
+    # Build a focused question based on finding type
+    if ftype == 'ledger':
+        question = (
+            f"Ledger '{finding.get('ledger')}' is grouped under '{finding.get('group')}' in Tally. "
+            f"Issue: {finding.get('issue')}. Balance: ₹{finding.get('amount', 0):,.0f}. "
+            f"Severity: {finding.get('severity')}. "
+            f"Explain: (1) why this is wrong, (2) what the correct group should be, "
+            f"(3) the exact Tally journal entry to fix it, (4) which accounting standard or law is violated."
+        )
+    elif ftype == 'cash':
+        question = (
+            f"Cash payment of ₹{finding.get('amount', 0):,.0f} made to '{finding.get('party')}' "
+            f"on {finding.get('date')}. "
+            f"Explain: (1) why this violates Section 40A(3), (2) how much will be disallowed, "
+            f"(3) what should be done to avoid this in future."
+        )
+    elif ftype == 'tds':
+        question = (
+            f"TDS issue: {finding.get('note', finding.get('issue', ''))}. "
+            f"Party: {finding.get('party', finding.get('ledger', ''))}. "
+            f"Amount: ₹{finding.get('amount', 0):,.0f}. "
+            f"Explain: (1) which TDS section applies, (2) what rate should be deducted, "
+            f"(3) interest/penalty for non-compliance, (4) Tally entry to rectify."
+        )
+    elif ftype == 'bankrec':
+        question = (
+            f"Bank reconciliation issue: {finding.get('type', '')}. "
+            f"Entry: {finding.get('narration', '')}. Amount: ₹{finding.get('amount', 0):,.0f}. "
+            f"Date: {finding.get('date', '')}. "
+            f"Explain: (1) what this means, (2) what action to take in Tally, "
+            f"(3) the journal entry if needed."
+        )
+    elif ftype in ('bs', 'pnl'):
+        question = (
+            f"{'Balance Sheet' if ftype == 'bs' else 'P&L'} finding: {finding.get('message', '')}. "
+            f"Severity: {finding.get('severity', '')}. "
+            f"Explain: (1) why this is an issue, (2) which accounting standard applies, "
+            f"(3) how to fix it in Tally."
+        )
+    else:
+        question = f"Audit finding: {finding}. Explain the issue and how to fix it."
+
+    try:
+        from ca_agent import chat as ca_chat_fn
+        audit_data = sb.load_audit_result(cid) or None
+        reply = ca_chat_fn(question, audit_data, [])
+        return jsonify({'explanation': reply})
+    except Exception as e:
+        import traceback; traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
 # ── POST /api/ca-chat ─────────────────────────────────────────────────────────
 @app.route('/api/ca-chat', methods=['POST'])
 def ca_chat():

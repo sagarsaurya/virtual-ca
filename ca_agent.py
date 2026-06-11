@@ -1,9 +1,10 @@
 """
-ca_agent.py — VirtualCA's AI CA powered by Groq API (Llama 3.1 70B)
-Reads last audit result as context, answers accounting questions like a senior CA.
+ca_agent.py — VirtualCA's AI CA powered by Groq API (Llama 3.3 70B)
+Reads last audit result + full knowledge base as context.
 """
 import os
 from groq import Groq
+from knowledge_loader import load_knowledge
 
 SYSTEM_PROMPT = """You are a senior Chartered Accountant (CA) based in India with 20+ years of experience.
 You are advising a client named Sagar whose accounting data has been uploaded and analysed.
@@ -17,6 +18,7 @@ Your role:
 - Reference correct IT Act sections (194C, 194H, 194I, 40A3 etc.), GST rules, Companies Act as needed
 - If the user asks something not in the data, say so clearly and give general guidance
 - Never make up numbers that aren't in the data
+- Use the KNOWLEDGE BASE below to give accurate, section-specific answers on GST, TDS, audit standards, accounting rules
 
 Format:
 - Use short paragraphs or bullet points
@@ -26,6 +28,9 @@ Format:
 
 Tone: Professional but direct. Like a CA who knows your books well and respects your time.
 """
+
+# Load knowledge base once at import time
+_KNOWLEDGE = load_knowledge('ask_ca')
 
 
 def build_context(audit_data: dict) -> str:
@@ -162,7 +167,11 @@ def chat(user_message: str, audit_data: dict = None, history: list = None) -> st
     client = Groq(api_key=api_key)
 
     context = build_context(audit_data)
-    system  = SYSTEM_PROMPT + f"\n\n## CLIENT'S ACCOUNTING DATA (use this for specific answers):\n{context}"
+    system  = (
+        SYSTEM_PROMPT
+        + f"\n\n## KNOWLEDGE BASE (Indian CA rules — GST, TDS, Audit, Accounting, Tally):\n{_KNOWLEDGE}"
+        + f"\n\n## CLIENT'S ACCOUNTING DATA (use this for specific answers):\n{context}"
+    )
 
     # Build message list — keep last 10 turns to save tokens
     messages = [{'role': 'system', 'content': system}]
