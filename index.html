@@ -1812,36 +1812,49 @@
         <div id="auditStep3" class="hidden">
 
           <!-- Audit Score Banner (populated by renderAuditResults) -->
-          <div id="auditScoreBanner" class="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-6 mb-6 text-white">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-orange-100 text-sm mb-1">Audit Score — <span id="auditPeriod">FY 2025–26</span> · <span id="auditCompanyName"></span></p>
-                <div class="text-5xl font-black mb-1"><span id="auditScore">--</span><span class="text-2xl font-semibold">/100</span></div>
-                <p class="text-orange-100 text-sm" id="auditTotalIssues">Running audit...</p>
+          <div id="auditScoreBanner" class="rounded-2xl p-5 mb-6" style="background:var(--navy-800);border:1px solid var(--border-light);">
+            <div class="flex items-center gap-5 flex-wrap">
+              <!-- Circular gauge -->
+              <div class="relative flex-shrink-0">
+                <svg width="108" height="108" viewBox="0 0 108 108">
+                  <circle cx="54" cy="54" r="44" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="9"/>
+                  <circle id="auditGaugeArc" cx="54" cy="54" r="44" fill="none" stroke="#f97316" stroke-width="9"
+                    stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="276.5"
+                    transform="rotate(-90 54 54)" style="transition:stroke-dashoffset 1.2s ease,stroke 0.5s;"/>
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                  <div class="text-3xl font-black leading-none" style="color:#f1f5f9;" id="auditScore">--</div>
+                  <div class="text-xs mt-0.5" style="color:var(--ink-muted);">/100</div>
+                </div>
               </div>
-              <div class="text-right">
-                <div class="grid grid-cols-3 gap-3 text-center">
-                  <div class="bg-white/20 rounded-xl px-4 py-3">
-                    <div class="text-2xl font-bold" id="auditCriticalCount">--</div>
-                    <div class="text-xs text-orange-100">Critical</div>
+              <!-- Labels + stat cards -->
+              <div class="flex-1 min-w-0">
+                <div class="text-xs mb-0.5" style="color:var(--ink-muted);">Compliance Score · <span id="auditPeriod">FY 2025–26</span></div>
+                <div class="font-semibold text-sm mb-0.5" style="color:var(--ink);" id="auditCompanyName"></div>
+                <div class="text-xs mb-3" style="color:var(--ink-muted);" id="auditTotalIssues">Running audit...</div>
+                <div class="flex gap-2 flex-wrap">
+                  <div class="rounded-xl px-3 py-2 text-center min-w-14" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);">
+                    <div class="font-bold text-lg leading-none" style="color:#f87171;" id="auditCriticalCount">--</div>
+                    <div class="text-xs mt-0.5" style="color:var(--ink-muted);">Critical</div>
                   </div>
-                  <div class="bg-white/20 rounded-xl px-4 py-3">
-                    <div class="text-2xl font-bold" id="auditWarningCount">--</div>
-                    <div class="text-xs text-orange-100">Warnings</div>
+                  <div class="rounded-xl px-3 py-2 text-center min-w-14" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);">
+                    <div class="font-bold text-lg leading-none" style="color:#fbbf24;" id="auditWarningCount">--</div>
+                    <div class="text-xs mt-0.5" style="color:var(--ink-muted);">Warnings</div>
                   </div>
-                  <div class="bg-white/20 rounded-xl px-4 py-3">
-                    <div class="text-2xl font-bold" id="auditQuestionCount">--</div>
-                    <div class="text-xs text-orange-100">Questions</div>
+                  <div class="rounded-xl px-3 py-2 text-center min-w-14" style="background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.2);">
+                    <div class="font-bold text-lg leading-none" style="color:#93c5fd;" id="auditQuestionCount">--</div>
+                    <div class="text-xs mt-0.5" style="color:var(--ink-muted);">Questions</div>
                   </div>
                 </div>
-                <div class="flex gap-2 mt-3">
-                  <button onclick="resetAudit()" class="bg-white/20 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-white/30 transition">
-                    <i class="fas fa-arrow-left mr-1.5"></i>Change Files
-                  </button>
-                  <button onclick="exportAuditExcel()" class="bg-white text-orange-600 px-5 py-2 rounded-xl text-sm font-bold hover:bg-orange-50 transition">
-                    <i class="fas fa-file-excel mr-2"></i>Download Report
-                  </button>
-                </div>
+              </div>
+              <!-- Action buttons -->
+              <div class="flex flex-col gap-2 flex-shrink-0 self-start pt-1">
+                <button onclick="resetAudit()" class="text-xs px-4 py-2 rounded-xl font-semibold whitespace-nowrap" style="background:var(--navy-700);color:var(--ink-muted);border:1px solid var(--border-light);">
+                  <i class="fas fa-sync-alt mr-1.5"></i>Change Files
+                </button>
+                <button onclick="exportAuditExcel()" class="text-xs px-4 py-2 rounded-xl font-semibold whitespace-nowrap" style="background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);">
+                  <i class="fas fa-file-excel mr-1.5"></i>Download Report
+                </button>
               </div>
             </div>
           </div>
@@ -1866,7 +1879,12 @@
                 <div class="w-9 h-9 rounded-xl flex items-center justify-center text-base" style="background:rgba(239,68,68,0.15);">💸</div>
                 <div>
                   <div class="font-semibold text-sm" style="color:#f1f5f9;">Cash Violations</div>
-                  <div class="text-xs" style="color:var(--ink-muted);">Sec 40A(3) &gt;₹10k &nbsp;·&nbsp; Sec 269ST &gt;₹2L &nbsp;·&nbsp; grouped by party</div>
+                  <div class="flex items-center gap-1.5 mt-1 flex-wrap">
+                    <span class="text-xs font-semibold px-2 py-0.5 rounded-md" style="background:rgba(239,68,68,0.15);color:#f87171;">Sec 40A(3) &gt;₹10k</span>
+                    <span class="text-xs" style="color:var(--ink-muted);">·</span>
+                    <span class="text-xs font-semibold px-2 py-0.5 rounded-md" style="background:rgba(239,68,68,0.15);color:#f87171;">Sec 269ST &gt;₹2L</span>
+                    <span class="text-xs" style="color:var(--ink-muted);">· grouped by party</span>
+                  </div>
                 </div>
               </div>
               <div class="flex items-center gap-3">
@@ -4308,10 +4326,17 @@ function startFullAudit() {
 function renderAuditResults(data) {
   const s = data.summary || {};
 
-  // Score banner
-  const scoreColor = s.score >= 70 ? 'from-green-500 to-teal-500' : s.score >= 40 ? 'from-orange-500 to-red-500' : 'from-red-600 to-red-800';
-  document.getElementById('auditScoreBanner').className = `bg-gradient-to-r ${scoreColor} rounded-2xl p-6 mb-6 text-white`;
-  document.getElementById('auditScore').textContent      = s.score || 0;
+  // Score banner — circular gauge
+  const score = s.score || 0;
+  const gaugeCirc = 276.5;
+  const gaugeArc = document.getElementById('auditGaugeArc');
+  if (gaugeArc) {
+    const offset = gaugeCirc - (score / 100 * gaugeCirc);
+    const arcColor = score >= 70 ? '#10b981' : score >= 40 ? '#f97316' : '#ef4444';
+    gaugeArc.style.stroke = arcColor;
+    setTimeout(() => { gaugeArc.style.strokeDashoffset = offset; }, 80);
+  }
+  document.getElementById('auditScore').textContent      = score;
   document.getElementById('auditTotalIssues').textContent = `${(s.critical||0)+(s.warnings||0)} issues found across all modules`;
   document.getElementById('auditCriticalCount').textContent  = s.critical  || 0;
   document.getElementById('auditWarningCount').textContent   = s.warnings  || 0;

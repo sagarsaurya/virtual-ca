@@ -2,8 +2,51 @@
 
 **Started:** 14 March 2026
 **Owner:** Sagar Pathak
-**Status:** Prototype Complete — Ready for Real Build
-**Last Updated:** 11 June 2026
+**Status:** Live on Render — Active Development
+
+---
+
+## June 2026 — Session 2 Changelog
+
+### Quick Audit UI Redesign
+- Score banner: replaced flat orange gradient with dark card + animated circular SVG gauge (r=44, circumference=276.5)
+  - Gauge animates score from 0 on load. Colors: green ≥70, orange ≥40, red <40
+  - Stat cards (Critical/Warnings/Questions) are now color-coded boxes (red/yellow/blue)
+  - Change Files + Download Report stacked buttons on right
+- Cash Violations section: law refs shown as red pill badges (Sec 40A(3) >₹10k · Sec 269ST >₹2L)
+
+### Knowledge Base
+- Created `knowledge/` folder with feature-mapped .md files
+- `knowledge_loader.py` — loads and caches .md files by feature category
+- `ca_agent.py` — injects full knowledge base into Groq system prompt for Ask Your CA
+- Feature map: ask_ca=all 5 folders, quick_audit=audit+accounting+tally, bank_recon=tally+accounting
+
+### Audit Engine
+- `audit_engine.py`: TDS findings now include `law` field (exact section + interest rate u/s 201(1A))
+- `bankrec_engine.py`: `_suggest_journal()` added — keyword-based Tally Dr/Cr suggestion for bank-only entries
+
+### Ask CA / AI Explain
+- `dashAskAI()` — quick question buttons on dashboard feed into Ask CA
+- `askAIExplain()` + `/api/ai-explain` endpoint — explains any audit finding using knowledge base + Groq
+
+### Coming Soon System (Session 1 — documented here for completeness)
+- `comingSoon(featureName)` JS function — gold toast, auto-dismiss 2.5s
+- All unbuilt features: opacity 0.75 + "Soon" badge + inner buttons pointer-events:none
+- Blocked: AI Audit Manager, AI Auditor Assistant, GST Readiness, ITR Readiness, GST Analysis, Generate Reports
+
+---
+
+## Pending / Next Build
+- `knowledge/accounting/` and `knowledge/tally/` — write Accounting Standards + Tally XML samples
+- TDS Analysis page (page-tds) — full UI
+- PT Analysis page (page-pt) — full UI
+- Full Audit mode (deeper than Quick Audit)
+- VPS: Hermes + OpenClaw on Hostinger KVM2 (Phase 2, future)
+
+---
+
+**Status:** Prototype Complete — Ready for Real Build (original line preserved below)
+**Last Updated:** 11 June 2026 (Session 2)
 
 ---
 
