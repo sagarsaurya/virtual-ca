@@ -606,6 +606,20 @@ def run_full_audit_all():
         return jsonify({'error': str(e)}), 500
 
 
+# ── POST /api/clear-bank-files ───────────────────────────────────────────────
+@app.route('/api/clear-bank-files', methods=['POST'])
+def clear_bank_files():
+    cid  = get_cid()
+    meta = load_files_meta(cid)
+    meta.pop('bstmt', None)
+    meta.pop('btally', None)
+    save_files_meta(meta, cid)
+    for fname in ('current_bank_stmt.xlsx', 'current_bank_tally.xlsx'):
+        lp = cpath(cid, fname)
+        if os.path.exists(lp):
+            os.remove(lp)
+    return jsonify({'ok': True})
+
 # ── POST /api/upload/bank-files ───────────────────────────────────────────────
 @app.route('/api/upload/bank-files', methods=['POST'])
 def upload_bank_files():
