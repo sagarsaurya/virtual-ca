@@ -180,6 +180,8 @@
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
   @keyframes typing { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-7px)} }
   @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  @keyframes fadeInUp { from{opacity:0;transform:translateX(-50%) translateY(12px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+  @keyframes fadeOut { from{opacity:1} to{opacity:0} }
 
   .entry-card { background: var(--navy-800); border-radius: 10px; border: 1px solid var(--navy-600); color: #e2e8f0; }
   .debit-tag  { background: rgba(30,58,95,0.08); color: var(--navy-500); padding: 2px 10px; border-radius: 99px; font-size: 11.5px; }
@@ -440,7 +442,7 @@
               <button onclick="showPage('fullaudit')" class="btn-gold px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5">
                 <i class="fas fa-play text-xs"></i> Start AI Audit
               </button>
-              <button class="px-4 py-2 rounded-xl text-xs font-medium flex items-center gap-1.5 relative" style="background:var(--navy-600);color:#94a3b8;border:1px solid var(--navy-500);">
+              <button onclick="comingSoon('How It Works')" class="px-4 py-2 rounded-xl text-xs font-medium flex items-center gap-1.5 relative" style="background:var(--navy-600);color:#94a3b8;border:1px solid var(--navy-500);cursor:pointer;">
                 <i class="fas fa-circle-play text-xs"></i> How It Works
                 <span class="absolute -top-1.5 -right-1.5 text-xs font-bold px-1.5 py-0.5 rounded-full" style="background:#334155;color:#64748b;font-size:9px;">Soon</span>
               </button>
@@ -494,14 +496,14 @@
             <div class="text-xs" id="dash-audit-detail" style="color:#64748b;">Not run yet</div>
           </div>
           <!-- GST Readiness -->
-          <div class="rounded-2xl p-4 relative" style="background:var(--navy-800);border:1px solid var(--navy-600);">
+          <div onclick="comingSoon('GST Readiness')" class="rounded-2xl p-4 relative" style="background:var(--navy-800);border:1px solid var(--navy-600);cursor:pointer;" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)'" onmouseout="this.style.borderColor='var(--navy-600)'">
             <div class="text-xs font-semibold mb-1" style="color:#64748b;">GST Readiness</div>
             <div class="text-3xl font-black mb-1" style="color:#64748b;">—</div>
             <div class="text-xs" style="color:#475569;">Coming Soon</div>
             <span class="absolute top-3 right-3 text-xs font-bold px-2 py-0.5 rounded-full" style="background:#1e293b;color:#475569;border:1px solid #334155;">Soon</span>
           </div>
           <!-- ITR Readiness -->
-          <div class="rounded-2xl p-4 relative" style="background:var(--navy-800);border:1px solid var(--navy-600);">
+          <div onclick="comingSoon('ITR Readiness')" class="rounded-2xl p-4 relative" style="background:var(--navy-800);border:1px solid var(--navy-600);cursor:pointer;" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)'" onmouseout="this.style.borderColor='var(--navy-600)'">
             <div class="text-xs font-semibold mb-1" style="color:#64748b;">ITR Readiness</div>
             <div class="text-3xl font-black mb-1" style="color:#64748b;">—</div>
             <div class="text-xs" style="color:#475569;">Coming Soon</div>
@@ -601,7 +603,7 @@
               <div class="text-xs" style="color:#475569;">Reconcile bank statements</div>
               <i class="fas fa-arrow-right text-xs mt-2 block" style="color:#475569;"></i>
             </button>
-            <div class="rounded-xl p-4 text-left relative" style="background:var(--navy-700);border:1px solid var(--navy-600);opacity:0.6;">
+            <div onclick="comingSoon('GST Analysis')" class="rounded-xl p-4 text-left relative" style="background:var(--navy-700);border:1px solid var(--navy-600);opacity:0.6;cursor:pointer;" onmouseover="this.style.opacity='0.9';this.style.borderColor='rgba(201,168,76,0.4)'" onmouseout="this.style.opacity='0.6';this.style.borderColor='var(--navy-600)'">
               <span class="absolute top-2 right-2 text-xs font-bold px-1.5 py-0.5 rounded-full" style="background:#1e293b;color:#475569;border:1px solid #334155;font-size:9px;">Soon</span>
               <div class="w-8 h-8 rounded-lg flex items-center justify-center mb-2" style="background:rgba(52,211,153,0.15);">
                 <i class="fas fa-percent text-sm" style="color:#34d399;"></i>
@@ -610,7 +612,7 @@
               <div class="text-xs" style="color:#475569;">Check GST compliance & mismatches</div>
               <i class="fas fa-arrow-right text-xs mt-2 block" style="color:#475569;"></i>
             </div>
-            <div class="rounded-xl p-4 text-left relative" style="background:var(--navy-700);border:1px solid var(--navy-600);opacity:0.6;">
+            <div onclick="comingSoon('Generate Reports')" class="rounded-xl p-4 text-left relative" style="background:var(--navy-700);border:1px solid var(--navy-600);opacity:0.6;cursor:pointer;" onmouseover="this.style.opacity='0.9';this.style.borderColor='rgba(201,168,76,0.4)'" onmouseout="this.style.opacity='0.6';this.style.borderColor='var(--navy-600)'">
               <span class="absolute top-2 right-2 text-xs font-bold px-1.5 py-0.5 rounded-full" style="background:#1e293b;color:#475569;border:1px solid #334155;font-size:9px;">Soon</span>
               <div class="w-8 h-8 rounded-lg flex items-center justify-center mb-2" style="background:rgba(251,191,36,0.15);">
                 <i class="fas fa-file-invoice-dollar text-sm" style="color:#fbbf24;"></i>
@@ -2775,6 +2777,17 @@ async function loadDashboard() {
       }
     }
   } catch(e) { /* backend not running */ }
+}
+
+function comingSoon(feature) {
+  const existing = document.getElementById('coming-soon-toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.id = 'coming-soon-toast';
+  toast.innerHTML = `<i class="fas fa-rocket mr-2" style="color:var(--gold-400);"></i><span style="color:#f1f5f9;"><strong style="color:var(--gold-300);">${feature}</strong> is coming soon!</span>`;
+  toast.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1e293b;border:1px solid rgba(201,168,76,0.4);padding:12px 20px;border-radius:12px;font-size:13px;z-index:9999;display:flex;align-items:center;box-shadow:0 8px 32px rgba(0,0,0,0.4);animation:fadeInUp 0.25s ease;';
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.style.animation = 'fadeOut 0.3s ease forwards'; setTimeout(() => toast.remove(), 300); }, 2500);
 }
 
 function dashAskAI(question) {
