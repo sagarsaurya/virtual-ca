@@ -2122,24 +2122,36 @@
               <div class="text-xs" style="color:#94a3b8;">Export from Tally as Excel (.xlsx)</div>
             </div>
           </div>
-          <div class="grid grid-cols-2 gap-4 mb-4">
-            <label class="rounded-xl p-5 text-center cursor-pointer block transition hover:brightness-110" style="border:2px dashed var(--navy-500);background:var(--navy-700);" for="faBSFile">
-              <i class="fas fa-scale-balanced text-2xl mb-2 block" style="color:#818cf8;"></i>
-              <div class="font-semibold text-sm mb-1" style="color:#e2e8f0;">Balance Sheet</div>
-              <div class="text-xs mb-3" id="faBSFileName" style="color:#94a3b8;">Click to browse</div>
-              <input type="file" accept=".xlsx,.xls" id="faBSFile" class="hidden" onchange="faOnFileSelected(this,'faBSFileName','bs')">
-              <span class="text-xs font-semibold px-3 py-1.5 rounded-lg" style="background:rgba(129,140,248,0.15);color:#818cf8;">Choose .xlsx</span>
-              <p class="text-xs mt-2" style="color:#94a3b8;">Tally → Balance Sheet → Alt+E</p>
-            </label>
-            <label class="rounded-xl p-5 text-center cursor-pointer block transition hover:brightness-110" style="border:2px dashed var(--navy-500);background:var(--navy-700);" for="faPNLFile">
-              <i class="fas fa-chart-line text-2xl mb-2 block" style="color:#34d399;"></i>
-              <div class="font-semibold text-sm mb-1" style="color:#e2e8f0;">Profit &amp; Loss</div>
-              <div class="text-xs mb-3" id="faPNLFileName" style="color:#94a3b8;">Click to browse</div>
-              <input type="file" accept=".xlsx,.xls" id="faPNLFile" class="hidden" onchange="faOnFileSelected(this,'faPNLFileName','pnl')">
-              <span class="text-xs font-semibold px-3 py-1.5 rounded-lg" style="background:rgba(52,211,153,0.15);color:#34d399;">Choose .xlsx</span>
-              <p class="text-xs mt-2" style="color:#94a3b8;">Tally → P&amp;L Account → Alt+E</p>
-            </label>
+
+          <!-- Already uploaded banner (hidden until files found) -->
+          <div id="faBSPNLLoaded" class="hidden rounded-xl px-4 py-3 mb-4 flex items-center gap-3" style="background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.25);">
+            <i class="fas fa-check-circle" style="color:#34d399;"></i>
+            <div class="flex-1 text-xs" style="color:#34d399;" id="faBSPNLLoadedDetail">BS + P&L already uploaded ✓</div>
+            <button onclick="faShowUploadZones()" class="text-xs px-3 py-1 rounded-lg transition" style="background:var(--navy-700);color:#94a3b8;border:1px solid var(--navy-500);">Change Files</button>
           </div>
+
+          <!-- Upload zones (hidden when files already saved) -->
+          <div id="faBSPNLZones">
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <label class="rounded-xl p-5 text-center cursor-pointer block transition hover:brightness-110" style="border:2px dashed var(--navy-500);background:var(--navy-700);" for="faBSFile">
+                <i class="fas fa-scale-balanced text-2xl mb-2 block" style="color:#818cf8;"></i>
+                <div class="font-semibold text-sm mb-1" style="color:#e2e8f0;">Balance Sheet</div>
+                <div class="text-xs mb-3" id="faBSFileName" style="color:#94a3b8;">Click to browse</div>
+                <input type="file" accept=".xlsx,.xls" id="faBSFile" class="hidden" onchange="faOnFileSelected(this,'faBSFileName','bs')">
+                <span class="text-xs font-semibold px-3 py-1.5 rounded-lg" style="background:rgba(129,140,248,0.15);color:#818cf8;">Choose .xlsx</span>
+                <p class="text-xs mt-2" style="color:#94a3b8;">Tally → Balance Sheet → Alt+E</p>
+              </label>
+              <label class="rounded-xl p-5 text-center cursor-pointer block transition hover:brightness-110" style="border:2px dashed var(--navy-500);background:var(--navy-700);" for="faPNLFile">
+                <i class="fas fa-chart-line text-2xl mb-2 block" style="color:#34d399;"></i>
+                <div class="font-semibold text-sm mb-1" style="color:#e2e8f0;">Profit &amp; Loss</div>
+                <div class="text-xs mb-3" id="faPNLFileName" style="color:#94a3b8;">Click to browse</div>
+                <input type="file" accept=".xlsx,.xls" id="faPNLFile" class="hidden" onchange="faOnFileSelected(this,'faPNLFileName','pnl')">
+                <span class="text-xs font-semibold px-3 py-1.5 rounded-lg" style="background:rgba(52,211,153,0.15);color:#34d399;">Choose .xlsx</span>
+                <p class="text-xs mt-2" style="color:#94a3b8;">Tally → P&amp;L Account → Alt+E</p>
+              </label>
+            </div>
+          </div>
+
           <button id="faRunBtn" onclick="startCompleteAudit()" class="w-full py-3 rounded-xl text-sm font-bold transition" style="background:var(--gold-500);color:var(--navy-900);">
             <i class="fas fa-play mr-2"></i>Run Full Audit
           </button>
@@ -2882,6 +2894,8 @@ async function loadCompleteAuditChecklist() {
     const tbOk   = meta.tb_exists && meta.tb;
     const dbOk   = meta.db_exists && meta.db;
     const bankOk = meta.bstmt_exists;
+    const bsOk   = meta.bs_exists  && meta.bs;
+    const pnlOk  = meta.pnl_exists && meta.pnl;
 
     // TB/DB check
     const tbEl  = document.getElementById('fa-check-tb');
@@ -2898,7 +2912,25 @@ async function loadCompleteAuditChecklist() {
       bkEl.style.background = 'rgba(52,211,153,0.2)'; bkEl.style.color = '#34d399'; bkEl.textContent = '✓';
       if (bkDet) bkDet.textContent = meta.bstmt?.filename || 'Bank statement uploaded';
     }
+
+    // BS + P&L check — show saved banner, hide upload zones
+    if (bsOk || pnlOk) {
+      const banner = document.getElementById('faBSPNLLoaded');
+      const zones  = document.getElementById('faBSPNLZones');
+      const detail = document.getElementById('faBSPNLLoadedDetail');
+      const parts  = [];
+      if (bsOk)  parts.push('BS: ' + meta.bs.filename);
+      if (pnlOk) parts.push('P&L: ' + meta.pnl.filename);
+      if (detail) detail.textContent = '✓ Already uploaded — ' + parts.join('  ·  ');
+      if (banner) banner.classList.remove('hidden');
+      if (zones)  zones.classList.add('hidden');
+    }
   } catch(e) {}
+}
+
+function faShowUploadZones() {
+  document.getElementById('faBSPNLLoaded')?.classList.add('hidden');
+  document.getElementById('faBSPNLZones')?.classList.remove('hidden');
 }
 
 async function startCompleteAudit() {
