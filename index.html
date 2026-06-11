@@ -3314,32 +3314,51 @@ function renderFullAuditResults(data, container) {
       <i class="fas fa-upload mr-1.5"></i>Upload New Files
     </button>
   </div>
-  <div class="rounded-2xl p-6 mb-5" style="background:var(--navy-800);border-top:3px solid ${scoreColor};border:1px solid var(--navy-600);">
-    <div class="flex items-start justify-between flex-wrap gap-4">
-      <div>
-        <div class="text-xs mb-1" style="color:#94a3b8;">Full Audit Score ${company ? '— ' + company : ''} ${period ? '· ' + period : ''}</div>
-        <div class="text-6xl font-black mb-1" style="color:${scoreColor};">${score}<span class="text-2xl font-semibold" style="color:#64748b;">/100</span></div>
-        <div class="text-sm font-bold" style="color:${scoreColor};">${scoreLabel}</div>
-      </div>
-      <div class="grid grid-cols-3 gap-3 text-center">
-        <div class="px-5 py-3 rounded-xl" style="background:var(--navy-700);">
-          <div class="text-2xl font-black" style="color:#f87171;">${critical}</div>
-          <div class="text-xs mt-0.5" style="color:#94a3b8;">Critical</div>
-        </div>
-        <div class="px-5 py-3 rounded-xl" style="background:var(--navy-700);">
-          <div class="text-2xl font-black" style="color:#f59e0b;">${warnings}</div>
-          <div class="text-xs mt-0.5" style="color:#94a3b8;">Warnings</div>
-        </div>
-        <div class="px-5 py-3 rounded-xl" style="background:var(--navy-700);">
-          <div class="text-2xl font-black" style="color:#60a5fa;">${(data.loans||[]).length + (data.large_expenses||[]).length}</div>
-          <div class="text-xs mt-0.5" style="color:#94a3b8;">Queries</div>
+  <div class="rounded-2xl p-5 mb-5" style="background:var(--navy-800);border:1px solid var(--border-light);">
+    <div class="flex items-center gap-5 flex-wrap">
+      <!-- Circular gauge -->
+      <div class="relative flex-shrink-0">
+        <svg width="108" height="108" viewBox="0 0 108 108">
+          <circle cx="54" cy="54" r="44" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="9"/>
+          <circle id="faGaugeArc" cx="54" cy="54" r="44" fill="none" stroke="${scoreColor}" stroke-width="9"
+            stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="276.5"
+            transform="rotate(-90 54 54)" style="transition:stroke-dashoffset 1.2s ease;"/>
+        </svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <div class="text-3xl font-black leading-none" style="color:#f1f5f9;">${score}</div>
+          <div class="text-xs mt-0.5" style="color:var(--ink-muted);">/100</div>
         </div>
       </div>
-    </div>
-    <div class="flex flex-wrap gap-2 mt-4">
-      <span class="text-xs px-2 py-0.5 rounded-full" style="background:rgba(52,211,153,0.1);color:#34d399;">✓ TB + Daybook</span>
-      ${bsF.length || pnlF.length ? '<span class="text-xs px-2 py-0.5 rounded-full" style="background:rgba(129,140,248,0.1);color:#818cf8;">✓ Balance Sheet + P&L</span>' : '<span class="text-xs px-2 py-0.5 rounded-full" style="background:rgba(255,255,255,0.05);color:#64748b;">○ BS/P&L not uploaded</span>'}
-      ${recon && !recon.error ? '<span class="text-xs px-2 py-0.5 rounded-full" style="background:rgba(96,165,250,0.1);color:#60a5fa;">✓ Bank Statement</span>' : '<span class="text-xs px-2 py-0.5 rounded-full" style="background:rgba(255,255,255,0.05);color:#64748b;">○ Bank Recon not uploaded</span>'}
+      <!-- Labels + stat cards -->
+      <div class="flex-1 min-w-0">
+        <div class="text-xs mb-0.5" style="color:var(--ink-muted);">Full Audit Score${period ? ' · ' + period : ''}${company ? ' · ' + company : ''}</div>
+        <div class="text-sm font-bold mb-2" style="color:${scoreColor};">${scoreLabel}</div>
+        <div class="flex gap-2 flex-wrap mb-3">
+          <div class="rounded-xl px-3 py-2 text-center min-w-14" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);">
+            <div class="font-bold text-lg leading-none" style="color:#f87171;">${critical}</div>
+            <div class="text-xs mt-0.5" style="color:var(--ink-muted);">Critical</div>
+          </div>
+          <div class="rounded-xl px-3 py-2 text-center min-w-14" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);">
+            <div class="font-bold text-lg leading-none" style="color:#fbbf24;">${warnings}</div>
+            <div class="text-xs mt-0.5" style="color:var(--ink-muted);">Warnings</div>
+          </div>
+          <div class="rounded-xl px-3 py-2 text-center min-w-14" style="background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.2);">
+            <div class="font-bold text-lg leading-none" style="color:#93c5fd;">${(data.loans||[]).length + (data.large_expenses||[]).length}</div>
+            <div class="text-xs mt-0.5" style="color:var(--ink-muted);">Queries</div>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-1.5">
+          <span class="text-xs px-2 py-0.5 rounded-full" style="background:rgba(52,211,153,0.1);color:#34d399;">✓ TB + Daybook</span>
+          ${bsF.length || pnlF.length ? '<span class="text-xs px-2 py-0.5 rounded-full" style="background:rgba(129,140,248,0.1);color:#818cf8;">✓ BS + P&L</span>' : '<span class="text-xs px-2 py-0.5 rounded-full" style="background:rgba(255,255,255,0.05);color:#64748b;">○ BS/P&L not uploaded</span>'}
+          ${recon && !recon.error ? '<span class="text-xs px-2 py-0.5 rounded-full" style="background:rgba(96,165,250,0.1);color:#60a5fa;">✓ Bank Statement</span>' : '<span class="text-xs px-2 py-0.5 rounded-full" style="background:rgba(255,255,255,0.05);color:#64748b;">○ Bank Recon not uploaded</span>'}
+        </div>
+      </div>
+      <!-- Action buttons -->
+      <div class="flex flex-col gap-2 flex-shrink-0 self-start pt-1">
+        <button onclick="faResetToUpload()" class="text-xs px-4 py-2 rounded-xl font-semibold whitespace-nowrap" style="background:var(--navy-700);color:var(--ink-muted);border:1px solid var(--border-light);">
+          <i class="fas fa-upload mr-1.5"></i>Upload New Files
+        </button>
+      </div>
     </div>
   </div>`;
 
@@ -3526,6 +3545,13 @@ function renderFullAuditResults(data, container) {
   }
 
   container.innerHTML = html;
+
+  // Animate Full Audit circular gauge
+  const faArc = document.getElementById('faGaugeArc');
+  if (faArc) {
+    const offset = 276.5 - (score / 100 * 276.5);
+    setTimeout(() => { faArc.style.strokeDashoffset = offset; }, 80);
+  }
 }
 
 async function saveAndRunAudit() {
