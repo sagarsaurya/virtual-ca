@@ -4070,7 +4070,7 @@ function renderAuditResults(data) {
   document.getElementById('auditPeriod').textContent         = s.period    || '';
 
   // Cash Violations (section 1 — most items, shown first)
-  renderCashViolations(data.cash_violations || [], data.personal_marks || [], data.cash_violations_bank_cleared || []);
+  renderCashViolations(data.cash_violations || [], data.personal_marks || [], data.cash_violations_bank_cleared || [], data.bank_crosscheck_status);
   // Ledger Classification
   renderLedgerFindings(data.ledger_classification || []);
   // TDS Compliance
@@ -4154,12 +4154,26 @@ function _updateProgressBar(data) {
 }
 
 // ── 1. CASH VIOLATIONS ────────────────────────────────────────────────────────
-function renderCashViolations(violations, personalMarks, bankCleared) {
+function renderCashViolations(violations, personalMarks, bankCleared, bankStatus) {
   bankCleared = bankCleared || [];
   window._confirmedBank = window._confirmedBank || new Set();
   const el = document.getElementById('audit-cash-real');
   const badge = document.getElementById('audit-cash-badge');
   const totalEl = document.getElementById('audit-cash-total');
+
+  // Show warning banner if bank statement not found
+  const existingBanner = document.getElementById('bank-missing-banner');
+  if (existingBanner) existingBanner.remove();
+  if (bankStatus === 'no_bank_statement' && violations.length) {
+    const banner = document.createElement('div');
+    banner.id = 'bank-missing-banner';
+    banner.innerHTML = `<div class="mx-3 mt-3 px-4 py-3 rounded-xl flex items-center gap-3" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);">
+      <i class="fas fa-triangle-exclamation" style="color:#f59e0b;"></i>
+      <div class="flex-1 text-xs" style="color:#fbbf24;">Bank statement not uploaded for this company — cross-check skipped. Go to <strong>Bank Reconciliation</strong> and upload your bank statement once to auto-clear verified payments.</div>
+      <button onclick="showPage('bankrec')" class="text-xs px-3 py-1.5 rounded-lg font-semibold shrink-0" style="background:rgba(245,158,11,0.2);color:#fbbf24;border:1px solid rgba(245,158,11,0.3);">Upload →</button>
+    </div>`;
+    el.parentNode.insertBefore(banner, el);
+  }
 
   if (!violations.length && !bankCleared.length) {
     el.innerHTML = _aEmpty('No cash violations found', 'All payments scanned — none exceed ₹10,000 in cash (Sec 40A(3)) or ₹2,00,000 cash receipt (Sec 269ST). No tax disallowance risk.', 'Sec 40A(3) & Sec 269ST — Income Tax Act 1961');

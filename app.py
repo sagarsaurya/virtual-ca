@@ -243,11 +243,18 @@ def run_audit():
         results['personal_marks']  = personal_marks
 
         bstmt_lp = cpath(cid, 'current_bank_stmt.xlsx')
-        if _ensure_local(rname(cid, 'current_bank_stmt.xlsx'), bstmt_lp):
+        bstmt_found = _ensure_local(rname(cid, 'current_bank_stmt.xlsx'), bstmt_lp)
+        # Fallback: try old pre-multi-company path (migration support)
+        if not bstmt_found:
+            bstmt_found = sb.download_file('current_bank_stmt.xlsx', bstmt_lp)
+        if bstmt_found:
             bstmt_fn = load_files_meta(cid).get('bstmt', {}).get('filename', 'bank_statement.xlsx')
             remaining, cleared = _cross_check_bank(results['cash_violations'], bstmt_lp, bstmt_fn)
             results['cash_violations']              = remaining
             results['cash_violations_bank_cleared'] = cleared
+            results['bank_crosscheck_status']       = 'done'
+        else:
+            results['bank_crosscheck_status'] = 'no_bank_statement'
 
         score, critical, warnings, questions = compute_score(results)
         results['summary']['score']     = score
