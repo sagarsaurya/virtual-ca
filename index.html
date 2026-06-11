@@ -293,6 +293,45 @@
       </div>
     </div>
 
+    <!-- Company Switcher -->
+    <div class="mx-4 mt-3">
+      <div class="text-xs mb-1.5 font-semibold uppercase tracking-wide" style="color:#2E4A62;">Company</div>
+      <div class="relative">
+        <button onclick="toggleCompanyMenu()" id="companyBtn"
+          class="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left transition"
+          style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);color:var(--gold-300);">
+          <i class="fas fa-building text-xs" style="color:var(--gold-500);"></i>
+          <span id="companyBtnLabel" class="flex-1 text-xs font-semibold truncate">Loading…</span>
+          <i class="fas fa-chevron-down text-xs" style="color:#2E4A62;"></i>
+        </button>
+        <!-- Dropdown -->
+        <div id="companyMenu" class="hidden absolute left-0 right-0 mt-1 rounded-xl overflow-hidden z-50"
+          style="background:var(--navy-700);border:1px solid var(--navy-500);box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+          <div id="companyList" class="max-h-48 overflow-y-auto py-1"></div>
+          <div class="border-t" style="border-color:var(--navy-600);">
+            <button onclick="openAddCompanyModal()" class="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium transition hover:bg-white/5" style="color:#34d399;">
+              <i class="fas fa-plus text-xs"></i> Add Company
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Company Modal -->
+    <div id="addCompanyModal" class="modal-overlay modal-hidden">
+      <div class="modal-box p-6 max-w-sm">
+        <div class="font-semibold text-base mb-4" style="color:#f1f5f9;">Add Company</div>
+        <input id="addCompanyInput" type="text" placeholder="Company name (e.g. ABC Pvt Ltd)"
+          class="w-full text-sm rounded-xl px-4 py-3 mb-4 focus:outline-none"
+          style="background:var(--navy-700);border:1px solid var(--navy-500);color:#e2e8f0;"
+          onkeydown="if(event.key==='Enter') doAddCompany()">
+        <div class="flex gap-3">
+          <button onclick="doAddCompany()" class="btn-gold px-5 py-2.5 rounded-xl text-sm font-semibold flex-1">Add</button>
+          <button onclick="closeAddCompanyModal()" class="btn-primary px-5 py-2.5 rounded-xl text-sm">Cancel</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Nav -->
     <nav class="flex-1 px-3 pb-4 mt-2">
 
@@ -2483,7 +2522,7 @@ function showPage(page) {
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
 async function loadDashboard() {
   try {
-    const r = await fetch(API_BASE + '/api/dashboard');
+    const r = await apiFetch('/api/dashboard');
     if (!r.ok) return;
     const d = await r.json();
 
@@ -2532,7 +2571,7 @@ async function loadHistory() {
   const el = document.getElementById('history-body');
   if (!el) return;
   try {
-    const r = await fetch(API_BASE + '/api/audit/history');
+    const r = await apiFetch('/api/audit/history');
     if (!r.ok) return;
     const hist = await r.json();
     if (!hist.length) {
@@ -2577,7 +2616,7 @@ async function loadCompliance() {
   const el = document.getElementById('compliance-dynamic-list');
   if (!el) return;
   try {
-    const r = await fetch(API_BASE + '/api/compliance');
+    const r = await apiFetch('/api/compliance');
     if (!r.ok) return;
     const items = await r.json();
 
@@ -2695,8 +2734,8 @@ function renderTDSPage(data) {
 async function loadAdminPage() {
   try {
     const [db, hist] = await Promise.all([
-      fetch(API_BASE + '/api/dashboard').then(r => r.ok ? r.json() : {}),
-      fetch(API_BASE + '/api/audit/history').then(r => r.ok ? r.json() : []),
+      apiFetch('/api/dashboard').then(r => r.ok ? r.json() : {}),
+      apiFetch('/api/audit/history').then(r => r.ok ? r.json() : []),
     ]);
     const ts = document.getElementById('admin-total');
     const ss = document.getElementById('admin-score');
@@ -2776,7 +2815,7 @@ function onDBSelected(input) {
 
 async function loadFilesStatus() {
   try {
-    const resp = await fetch(API_BASE + '/api/files/status');
+    const resp = await apiFetch('/api/files/status');
     if (!resp.ok) return;
     const meta = await resp.json();
 
@@ -2836,7 +2875,7 @@ function faResetToUpload() {
 
 async function loadCompleteAuditChecklist() {
   try {
-    const resp = await fetch(API_BASE + '/api/files/status');
+    const resp = await apiFetch('/api/files/status');
     if (!resp.ok) return;
     const meta = await resp.json();
 
@@ -2888,7 +2927,7 @@ async function startCompleteAudit() {
   }, 600);
 
   try {
-    const resp = await fetch(API_BASE + '/api/full-audit', { method: 'POST', body: fd });
+    const resp = await apiFetch('/api/full-audit', { method: 'POST', body: fd });
     clearInterval(ticker);
     bar.style.width = '100%'; text.textContent = '100%';
 
@@ -3205,7 +3244,7 @@ async function runAuditWithFiles(tbFile, dbFile) {
     if (tbFile) fd.append('trial_balance', tbFile);
     if (dbFile) fd.append('daybook', dbFile);
 
-    const resp = await fetch(API_BASE + '/api/audit', { method: 'POST', body: fd });
+    const resp = await apiFetch('/api/audit', { method: 'POST', body: fd });
     clearInterval(fakeInterval);
     if (!resp.ok) { throw new Error((await resp.json()).error || await resp.text()); }
     const data = await resp.json();
@@ -3536,7 +3575,7 @@ async function replyToQuery(id) {
 
   // Ask AI to acknowledge the reply
   try {
-    const res = await fetch(`${API_BASE}/api/ca-chat`, {
+    const res = await apiFetch('/api/ca-chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -3654,7 +3693,7 @@ async function sendChat() {
   input.style.height = 'auto';
 
   try {
-    const res = await fetch(`${API_BASE}/api/ca-chat`, {
+    const res = await apiFetch('/api/ca-chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: msg, history: caChatHistory })
@@ -3709,6 +3748,123 @@ const API_BASE = (window.location.hostname === 'localhost' || window.location.ho
   : '';
 let auditData = null;
 
+// ── Multi-company state ────────────────────────────────────────────────────────
+let activeCompanyId   = parseInt(localStorage.getItem('activeCompanyId')  || '1');
+let activeCompanyName = localStorage.getItem('activeCompanyName') || 'Default Company';
+let allCompanies      = [];
+
+function apiHeaders(extra = {}) {
+  return { 'X-Company-ID': String(activeCompanyId), ...extra };
+}
+
+function apiFetch(url, opts = {}) {
+  const headers = { ...apiHeaders(), ...(opts.headers || {}) };
+  return fetch(API_BASE + url, { ...opts, headers });
+}
+
+async function loadCompanies() {
+  try {
+    const r = await apiFetch('/api/companies');
+    if (!r.ok) return;
+    allCompanies = await r.json();
+    // Ensure active company still exists
+    if (!allCompanies.find(c => c.id === activeCompanyId) && allCompanies.length) {
+      setActiveCompany(allCompanies[0].id, allCompanies[0].name);
+    }
+    renderCompanyList();
+  } catch(e) {}
+}
+
+function renderCompanyList() {
+  const el = document.getElementById('companyList');
+  const btn = document.getElementById('companyBtnLabel');
+  if (btn) btn.textContent = activeCompanyName;
+  if (!el) return;
+  el.innerHTML = allCompanies.map(c => {
+    const active = c.id === activeCompanyId;
+    return `<div class="flex items-center gap-2 px-3 py-2 text-xs cursor-pointer transition hover:bg-white/5 ${active ? 'font-semibold' : ''}"
+      style="color:${active ? 'var(--gold-300)' : '#94a3b8'};"
+      onclick="setActiveCompany(${c.id}, '${c.name.replace(/'/g,"\\'")}')">
+      <i class="fas fa-building text-xs" style="color:${active ? 'var(--gold-500)' : '#2E4A62'};"></i>
+      <span class="flex-1 truncate">${escapeHtml(c.name)}</span>
+      ${active ? '<i class="fas fa-check text-xs" style="color:var(--gold-500);"></i>' : ''}
+      ${c.id !== 1 ? `<button onclick="event.stopPropagation();deleteCompany(${c.id})"
+        class="ml-1 text-xs hover:text-red-400 transition" style="color:#475569;" title="Delete">
+        <i class="fas fa-trash-alt"></i></button>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function setActiveCompany(id, name) {
+  activeCompanyId   = id;
+  activeCompanyName = name;
+  localStorage.setItem('activeCompanyId',   id);
+  localStorage.setItem('activeCompanyName', name);
+  renderCompanyList();
+  closeCompanyMenu();
+  // Reload current page data for new company
+  auditData = null;
+  loadDashboard();
+  loadFilesStatus();
+  apiFetch('/api/audit/last').then(r => r.ok ? r.json() : null).then(d => {
+    if (d && d.summary && !d._stale_warning) {
+      auditData = d;
+      updateCABanner(d);
+      if (d.audit_type !== 'full') {
+        document.getElementById('auditStep1')?.classList.add('hidden');
+        document.getElementById('auditStep3')?.classList.remove('hidden');
+        renderAuditResults(d);
+      }
+      renderTDSPage(d);
+      renderSalaryCompliance(d.salary_compliance || []);
+      _renderPTSummary(d.salary_compliance || []);
+    } else {
+      // Clear audit results for this new company (no prior data)
+      document.getElementById('auditStep1')?.classList.remove('hidden');
+      document.getElementById('auditStep3')?.classList.add('hidden');
+    }
+  }).catch(()=>{});
+}
+
+function toggleCompanyMenu() {
+  const m = document.getElementById('companyMenu');
+  if (m) m.classList.toggle('hidden');
+}
+function closeCompanyMenu() {
+  document.getElementById('companyMenu')?.classList.add('hidden');
+}
+// Close dropdown when clicking outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('#companyBtn') && !e.target.closest('#companyMenu')) closeCompanyMenu();
+});
+
+function openAddCompanyModal() {
+  closeCompanyMenu();
+  document.getElementById('addCompanyModal').classList.remove('modal-hidden');
+  document.getElementById('addCompanyInput').value = '';
+  setTimeout(() => document.getElementById('addCompanyInput').focus(), 50);
+}
+function closeAddCompanyModal() {
+  document.getElementById('addCompanyModal').classList.add('modal-hidden');
+}
+async function doAddCompany() {
+  const name = document.getElementById('addCompanyInput').value.trim();
+  if (!name) return;
+  const r = await apiFetch('/api/companies', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name}) });
+  if (r.ok) {
+    const co = await r.json();
+    await loadCompanies();
+    closeAddCompanyModal();
+    setActiveCompany(co.id, co.name);
+  }
+}
+async function deleteCompany(id) {
+  if (!confirm('Delete this company and all its data? This cannot be undone.')) return;
+  await apiFetch(`/api/companies/${id}`, { method:'DELETE' });
+  if (activeCompanyId === id) setActiveCompany(1, 'Default Company');
+  await loadCompanies();
+}
+
 // ── CA Chat banner updater ─────────────────────────────────────────────────────
 function updateCABanner(data) {
   if (!data || !data.summary) return;
@@ -3736,19 +3892,20 @@ function clearCAChat() {
 
 // Load dashboard data on startup
 window.addEventListener('load', async () => {
+  await loadCompanies();
   loadDashboard();
   loadCompliance();
   loadFilesStatus();   // show saved files status in header + upload page
   // Try to load last audit for CA chat context banner
   try {
-    const r = await fetch(API_BASE + '/api/audit/last');
+    const r = await apiFetch('/api/audit/last');
     if (r.ok) {
       const d = await r.json();
       // Only use saved result if it has real data — ignore stale 0-issue results
       if (d._stale_warning) {
         console.warn('Stale audit result detected — ignoring saved result, user must re-run.');
         // Clear the stale file on server so it doesn't keep loading
-        fetch(API_BASE + '/api/audit/clear', { method: 'POST' }).catch(()=>{});
+        apiFetch('/api/audit/clear', { method: 'POST' }).catch(()=>{});
       } else if (d && d.summary) {
         auditData = d;
         updateCABanner(d);
@@ -3798,7 +3955,7 @@ function startFullAudit() {
   if (dbFile) formData.append('daybook', dbFile);
 
   // Kick off API call
-  fetch(`${API_BASE}/api/audit`, { method:'POST', body: formData })
+  apiFetch('/api/audit', { method:'POST', body: formData })
     .then(r => r.json())
     .then(data => {
       auditData = data;
@@ -4068,7 +4225,7 @@ async function confirmPartyBank(key) {
   if (g && g.items) {
     for (const v of g.items) {
       try {
-        await fetch(`${API_BASE}/api/audit/mark-personal`, {
+        await apiFetch('/api/audit/mark-personal', {
           method: 'POST', headers: {'Content-Type':'application/json'},
           body: JSON.stringify({date: v.date, party: v.party, amount: v.amount, reason: 'Bank payment — confirmed'})
         });
@@ -4098,7 +4255,7 @@ async function confirmAllBank() {
     if (g && g.items) {
       for (const v of g.items) {
         try {
-          await fetch(`${API_BASE}/api/audit/mark-personal`, {
+          await apiFetch('/api/audit/mark-personal', {
             method: 'POST', headers: {'Content-Type':'application/json'},
             body: JSON.stringify({date: v.date, party: v.party, amount: v.amount, reason: 'Bank payment — confirmed'})
           });
@@ -4305,7 +4462,7 @@ async function markPersonal(date, party, amount, rowId) {
   const reason = prompt(`Mark "${party}" (${fmt(amount)}) as personal?\nEnter reason (optional):`, 'Personal expense');
   if (reason === null) return;
   try {
-    await fetch(`${API_BASE}/api/audit/mark-personal`, {
+    await apiFetch('/api/audit/mark-personal', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({date, party, amount, reason})
@@ -4321,7 +4478,7 @@ async function markPersonal(date, party, amount, rowId) {
 }
 
 async function unmarkPersonal(date, party, rowId) {
-  await fetch(`${API_BASE}/api/audit/mark-personal`, {
+  await apiFetch('/api/audit/mark-personal', {
     method: 'DELETE',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({date, party})
@@ -4375,7 +4532,7 @@ function markResolved(btn, id) {
 }
 async function loadBankRecStatus() {
   try {
-    const resp = await fetch(API_BASE + '/api/files/status');
+    const resp = await apiFetch('/api/files/status');
     if (!resp.ok) return;
     const meta = await resp.json();
     const bsName = meta.bank_stmt_name;
@@ -4435,7 +4592,7 @@ async function runBankRecExisting() {
   document.getElementById('brLoading').classList.remove('hidden');
   document.getElementById('brExistingRunWrap')?.classList.add('hidden');
   try {
-    const r = await fetch(API_BASE + '/api/bankrec-existing', { method: 'POST' });
+    const r = await apiFetch('/api/bankrec-existing', { method: 'POST' });
     if (!r.ok) { const e = await r.json(); throw new Error(e.error || 'Server error'); }
     const data = await r.json();
     renderBankRec(data);
@@ -4486,7 +4643,7 @@ async function runBankRec() {
     const fd = new FormData();
     fd.append('bank_statement', bs);
     fd.append('tally_ledger', tl);
-    const r = await fetch(API_BASE + '/api/bankrec', { method: 'POST', body: fd });
+    const r = await apiFetch('/api/bankrec', { method: 'POST', body: fd });
     if (!r.ok) { const e = await r.json(); throw new Error(e.error || 'Server error'); }
     const data = await r.json();
     renderBankRec(data);

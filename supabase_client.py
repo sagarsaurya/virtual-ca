@@ -1,10 +1,8 @@
 """
 Supabase client — storage + database for VirtualCA.
-All file I/O and JSON state now goes through Supabase.
+All functions accept company_id (cid) for multi-company support.
 """
 import os
-import json
-import datetime
 from supabase import create_client, Client
 
 SUPABASE_URL = os.environ.get('SUPABASE_URL', 'https://arlsvbjvsikzdeqfufut.supabase.co')
@@ -21,20 +19,56 @@ def get_client() -> Client:
     return _client
 
 
+# ── COMPANIES ─────────────────────────────────────────────────────────────────
+
+def load_companies() -> list:
+    try:
+        sb = get_client()
+        res = sb.table('companies').select('*').order('id').execute()
+        return res.data or []
+    except Exception as e:
+        print(f'[Supabase] load_companies error: {e}')
+        return [{'id': 1, 'name': 'Default Company'}]
+
+
+def create_company(name: str) -> dict:
+    try:
+        sb = get_client()
+        res = sb.table('companies').insert({'name': name}).execute()
+        return res.data[0] if res.data else {}
+    except Exception as e:
+        print(f'[Supabase] create_company error: {e}')
+        return {}
+
+
+def delete_company(cid: int):
+    try:
+        sb = get_client()
+        sb.table('companies').delete().eq('id', cid).execute()
+        sb.table('files_meta').delete().eq('company_id', cid).execute()
+        sb.table('audit_result').delete().eq('company_id', cid).execute()
+        sb.table('audit_history').delete().eq('company_id', cid).execute()
+        sb.table('personal_marks').delete().eq('company_id', cid).execute()
+    except Exception as e:
+        print(f'[Supabase] delete_company error: {e}')
+
+
+def rename_company(cid: int, name: str):
+    try:
+        sb = get_client()
+        sb.table('companies').update({'name': name}).eq('id', cid).execute()
+    except Exception as e:
+        print(f'[Supabase] rename_company error: {e}')
+
+
 # ── FILE STORAGE ──────────────────────────────────────────────────────────────
 
 def upload_file(local_path: str, remote_name: str) -> bool:
-    """Upload a local file to Supabase storage. Returns True on success."""
     try:
         sb = get_client()
         with open(local_path, 'rb') as f:
             data = f.read()
-        # upsert=True overwrites existing file
-        sb.storage.from_(BUCKET).upload(
-            path=remote_name,
-            file=data,
-            file_options={"upsert": "true"}
-        )
+        sb.storage.from_(BUCKET).upload(path=remote_name, file=data, file_options={"upsert": "true"})
         return True
     except Exception as e:
         print(f'[Supabase] upload_file error: {e}')
@@ -42,10 +76,10 @@ def upload_file(local_path: str, remote_name: str) -> bool:
 
 
 def download_file(remote_name: str, local_path: str) -> bool:
-    """Download a file from Supabase storage to local_path. Returns True on success."""
     try:
         sb = get_client()
         data = sb.storage.from_(BUCKET).download(remote_name)
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
         with open(local_path, 'wb') as f:
             f.write(data)
         return True
@@ -54,22 +88,12 @@ def download_file(remote_name: str, local_path: str) -> bool:
         return False
 
 
-def file_exists_remote(remote_name: str) -> bool:
-    """Check if a file exists in Supabase storage."""
-    try:
-        sb = get_client()
-        files = sb.storage.from_(BUCKET).list()
-        return any(f['name'] == remote_name for f in (files or []))
-    except Exception:
-        return False
-
-
 # ── DATABASE: files_meta ──────────────────────────────────────────────────────
 
-def load_files_meta() -> dict:
+def load_files_meta(cid: int = 1) -> dict:
     try:
         sb = get_client()
-        res = sb.table('files_meta').select('*').eq('id', 1).execute()
+        res = sb.table('files_meta').select('*').eq('company_id', cid).execute()
         if res.data:
             return res.data[0].get('meta', {})
         return {}
@@ -78,29 +102,35 @@ def load_files_meta() -> dict:
         return {}
 
 
-def save_files_meta(meta: dict):
+def save_files_meta(meta: dict, cid: int = 1):
     try:
         sb = get_client()
-        sb.table('files_meta').upsert({'id': 1, 'meta': meta}).execute()
+        # Check if row exists for this company
+        res = sb.table('files_meta').select('id').eq('company_id', cid).execute()
+        if res.data:
+            sb.table('files_meta').update({'meta': meta}).eq('company_id', cid).execute()
+        else:
+            sb.table('files_meta').insert({'company_id': cid, 'meta': meta}).execute()
     except Exception as e:
         print(f'[Supabase] save_files_meta error: {e}')
 
 
 # ── DATABASE: audit_history ───────────────────────────────────────────────────
 
-def load_history() -> list:
+def load_history(cid: int = 1) -> list:
     try:
         sb = get_client()
-        res = sb.table('audit_history').select('*').order('audited_at', desc=True).limit(50).execute()
+        res = sb.table('audit_history').select('*').eq('company_id', cid).order('audited_at', desc=True).limit(50).execute()
         return res.data or []
     except Exception as e:
         print(f'[Supabase] load_history error: {e}')
         return []
 
 
-def save_history_entry(entry: dict):
+def save_history_entry(entry: dict, cid: int = 1):
     try:
         sb = get_client()
+        entry['company_id'] = cid
         sb.table('audit_history').insert(entry).execute()
     except Exception as e:
         print(f'[Supabase] save_history_entry error: {e}')
@@ -108,46 +138,51 @@ def save_history_entry(entry: dict):
 
 # ── DATABASE: personal_marks ──────────────────────────────────────────────────
 
-def load_personal() -> list:
+def load_personal(cid: int = 1) -> list:
     try:
         sb = get_client()
-        res = sb.table('personal_marks').select('*').execute()
+        res = sb.table('personal_marks').select('*').eq('company_id', cid).execute()
         return res.data or []
     except Exception as e:
         print(f'[Supabase] load_personal error: {e}')
         return []
 
 
-def save_personal_mark(entry: dict):
+def save_personal_mark(entry: dict, cid: int = 1):
     try:
         sb = get_client()
+        entry['company_id'] = cid
         sb.table('personal_marks').insert(entry).execute()
     except Exception as e:
         print(f'[Supabase] save_personal_mark error: {e}')
 
 
-def delete_personal_mark(date: str, party: str):
+def delete_personal_mark(date: str, party: str, cid: int = 1):
     try:
         sb = get_client()
-        sb.table('personal_marks').delete().eq('date', date).eq('party', party).execute()
+        sb.table('personal_marks').delete().eq('date', date).eq('party', party).eq('company_id', cid).execute()
     except Exception as e:
         print(f'[Supabase] delete_personal_mark error: {e}')
 
 
-# ── DATABASE: audit_result (latest) ──────────────────────────────────────────
+# ── DATABASE: audit_result (latest per company) ───────────────────────────────
 
-def save_audit_result(result: dict):
+def save_audit_result(result: dict, cid: int = 1):
     try:
         sb = get_client()
-        sb.table('audit_result').upsert({'id': 1, 'result': result}).execute()
+        res = sb.table('audit_result').select('id').eq('company_id', cid).execute()
+        if res.data:
+            sb.table('audit_result').update({'result': result}).eq('company_id', cid).execute()
+        else:
+            sb.table('audit_result').insert({'company_id': cid, 'result': result}).execute()
     except Exception as e:
         print(f'[Supabase] save_audit_result error: {e}')
 
 
-def load_audit_result() -> dict:
+def load_audit_result(cid: int = 1) -> dict:
     try:
         sb = get_client()
-        res = sb.table('audit_result').select('*').eq('id', 1).execute()
+        res = sb.table('audit_result').select('*').eq('company_id', cid).execute()
         if res.data:
             return res.data[0].get('result', {})
         return {}

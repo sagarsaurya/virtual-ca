@@ -19,13 +19,27 @@ CORS(app)
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 os.makedirs(DATA_DIR, exist_ok=True)
 
-# Local temp paths — used during request only, then uploaded to Supabase
-CURRENT_TB     = os.path.join(DATA_DIR, 'current_tb.xlsx')
-CURRENT_DB     = os.path.join(DATA_DIR, 'current_db.xlsx')
-CURRENT_BS     = os.path.join(DATA_DIR, 'current_bs.xlsx')
-CURRENT_PNL    = os.path.join(DATA_DIR, 'current_pnl.xlsx')
-CURRENT_BSTMT  = os.path.join(DATA_DIR, 'current_bank_stmt.xlsx')
-CURRENT_BTALLY = os.path.join(DATA_DIR, 'current_bank_tally.xlsx')
+# ── Multi-company helpers ──────────────────────────────────────────────────────
+def get_cid() -> int:
+    """Get company_id from request header. Defaults to 1."""
+    try:
+        return int(request.headers.get('X-Company-ID', 1))
+    except (ValueError, TypeError):
+        return 1
+
+def company_dir(cid: int) -> str:
+    """Local temp directory for a company."""
+    d = os.path.join(DATA_DIR, f'company_{cid}')
+    os.makedirs(d, exist_ok=True)
+    return d
+
+def cpath(cid: int, filename: str) -> str:
+    """Local file path for a company file."""
+    return os.path.join(company_dir(cid), filename)
+
+def rname(cid: int, filename: str) -> str:
+    """Remote Supabase storage path for a company file."""
+    return f'company_{cid}/{filename}'
 
 def _ensure_local(remote_name, local_path):
     """Download from Supabase if local copy missing."""
@@ -78,24 +92,18 @@ def _cross_check_bank(violations, bstmt_path, bstmt_filename):
     return remaining, cleared
 
 
-# ── helpers — now Supabase-backed ─────────────────────────────────────────────
-def load_personal():
-    return sb.load_personal()
+# ── helpers — now Supabase-backed (all cid-aware) ─────────────────────────────
+def load_personal(cid=1):
+    return sb.load_personal(cid)
 
-def save_personal(marks):
-    pass  # handled individually via save_personal_mark / delete_personal_mark
+def load_history(cid=1):
+    return sb.load_history(cid)
 
-def load_history():
-    return sb.load_history()
+def load_files_meta(cid=1):
+    return sb.load_files_meta(cid)
 
-def save_history(h):
-    pass  # handled individually via save_history_entry
-
-def load_files_meta():
-    return sb.load_files_meta()
-
-def save_files_meta(m):
-    sb.save_files_meta(m)
+def save_files_meta(m, cid=1):
+    sb.save_files_meta(m, cid)
 
 def compute_score(results):
     critical = (
@@ -117,57 +125,74 @@ def index():
     return send_from_directory('.', 'index.html')
 
 # ── POST /api/upload/files ────────────────────────────────────────────────────
+@app.route('/api/companies', methods=['GET'])
+def get_companies():
+    return jsonify(sb.load_companies())
+
+@app.route('/api/companies', methods=['POST'])
+def add_company():
+    name = (request.json or {}).get('name', '').strip()
+    if not name:
+        return jsonify({'error': 'name required'}), 400
+    co = sb.create_company(name)
+    return jsonify(co)
+
+@app.route('/api/companies/<int:cid>', methods=['DELETE'])
+def del_company(cid):
+    if cid == 1:
+        return jsonify({'error': 'Cannot delete default company'}), 400
+    sb.delete_company(cid)
+    return jsonify({'ok': True})
+
+@app.route('/api/companies/<int:cid>/rename', methods=['POST'])
+def rename_company(cid):
+    name = (request.json or {}).get('name', '').strip()
+    if not name:
+        return jsonify({'error': 'name required'}), 400
+    sb.rename_company(cid, name)
+    return jsonify({'ok': True})
+
+
 @app.route('/api/upload/files', methods=['POST'])
 def upload_files():
-    """
-    Saves Trial Balance and/or Daybook permanently on the server.
-    Either or both files can be sent in a single request.
-    Returns current file status after saving.
-    """
-    meta = load_files_meta()
+    cid  = get_cid()
+    meta = load_files_meta(cid)
     saved = []
 
     tb_file = request.files.get('trial_balance')
     if tb_file and tb_file.filename:
-        tb_file.save(CURRENT_TB)
-        sb.upload_file(CURRENT_TB, 'current_tb.xlsx')
-        meta['tb'] = {
-            'filename':    tb_file.filename,
-            'uploaded_at': datetime.datetime.now().isoformat(),
-            'size':        os.path.getsize(CURRENT_TB),
-        }
+        lp = cpath(cid, 'current_tb.xlsx')
+        tb_file.save(lp)
+        sb.upload_file(lp, rname(cid, 'current_tb.xlsx'))
+        meta['tb'] = {'filename': tb_file.filename, 'uploaded_at': datetime.datetime.now().isoformat(), 'size': os.path.getsize(lp)}
         saved.append('trial_balance')
 
     db_file = request.files.get('daybook')
     if db_file and db_file.filename:
-        db_file.save(CURRENT_DB)
-        sb.upload_file(CURRENT_DB, 'current_db.xlsx')
-        meta['db'] = {
-            'filename':    db_file.filename,
-            'uploaded_at': datetime.datetime.now().isoformat(),
-            'size':        os.path.getsize(CURRENT_DB),
-        }
+        lp = cpath(cid, 'current_db.xlsx')
+        db_file.save(lp)
+        sb.upload_file(lp, rname(cid, 'current_db.xlsx'))
+        meta['db'] = {'filename': db_file.filename, 'uploaded_at': datetime.datetime.now().isoformat(), 'size': os.path.getsize(lp)}
         saved.append('daybook')
 
     if not saved:
         return jsonify({'error': 'No files received'}), 400
 
-    save_files_meta(meta)
+    save_files_meta(meta, cid)
     return jsonify({'saved': saved, 'status': meta})
 
 
 # ── GET /api/files/status ─────────────────────────────────────────────────────
 @app.route('/api/files/status', methods=['GET'])
 def files_status():
-    """Returns what files are currently saved on the server."""
-    meta = load_files_meta()
-    # Existence = file was uploaded (tracked in meta), not local disk presence
-    meta['tb_exists']    = bool(meta.get('tb'))
-    meta['db_exists']    = bool(meta.get('db'))
-    meta['bs_exists']    = bool(meta.get('bs'))
-    meta['pnl_exists']   = bool(meta.get('pnl'))
-    meta['bstmt_exists'] = bool(meta.get('bstmt'))
-    meta['btally_exists']= bool(meta.get('btally'))
+    cid  = get_cid()
+    meta = load_files_meta(cid)
+    meta['tb_exists']       = bool(meta.get('tb'))
+    meta['db_exists']       = bool(meta.get('db'))
+    meta['bs_exists']       = bool(meta.get('bs'))
+    meta['pnl_exists']      = bool(meta.get('pnl'))
+    meta['bstmt_exists']    = bool(meta.get('bstmt'))
+    meta['btally_exists']   = bool(meta.get('btally'))
     meta['bank_stmt_name']  = meta.get('bstmt', {}).get('filename', '')
     meta['bank_tally_name'] = meta.get('btally', {}).get('filename', '')
     return jsonify(meta)
@@ -176,65 +201,51 @@ def files_status():
 # ── POST /api/audit ───────────────────────────────────────────────────────────
 @app.route('/api/audit', methods=['POST'])
 def run_audit():
+    cid     = get_cid()
     tb_file = request.files.get('trial_balance')
     db_file = request.files.get('daybook')
-
-    # ── use newly uploaded files, or fall back to saved files ──
-    tb_path  = None
-    db_path  = None
-    tb_name  = ''
-    tmp_tb   = None
-    tmp_db   = None
-
-    meta = load_files_meta()
+    meta    = load_files_meta(cid)
+    tb_path = db_path = tb_name = None
 
     if tb_file and tb_file.filename:
-        tb_file.save(CURRENT_TB)
-        sb.upload_file(CURRENT_TB, 'current_tb.xlsx')
-        meta['tb'] = {'filename': tb_file.filename,
-                      'uploaded_at': datetime.datetime.now().isoformat(),
-                      'size': os.path.getsize(CURRENT_TB)}
-        save_files_meta(meta)
-        tb_path = CURRENT_TB
-        tb_name = tb_file.filename
-    elif _ensure_local('current_tb.xlsx', CURRENT_TB):
-        tb_path = CURRENT_TB
-        tb_name = meta.get('tb', {}).get('filename', 'trial_balance.xlsx')
+        lp = cpath(cid, 'current_tb.xlsx')
+        tb_file.save(lp)
+        sb.upload_file(lp, rname(cid, 'current_tb.xlsx'))
+        meta['tb'] = {'filename': tb_file.filename, 'uploaded_at': datetime.datetime.now().isoformat(), 'size': os.path.getsize(lp)}
+        save_files_meta(meta, cid)
+        tb_path = lp; tb_name = tb_file.filename
     else:
-        return jsonify({'error': 'No Trial Balance uploaded. Please upload a file first.'}), 400
+        lp = cpath(cid, 'current_tb.xlsx')
+        if _ensure_local(rname(cid, 'current_tb.xlsx'), lp):
+            tb_path = lp; tb_name = meta.get('tb', {}).get('filename', 'trial_balance.xlsx')
+        else:
+            return jsonify({'error': 'No Trial Balance uploaded. Please upload a file first.'}), 400
 
     if db_file and db_file.filename:
-        db_file.save(CURRENT_DB)
-        sb.upload_file(CURRENT_DB, 'current_db.xlsx')
-        meta['db'] = {'filename': db_file.filename,
-                      'uploaded_at': datetime.datetime.now().isoformat(),
-                      'size': os.path.getsize(CURRENT_DB)}
-        save_files_meta(meta)
-        db_path = CURRENT_DB
-    elif _ensure_local('current_db.xlsx', CURRENT_DB):
-        db_path = CURRENT_DB
+        lp = cpath(cid, 'current_db.xlsx')
+        db_file.save(lp)
+        sb.upload_file(lp, rname(cid, 'current_db.xlsx'))
+        meta['db'] = {'filename': db_file.filename, 'uploaded_at': datetime.datetime.now().isoformat(), 'size': os.path.getsize(lp)}
+        save_files_meta(meta, cid)
+        db_path = lp
     else:
-        db_path = None
+        lp = cpath(cid, 'current_db.xlsx')
+        db_path = lp if _ensure_local(rname(cid, 'current_db.xlsx'), lp) else None
 
     try:
         results = run_full_audit(tb_path, db_path)
 
-        personal_marks = load_personal()
-        results['cash_violations'] = [
-            v for v in results['cash_violations']
-            if not any(m['date'] == v['date'] and m['party'] == v['party'] for m in personal_marks)
-        ]
-        results['large_expenses'] = [
-            e for e in results['large_expenses']
-            if not any(m['date'] == e['date'] and m['party'] == e['party'] for m in personal_marks)
-        ]
-        results['personal_marks'] = personal_marks
+        personal_marks = load_personal(cid)
+        results['cash_violations'] = [v for v in results['cash_violations']
+            if not any(m['date'] == v['date'] and m['party'] == v['party'] for m in personal_marks)]
+        results['large_expenses']  = [e for e in results['large_expenses']
+            if not any(m['date'] == e['date'] and m['party'] == e['party'] for m in personal_marks)]
+        results['personal_marks']  = personal_marks
 
-        # Cross-check cash violations against saved bank statement (if available)
-        meta = load_files_meta()
-        if _ensure_local('current_bank_stmt.xlsx', CURRENT_BSTMT):
-            bstmt_fn = meta.get('bstmt', {}).get('filename', 'bank_statement.xlsx')
-            remaining, cleared = _cross_check_bank(results['cash_violations'], CURRENT_BSTMT, bstmt_fn)
+        bstmt_lp = cpath(cid, 'current_bank_stmt.xlsx')
+        if _ensure_local(rname(cid, 'current_bank_stmt.xlsx'), bstmt_lp):
+            bstmt_fn = load_files_meta(cid).get('bstmt', {}).get('filename', 'bank_statement.xlsx')
+            remaining, cleared = _cross_check_bank(results['cash_violations'], bstmt_lp, bstmt_fn)
             results['cash_violations']              = remaining
             results['cash_violations_bank_cleared'] = cleared
 
@@ -246,18 +257,10 @@ def run_audit():
         results['tb_filename']          = tb_name
         results['audited_at']           = datetime.datetime.now().isoformat()
 
-        sb.save_audit_result(results)
-        sb.save_history_entry({
-            'filename':   tb_name,
-            'audited_at': results['audited_at'],
-            'company':    results['summary'].get('company', ''),
-            'period':     results['summary'].get('period', ''),
-            'score':      score,
-            'critical':   critical,
-            'warnings':   warnings,
-            'questions':  questions,
-        })
-
+        sb.save_audit_result(results, cid)
+        sb.save_history_entry({'filename': tb_name, 'audited_at': results['audited_at'],
+            'company': results['summary'].get('company', ''), 'period': results['summary'].get('period', ''),
+            'score': score, 'critical': critical, 'warnings': warnings, 'questions': questions}, cid)
         return jsonify(results)
 
     except Exception as e:
@@ -267,32 +270,31 @@ def run_audit():
 # ── GET /api/audit/last ───────────────────────────────────────────────────────
 @app.route('/api/audit/last', methods=['GET'])
 def last_audit():
-    data = sb.load_audit_result()
+    cid  = get_cid()
+    data = sb.load_audit_result(cid)
     if data:
         s = data.get('summary', {})
         if (s.get('critical', 0) == 0 and s.get('warnings', 0) == 0
                 and s.get('questions', 0) == 0 and s.get('score', 0) == 0
-                and sb.load_files_meta().get('tb')):
-            data['_stale_warning'] = 'Saved result shows 0 issues — please re-run audit to get fresh results.'
+                and sb.load_files_meta(cid).get('tb')):
+            data['_stale_warning'] = 'Saved result shows 0 issues — please re-run audit.'
         return jsonify(data)
     return jsonify({'error': 'No audit run yet'}), 404
 
-# ── DELETE /api/audit/clear ───────────────────────────────────────────────────
 @app.route('/api/audit/clear', methods=['POST'])
 def clear_audit():
-    sb.save_audit_result({})
+    sb.save_audit_result({}, get_cid())
     return jsonify({'ok': True})
 
-# ── GET /api/audit/history ────────────────────────────────────────────────────
 @app.route('/api/audit/history', methods=['GET'])
 def audit_history():
-    return jsonify(load_history())
+    return jsonify(load_history(get_cid()))
 
-# ── GET /api/dashboard ────────────────────────────────────────────────────────
 @app.route('/api/dashboard', methods=['GET'])
 def dashboard():
-    history = load_history()
-    last    = sb.load_audit_result() or {}
+    cid     = get_cid()
+    history = load_history(cid)
+    last    = sb.load_audit_result(cid) or {}
     return jsonify({
         'total_audits': len(history),
         'last_score':   last.get('summary', {}).get('score'),
@@ -392,49 +394,45 @@ def compliance():
 # ── mark/unmark personal ──────────────────────────────────────────────────────
 @app.route('/api/audit/mark-personal', methods=['POST'])
 def mark_personal():
+    cid   = get_cid()
     data  = request.json
-    marks = load_personal()
+    marks = load_personal(cid)
     entry = {'date': data['date'], 'party': data['party'], 'amount': data['amount'], 'reason': data.get('reason', 'Personal')}
     if not any(m['date'] == entry['date'] and m['party'] == entry['party'] for m in marks):
-        sb.save_personal_mark(entry)
+        sb.save_personal_mark(entry, cid)
     return jsonify({'success': True, 'total_marks': len(marks) + 1})
 
 @app.route('/api/audit/mark-personal', methods=['DELETE'])
 def unmark_personal():
+    cid  = get_cid()
     data = request.json
-    sb.delete_personal_mark(data['date'], data['party'])
+    sb.delete_personal_mark(data['date'], data['party'], cid)
     return jsonify({'success': True})
 
 @app.route('/api/audit/personal-marks', methods=['GET'])
 def get_personal_marks():
-    return jsonify(load_personal())
+    return jsonify(load_personal(get_cid()))
 
 # ── POST /api/bankrec-existing ────────────────────────────────────────────────
 @app.route('/api/bankrec-existing', methods=['POST'])
 def bank_reconciliation_existing():
-    """Run bank recon using already-saved bank files (no re-upload needed)."""
-    meta = load_files_meta()
+    cid  = get_cid()
+    meta = load_files_meta(cid)
     if not meta.get('bstmt'):
         return jsonify({'error': 'No bank statement uploaded yet. Upload files first.'}), 400
-
-    bs_ok = _ensure_local('current_bank_stmt.xlsx', CURRENT_BSTMT)
-    if not bs_ok:
+    bstmt_lp  = cpath(cid, 'current_bank_stmt.xlsx')
+    if not _ensure_local(rname(cid, 'current_bank_stmt.xlsx'), bstmt_lp):
         return jsonify({'error': 'Bank statement file not found. Please re-upload.'}), 400
-
-    tl_path     = None
-    tl_filename = ''
-    if meta.get('btally') and _ensure_local('current_bank_tally.xlsx', CURRENT_BTALLY):
-        tl_path     = CURRENT_BTALLY
-        tl_filename = meta['btally'].get('filename', 'tally_ledger.xlsx')
-    elif _ensure_local('current_db.xlsx', CURRENT_DB):
-        tl_path     = CURRENT_DB
-        tl_filename = meta.get('db', {}).get('filename', 'daybook.xlsx')
+    btally_lp = cpath(cid, 'current_bank_tally.xlsx')
+    db_lp     = cpath(cid, 'current_db.xlsx')
+    if meta.get('btally') and _ensure_local(rname(cid, 'current_bank_tally.xlsx'), btally_lp):
+        tl_path = btally_lp
+    elif _ensure_local(rname(cid, 'current_db.xlsx'), db_lp):
+        tl_path = db_lp
     else:
-        return jsonify({'error': 'No Tally ledger or Daybook found. Upload files first.'}), 400
-
+        return jsonify({'error': 'No Tally ledger or Daybook found.'}), 400
     try:
-        result = run_bankrec(CURRENT_BSTMT, tl_path, meta['bstmt'].get('filename', 'bank_statement.xlsx'))
-        return jsonify(result)
+        return jsonify(run_bankrec(bstmt_lp, tl_path, meta['bstmt'].get('filename', 'bank_statement.xlsx')))
     except Exception as e:
         import traceback; traceback.print_exc()
         return jsonify({'error': str(e)}), 500
@@ -443,39 +441,32 @@ def bank_reconciliation_existing():
 # ── POST /api/bankrec ─────────────────────────────────────────────────────────
 @app.route('/api/bankrec', methods=['POST'])
 def bank_reconciliation():
+    cid     = get_cid()
     bs_file = request.files.get('bank_statement')
     tl_file = request.files.get('tally_ledger')
-
     if not bs_file or not bs_file.filename:
         return jsonify({'error': 'bank_statement file is required'}), 400
 
-    # tally_ledger: use uploaded file OR fall back to saved daybook
     bs_ext = os.path.splitext(bs_file.filename)[1] or '.pdf'
     with tempfile.NamedTemporaryFile(suffix=bs_ext, delete=False) as tmp:
         bs_path = tmp.name; bs_file.save(bs_path)
 
-    tl_path     = None
-    tmp_tl      = None
-    tl_filename = ''
-
-    # Save bank stmt to Supabase
-    sb.upload_file(bs_path, 'current_bank_stmt.xlsx')
-    meta = load_files_meta()
+    meta = load_files_meta(cid)
+    sb.upload_file(bs_path, rname(cid, 'current_bank_stmt.xlsx'))
     meta['bstmt'] = {'filename': bs_file.filename, 'uploaded_at': datetime.datetime.now().isoformat()}
-    save_files_meta(meta)
+    save_files_meta(meta, cid)
 
+    tmp_tl  = None
+    db_lp   = cpath(cid, 'current_db.xlsx')
     if tl_file and tl_file.filename:
         tl_ext = os.path.splitext(tl_file.filename)[1] or '.xlsx'
         with tempfile.NamedTemporaryFile(suffix=tl_ext, delete=False) as tmp:
-            tl_path = tmp.name; tl_file.save(tl_path)
-            tmp_tl  = tl_path
-        sb.upload_file(tl_path, 'current_bank_tally.xlsx')
+            tl_path = tmp.name; tl_file.save(tl_path); tmp_tl = tl_path
+        sb.upload_file(tl_path, rname(cid, 'current_bank_tally.xlsx'))
         meta['btally'] = {'filename': tl_file.filename, 'uploaded_at': datetime.datetime.now().isoformat()}
-        save_files_meta(meta)
-        tl_filename = tl_file.filename
-    elif _ensure_local('current_db.xlsx', CURRENT_DB):
-        tl_path     = CURRENT_DB
-        tl_filename = load_files_meta().get('db', {}).get('filename', 'daybook.xlsx')
+        save_files_meta(meta, cid)
+    elif _ensure_local(rname(cid, 'current_db.xlsx'), db_lp):
+        tl_path = db_lp
     else:
         os.unlink(bs_path)
         return jsonify({'error': 'No Daybook uploaded. Upload it here or via the Upload page first.'}), 400
@@ -500,7 +491,7 @@ def ca_chat():
     if not user_msg:
         return jsonify({'error': 'message required'}), 400
 
-    audit_data = sb.load_audit_result() or None
+    audit_data = sb.load_audit_result(get_cid()) or None
 
     try:
         from ca_agent import chat as ca_chat_fn
@@ -518,83 +509,74 @@ def run_full_audit_all():
     Full Audit — accepts BS + P&L uploads, auto-pulls TB/DB/bank files.
     Runs all 9 existing modules + BS/P&L compliance modules.
     """
-    meta = load_files_meta()
+    cid  = get_cid()
+    meta = load_files_meta(cid)
 
-    # Save BS if uploaded
     bs_file = request.files.get('balance_sheet')
     if bs_file and bs_file.filename:
-        bs_ext = os.path.splitext(bs_file.filename)[1] or '.xlsx'
-        bs_save = CURRENT_BS if bs_ext in ('.xlsx','.xls') else CURRENT_BS.replace('.xlsx', bs_ext)
-        bs_file.save(CURRENT_BS)
-        meta['bs'] = {'filename': bs_file.filename, 'uploaded_at': datetime.datetime.now().isoformat(), 'size': os.path.getsize(CURRENT_BS)}
+        lp = cpath(cid, 'current_bs.xlsx')
+        bs_file.save(lp)
+        sb.upload_file(lp, rname(cid, 'current_bs.xlsx'))
+        meta['bs'] = {'filename': bs_file.filename, 'uploaded_at': datetime.datetime.now().isoformat(), 'size': os.path.getsize(lp)}
 
-    # Save P&L if uploaded
     pnl_file = request.files.get('pnl')
     if pnl_file and pnl_file.filename:
-        pnl_file.save(CURRENT_PNL)
-        meta['pnl'] = {'filename': pnl_file.filename, 'uploaded_at': datetime.datetime.now().isoformat(), 'size': os.path.getsize(CURRENT_PNL)}
+        lp = cpath(cid, 'current_pnl.xlsx')
+        pnl_file.save(lp)
+        sb.upload_file(lp, rname(cid, 'current_pnl.xlsx'))
+        meta['pnl'] = {'filename': pnl_file.filename, 'uploaded_at': datetime.datetime.now().isoformat(), 'size': os.path.getsize(lp)}
 
-    save_files_meta(meta)
+    save_files_meta(meta, cid)
 
-    # Ensure local copies (download from Supabase if needed)
-    if not _ensure_local('current_tb.xlsx', CURRENT_TB):
-        return jsonify({'error': 'Trial Balance not found. Run Quick Audit first to upload TB + Daybook.'}), 400
-    if not _ensure_local('current_db.xlsx', CURRENT_DB):
-        return jsonify({'error': 'Daybook not found. Run Quick Audit first to upload TB + Daybook.'}), 400
+    tb_lp = cpath(cid, 'current_tb.xlsx')
+    db_lp = cpath(cid, 'current_db.xlsx')
+    if not _ensure_local(rname(cid, 'current_tb.xlsx'), tb_lp):
+        return jsonify({'error': 'Trial Balance not found. Run Quick Audit first.'}), 400
+    if not _ensure_local(rname(cid, 'current_db.xlsx'), db_lp):
+        return jsonify({'error': 'Daybook not found. Run Quick Audit first.'}), 400
 
     try:
         from audit_engine import run_full_audit
-        results = run_full_audit(CURRENT_TB, CURRENT_DB)
+        results = run_full_audit(tb_lp, db_lp)
 
-        # Apply personal marks
-        personal_marks = load_personal()
-        results['cash_violations'] = [
-            v for v in results['cash_violations']
-            if not any(m['date'] == v['date'] and m['party'] == v['party'] for m in personal_marks)
-        ]
-        results['large_expenses'] = [
-            e for e in results['large_expenses']
-            if not any(m['date'] == e['date'] and m['party'] == e['party'] for m in personal_marks)
-        ]
+        personal_marks = load_personal(cid)
+        results['cash_violations'] = [v for v in results['cash_violations']
+            if not any(m['date'] == v['date'] and m['party'] == v['party'] for m in personal_marks)]
+        results['large_expenses']  = [e for e in results['large_expenses']
+            if not any(m['date'] == e['date'] and m['party'] == e['party'] for m in personal_marks)]
 
-        # Run BS + P&L audit if files present
-        bs_findings   = []
-        pnl_findings  = []
+        bs_findings = pnl_findings = []
         bankrec_result = None
+        bs_lp  = cpath(cid, 'current_bs.xlsx')
+        pnl_lp = cpath(cid, 'current_pnl.xlsx')
+        _ensure_local(rname(cid, 'current_bs.xlsx'),  bs_lp)
+        _ensure_local(rname(cid, 'current_pnl.xlsx'), pnl_lp)
 
-        if os.path.exists(CURRENT_BS) or os.path.exists(CURRENT_PNL):
+        if os.path.exists(bs_lp) or os.path.exists(pnl_lp):
             try:
                 from bs_pnl_audit import audit_bs_pnl
                 bs_findings, pnl_findings = audit_bs_pnl(
-                    CURRENT_BS   if os.path.exists(CURRENT_BS)    else None,
-                    CURRENT_PNL  if os.path.exists(CURRENT_PNL)   else None,
-                    results,
-                )
+                    bs_lp  if os.path.exists(bs_lp)  else None,
+                    pnl_lp if os.path.exists(pnl_lp) else None,
+                    results)
             except Exception as e:
-                bs_findings  = [{'type': 'error', 'message': f'BS/P&L audit error: {e}', 'severity': 'Info'}]
+                bs_findings = [{'type': 'error', 'message': f'BS/P&L audit error: {e}', 'severity': 'Info'}]
 
-        # Run bank recon if files present + cross-check cash violations against bank statement
-        if _ensure_local('current_bank_stmt.xlsx', CURRENT_BSTMT):
+        bstmt_lp  = cpath(cid, 'current_bank_stmt.xlsx')
+        btally_lp = cpath(cid, 'current_bank_tally.xlsx')
+        if _ensure_local(rname(cid, 'current_bank_stmt.xlsx'), bstmt_lp):
             try:
-                from bankrec_engine import run_bankrec, parse_bank_statement
-                _ensure_local('current_bank_tally.xlsx', CURRENT_BTALLY)
-                tally_path = CURRENT_BTALLY if os.path.exists(CURRENT_BTALLY) else CURRENT_DB
+                _ensure_local(rname(cid, 'current_bank_tally.xlsx'), btally_lp)
+                tally_path     = btally_lp if os.path.exists(btally_lp) else db_lp
                 bstmt_filename = meta.get('bstmt', {}).get('filename', 'bank_statement.xlsx')
-                bankrec_result = run_bankrec(CURRENT_BSTMT, tally_path, bstmt_filename)
-
-                # ── Cross-check cash violations against bank statement ──────────
-                try:
-                    remaining, cleared = _cross_check_bank(results['cash_violations'], CURRENT_BSTMT, bstmt_filename)
-                    results['cash_violations']              = remaining
-                    results['cash_violations_bank_cleared'] = cleared
-                except Exception as e:
-                    print(f'[cross-check] bank cross-check error: {e}')
-
+                bankrec_result = run_bankrec(bstmt_lp, tally_path, bstmt_filename)
+                remaining, cleared = _cross_check_bank(results['cash_violations'], bstmt_lp, bstmt_filename)
+                results['cash_violations']              = remaining
+                results['cash_violations_bank_cleared'] = cleared
             except Exception as e:
                 bankrec_result = {'error': str(e)}
 
         score, critical, warnings, questions = compute_score(results)
-        # Deduct for BS/P&L findings
         for f in bs_findings + pnl_findings:
             if f.get('severity') == 'Critical': critical += 1; score = max(0, score - 5)
             elif f.get('severity') == 'Review':  warnings += 1; score = max(0, score - 2)
@@ -609,7 +591,7 @@ def run_full_audit_all():
         results['audited_at']           = datetime.datetime.now().isoformat()
         results['audit_type']           = 'full'
 
-        sb.save_audit_result(results)
+        sb.save_audit_result(results, cid)
         return jsonify(results)
 
     except Exception as e:
@@ -621,25 +603,30 @@ def run_full_audit_all():
 @app.route('/api/upload/bank-files', methods=['POST'])
 def upload_bank_files():
     """Save bank statement and/or bank tally ledger persistently."""
-    meta = load_files_meta()
+    cid  = get_cid()
+    meta = load_files_meta(cid)
     saved = []
 
     bstmt = request.files.get('bank_statement')
     if bstmt and bstmt.filename:
-        bstmt.save(CURRENT_BSTMT)
-        meta['bstmt'] = {'filename': bstmt.filename, 'uploaded_at': datetime.datetime.now().isoformat(), 'size': os.path.getsize(CURRENT_BSTMT)}
+        lp = cpath(cid, 'current_bank_stmt.xlsx')
+        bstmt.save(lp)
+        sb.upload_file(lp, rname(cid, 'current_bank_stmt.xlsx'))
+        meta['bstmt'] = {'filename': bstmt.filename, 'uploaded_at': datetime.datetime.now().isoformat(), 'size': os.path.getsize(lp)}
         saved.append('bank_statement')
 
     btally = request.files.get('tally_ledger')
     if btally and btally.filename:
-        btally.save(CURRENT_BTALLY)
-        meta['btally'] = {'filename': btally.filename, 'uploaded_at': datetime.datetime.now().isoformat(), 'size': os.path.getsize(CURRENT_BTALLY)}
+        lp = cpath(cid, 'current_bank_tally.xlsx')
+        btally.save(lp)
+        sb.upload_file(lp, rname(cid, 'current_bank_tally.xlsx'))
+        meta['btally'] = {'filename': btally.filename, 'uploaded_at': datetime.datetime.now().isoformat(), 'size': os.path.getsize(lp)}
         saved.append('tally_ledger')
 
     if not saved:
         return jsonify({'error': 'No files received'}), 400
 
-    save_files_meta(meta)
+    save_files_meta(meta, cid)
     return jsonify({'saved': saved, 'status': meta})
 
 
