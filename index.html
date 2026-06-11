@@ -2841,20 +2841,35 @@ async function loadFilesStatus() {
       if (hdr) { hdr.classList.remove('hidden'); hdr.style.display = 'flex'; }
       const count = (tbOk?1:0) + (dbOk?1:0);
       if (lbl) lbl.textContent = count === 2 ? 'TB + DB loaded' : (tbOk ? 'TB loaded' : 'DB loaded');
+    } else {
+      // No files for this company — hide header pill
+      if (hdr) { hdr.classList.add('hidden'); hdr.style.display = ''; }
     }
 
     // Full Audit page — switch between State A and State B
     const filesLoaded = document.getElementById('auditFilesLoaded');
     const uploadZones = document.getElementById('auditUploadZones');
     const detail = document.getElementById('auditFilesDetail');
-    if (tbOk && filesLoaded && uploadZones) {
-      // State A: files ready — show compact bar, hide drop zones
-      const parts = [];
-      if (tbOk) parts.push('✅ TB: ' + meta.tb.filename);
-      if (dbOk) parts.push('✅ DB: ' + meta.db.filename);
-      if (detail) detail.textContent = parts.join('   ');
-      filesLoaded.classList.remove('hidden');
-      uploadZones.classList.add('hidden');
+    if (filesLoaded && uploadZones) {
+      if (tbOk) {
+        const parts = [];
+        if (tbOk) parts.push('✅ TB: ' + meta.tb.filename);
+        if (dbOk) parts.push('✅ DB: ' + meta.db.filename);
+        if (detail) detail.textContent = parts.join('   ');
+        filesLoaded.classList.remove('hidden');
+        uploadZones.classList.add('hidden');
+      } else {
+        // No files for this company — show upload zones
+        filesLoaded.classList.add('hidden');
+        uploadZones.classList.remove('hidden');
+      }
+    }
+
+    // Reset audit results panel if no files for this company
+    if (!tbOk) {
+      document.getElementById('auditStep1')?.classList.remove('hidden');
+      document.getElementById('auditStep2')?.classList.add('hidden');
+      document.getElementById('auditStep3')?.classList.add('hidden');
     }
   } catch(e) { /* ignore */ }
 }
