@@ -22,5 +22,21 @@
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
+    <script>
+      // Auto-detect new deployments and reload
+      (function() {
+        var currentJS = null;
+        function checkVersion() {
+          fetch('/asset-manifest.json?t=' + Date.now())
+            .then(function(r) { return r.json(); })
+            .then(function(m) {
+              var js = m.files && m.files['main.js'];
+              if (!currentJS) { currentJS = js; return; }
+              if (js && js !== currentJS) { window.location.reload(); }
+            }).catch(function(){});
+        }
+        setTimeout(function() { checkVersion(); setInterval(checkVersion, 60000); }, 5000);
+      })();
+    </script>
   </body>
 </html>

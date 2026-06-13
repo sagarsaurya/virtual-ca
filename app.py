@@ -16,16 +16,6 @@ import supabase_client as sb
 app = Flask(__name__, static_folder='frontend/build', static_url_path='')
 CORS(app)
 
-# Serve React frontend — catch-all for client-side routing
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve_react(path):
-    build_dir = os.path.join(os.path.dirname(__file__), 'frontend', 'build')
-    file_path = os.path.join(build_dir, path)
-    if path and os.path.exists(file_path):
-        return send_from_directory(build_dir, path)
-    return send_from_directory(build_dir, 'index.html')
-
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 os.makedirs(DATA_DIR, exist_ok=True)
 
@@ -728,6 +718,16 @@ def upload_bank_files():
     save_files_meta(meta, cid)
     return jsonify({'saved': saved, 'status': meta})
 
+
+# Catch-all MUST be last — after all /api/* routes — so React Router works on refresh
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_react(path):
+    build_dir = os.path.join(os.path.dirname(__file__), 'frontend', 'build')
+    file_path = os.path.join(build_dir, path)
+    if path and os.path.exists(file_path):
+        return send_from_directory(build_dir, path)
+    return send_from_directory(build_dir, 'index.html')
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5050))
