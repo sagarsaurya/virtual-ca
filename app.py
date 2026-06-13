@@ -844,15 +844,26 @@ def api_broker_rec():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# Catch-all MUST be last — after all /api/* routes — so React Router works on refresh
+# Explicit static asset routes (JS, CSS, images, favicon)
+BUILD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'frontend', 'build')
+
+@app.route('/static/<path:filename>')
+def static_assets(filename):
+    return send_from_directory(os.path.join(BUILD_DIR, 'static'), filename)
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(BUILD_DIR, 'favicon.ico')
+
+@app.route('/asset-manifest.json')
+def asset_manifest():
+    return send_from_directory(BUILD_DIR, 'asset-manifest.json')
+
+# Catch-all — serves index.html for all React Router paths
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve_react(path):
-    build_dir = os.path.join(os.path.dirname(__file__), 'frontend', 'build')
-    file_path = os.path.join(build_dir, path)
-    if path and os.path.exists(file_path):
-        return send_from_directory(build_dir, path)
-    return send_from_directory(build_dir, 'index.html')
+    return send_from_directory(BUILD_DIR, 'index.html')
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5050))
