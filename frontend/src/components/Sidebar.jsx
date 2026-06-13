@@ -103,14 +103,31 @@ export default function Sidebar() {
         <div className={active('/history')} onClick={() => nav('/history')}><i className="fas fa-clock-rotate-left nav-icon"></i><span className="nav-label">History</span></div>
         <div className={active('/bankrec')} onClick={() => nav('/bankrec')}><i className="fas fa-right-left nav-icon"></i><span className="nav-label">Bank Reconciliation</span></div>
 
-        <div className="nav-section-label">Analysis</div>
+        <div className="nav-section-label">Audit</div>
         <div className={active('/quickaudit')} onClick={() => nav('/quickaudit')}><i className="fas fa-magnifying-glass-dollar nav-icon"></i><span className="nav-label">Quick Audit</span></div>
         <div className={active('/fullaudit')} onClick={() => nav('/fullaudit')}>
           <i className="fas fa-clipboard-check nav-icon"></i><span className="nav-label">Full Audit</span>
           <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full" style={{background:'rgba(201,168,76,0.15)',color:'var(--gold-400)'}}>New</span>
         </div>
+        <div className={active('/doc-checker')} onClick={() => nav('/doc-checker')}><i className="fas fa-file-circle-exclamation nav-icon"></i><span className="nav-label">Missing Docs</span></div>
+
+        <div className="nav-section-label">Financial Reports</div>
+        <div className={active('/balance-sheet')} onClick={() => nav('/balance-sheet')}><i className="fas fa-scale-balanced nav-icon"></i><span className="nav-label">Balance Sheet</span></div>
+        <div className={active('/cash-flow')} onClick={() => nav('/cash-flow')}><i className="fas fa-water nav-icon"></i><span className="nav-label">Cash Flow (AS-3)</span></div>
+
+        <div className="nav-section-label">Tax & Compliance</div>
+        <div className={active('/tds-detect')} onClick={() => nav('/tds-detect')}><i className="fas fa-triangle-exclamation nav-icon"></i><span className="nav-label">TDS Detector</span></div>
+        <div className={active('/gst-return')} onClick={() => nav('/gst-return')}><i className="fas fa-file-invoice nav-icon"></i><span className="nav-label">GST Returns</span></div>
         <div className={active('/tds')} onClick={() => nav('/tds')}><i className="fas fa-percent nav-icon"></i><span className="nav-label">TDS Analysis</span></div>
         <div className={active('/compliance')} onClick={() => nav('/compliance')}><i className="fas fa-calendar-check nav-icon"></i><span className="nav-label">Compliance Calendar</span></div>
+
+        <div className="nav-section-label">Investments</div>
+        <div className={active('/shares-pnl')} onClick={() => nav('/shares-pnl')}><i className="fas fa-chart-line nav-icon"></i><span className="nav-label">Shares P&L</span></div>
+        <div className={active('/broker-rec')} onClick={() => nav('/broker-rec')}><i className="fas fa-handshake nav-icon"></i><span className="nav-label">Broker Rec</span></div>
+
+        <div className="nav-section-label">Reconciliation</div>
+        <div className={active('/party-rec')} onClick={() => nav('/party-rec')}><i className="fas fa-right-left nav-icon"></i><span className="nav-label">Party Ledger Rec</span></div>
+        <div className={active('/bankrec')} onClick={() => nav('/bankrec')}><i className="fas fa-building-columns nav-icon"></i><span className="nav-label">Bank Reconciliation</span></div>
 
         <div className="nav-section-label">AI &amp; Guides</div>
         <div className={active('/askca')} onClick={() => nav('/askca')}>

@@ -14,6 +14,14 @@ import Compliance from './pages/Compliance'
 import AskCA from './pages/AskCA'
 import History from './pages/History'
 import Admin from './pages/Admin'
+import BalanceSheet from './pages/BalanceSheet'
+import TDSDetect from './pages/TDSDetect'
+import GSTReturn from './pages/GSTReturn'
+import SharesPnL from './pages/SharesPnL'
+import CashFlow from './pages/CashFlow'
+import PartyRec from './pages/PartyRec'
+import DocChecker from './pages/DocChecker'
+import BrokerRec from './pages/BrokerRec'
 
 function PrivateLayout({ children }) {
   const loggedIn = localStorage.getItem('logged_in')
@@ -42,8 +50,16 @@ export default function App() {
         <Route path="/compliance" element={<PrivateLayout><Compliance /></PrivateLayout>} />
         <Route path="/askca"      element={<PrivateLayout><AskCA /></PrivateLayout>} />
         <Route path="/history"    element={<PrivateLayout><History /></PrivateLayout>} />
-        <Route path="/admin"      element={<PrivateLayout><Admin /></PrivateLayout>} />
-        <Route path="*"           element={<Navigate to="/" replace />} />
+        <Route path="/admin"       element={<PrivateLayout><Admin /></PrivateLayout>} />
+        <Route path="/balance-sheet" element={<PrivateLayout><BalanceSheet /></PrivateLayout>} />
+        <Route path="/tds-detect"  element={<PrivateLayout><TDSDetect /></PrivateLayout>} />
+        <Route path="/gst-return"  element={<PrivateLayout><GSTReturn /></PrivateLayout>} />
+        <Route path="/shares-pnl"  element={<PrivateLayout><SharesPnL /></PrivateLayout>} />
+        <Route path="/cash-flow"   element={<PrivateLayout><CashFlow /></PrivateLayout>} />
+        <Route path="/party-rec"   element={<PrivateLayout><PartyRec /></PrivateLayout>} />
+        <Route path="/doc-checker" element={<PrivateLayout><DocChecker /></PrivateLayout>} />
+        <Route path="/broker-rec"  element={<PrivateLayout><BrokerRec /></PrivateLayout>} />
+        <Route path="*"            element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   )

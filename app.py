@@ -719,6 +719,135 @@ def upload_bank_files():
     return jsonify({'saved': saved, 'status': meta})
 
 
+# ── NEW FEATURES (Sandeep Bajoria) ────────────────────────────────────────────
+
+@app.route('/api/balance-sheet', methods=['POST'])
+def api_balance_sheet():
+    cid = get_cid()
+    tb = cpath(cid, 'current_tb.xlsx')
+    if not os.path.exists(tb):
+        return jsonify({'error': 'Upload Trial Balance first'}), 400
+    try:
+        from balance_sheet import generate_balance_sheet
+        return jsonify(generate_balance_sheet(tb))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/tds-detect', methods=['POST'])
+def api_tds_detect():
+    cid = get_cid()
+    tb = cpath(cid, 'current_tb.xlsx')
+    if not os.path.exists(tb):
+        return jsonify({'error': 'Upload Trial Balance first'}), 400
+    try:
+        from tds_detector import detect_missed_tds
+        db = cpath(cid, 'current_daybook.xlsx')
+        return jsonify(detect_missed_tds(tb, db if os.path.exists(db) else None))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/gst-return', methods=['POST'])
+def api_gst_return():
+    cid = get_cid()
+    tb = cpath(cid, 'current_tb.xlsx')
+    if not os.path.exists(tb):
+        return jsonify({'error': 'Upload Trial Balance first'}), 400
+    try:
+        from gst_return import parse_gst_data
+        db = cpath(cid, 'current_daybook.xlsx')
+        return jsonify(parse_gst_data(tb, db if os.path.exists(db) else None))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/shares-pnl', methods=['POST'])
+def api_shares_pnl():
+    cid = get_cid()
+    tb = cpath(cid, 'current_tb.xlsx')
+    if not os.path.exists(tb):
+        return jsonify({'error': 'Upload Trial Balance first'}), 400
+    try:
+        from shares_pnl import calculate_shares_pnl
+        db = cpath(cid, 'current_daybook.xlsx')
+        return jsonify(calculate_shares_pnl(tb, db if os.path.exists(db) else None))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/cash-flow', methods=['POST'])
+def api_cash_flow():
+    cid = get_cid()
+    tb = cpath(cid, 'current_tb.xlsx')
+    if not os.path.exists(tb):
+        return jsonify({'error': 'Upload Trial Balance first'}), 400
+    try:
+        from cash_flow import generate_cash_flow
+        db = cpath(cid, 'current_daybook.xlsx')
+        return jsonify(generate_cash_flow(tb, db if os.path.exists(db) else None))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/doc-checker', methods=['POST'])
+def api_doc_checker():
+    cid = get_cid()
+    tb = cpath(cid, 'current_tb.xlsx')
+    db = cpath(cid, 'current_daybook.xlsx')
+    try:
+        from doc_checker import check_documents
+        return jsonify(check_documents(
+            db if os.path.exists(db) else None,
+            tb if os.path.exists(tb) else None
+        ))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/party-rec', methods=['POST'])
+def api_party_rec():
+    cid = get_cid()
+    headers = {'X-Company-ID': str(cid)}
+    tally_file = request.files.get('tally_ledger')
+    party_file = request.files.get('party_statement')
+    party_name = request.form.get('party_name', 'Party')
+    if not tally_file or not party_file:
+        return jsonify({'error': 'Upload both Tally ledger and party statement'}), 400
+    try:
+        import tempfile
+        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as tf:
+            tally_file.save(tf.name)
+            tp = tf.name
+        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as pf:
+            party_file.save(pf.name)
+            pp = pf.name
+        from party_rec import reconcile_party
+        result = reconcile_party(tp, pp, party_name)
+        os.unlink(tp); os.unlink(pp)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/broker-rec', methods=['POST'])
+def api_broker_rec():
+    if 'tally_file' not in request.files or 'broker_file' not in request.files:
+        return jsonify({'error': 'Upload both tally_file and broker_file'}), 400
+    broker = request.form.get('broker', 'zerodha')
+    try:
+        import tempfile, pandas as pd
+        tf = request.files['tally_file']
+        bf = request.files['broker_file']
+        tp = tempfile.mktemp(suffix='.xlsx'); bp = tempfile.mktemp(suffix='.xlsx')
+        tf.save(tp); bf.save(bp)
+        tally_df = pd.read_excel(tp, header=None) if tp.endswith('.xlsx') else pd.read_csv(tp)
+        broker_df = pd.read_excel(bp, header=None) if bp.endswith('.xlsx') else pd.read_csv(bp)
+        os.unlink(tp); os.unlink(bp)
+        return jsonify({
+            'matched_count': 0,
+            'unmatched_count': 0,
+            'value_diff': 0,
+            'is_reconciled': False,
+            'unmatched': [],
+            'note': f'Broker reconciliation for {broker} — upload parsed correctly. Manual column mapping needed for full match.'
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # Catch-all MUST be last — after all /api/* routes — so React Router works on refresh
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
