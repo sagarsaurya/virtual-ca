@@ -13,8 +13,18 @@ from audit_engine import run_full_audit
 from bankrec_engine import run_bankrec
 import supabase_client as sb
 
-app = Flask(__name__, static_folder='.', static_url_path='')
+app = Flask(__name__, static_folder='frontend/build', static_url_path='')
 CORS(app)
+
+# Serve React frontend — catch-all for client-side routing
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_react(path):
+    build_dir = os.path.join(os.path.dirname(__file__), 'frontend', 'build')
+    file_path = os.path.join(build_dir, path)
+    if path and os.path.exists(file_path):
+        return send_from_directory(build_dir, path)
+    return send_from_directory(build_dir, 'index.html')
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 os.makedirs(DATA_DIR, exist_ok=True)
