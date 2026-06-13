@@ -79,21 +79,21 @@ def _classify(group_name, ledger_name):
 
 def generate_balance_sheet(tb_path):
     from audit_engine import parse_trial_balance
-    ledgers = parse_trial_balance(tb_path)
+    ledgers, _, _ = parse_trial_balance(tb_path)
 
     assets = {}
     liabilities = {}
     unclassified = []
 
     for l in ledgers:
-        name   = l.get('ledger') or l.get('name', '')
+        name   = l.get('name', '')
         group  = l.get('group', '')
-        bal    = float(l.get('closing_balance') or l.get('balance') or 0)
-        dr_cr  = (l.get('dr_cr') or '').upper()
+        debit  = float(l.get('debit') or 0)
+        credit = float(l.get('credit') or 0)
+        bal    = abs(debit - credit)
+        dr_cr  = 'DR' if debit >= credit else 'CR'
         if not name or bal == 0:
             continue
-        # Normalise: Dr = asset side positive, Cr = liability side positive
-        signed = bal if dr_cr == 'DR' else -bal
 
         mapping = _classify(group, name)
         if not mapping:

@@ -32,7 +32,7 @@ def _is_inter_state(party_name):
 
 def parse_gst_data(tb_path, daybook_path=None):
     from audit_engine import parse_trial_balance
-    ledgers = parse_trial_balance(tb_path)
+    ledgers, _, _ = parse_trial_balance(tb_path)
 
     sales_entries   = []
     purchase_entries = []
@@ -43,9 +43,9 @@ def parse_gst_data(tb_path, daybook_path=None):
     b2c_total = 0
 
     for l in ledgers:
-        name  = l.get('ledger') or ''
+        name  = l.get('name') or ''
         group = (l.get('group') or '').lower()
-        bal   = abs(float(l.get('closing_balance') or l.get('balance') or 0))
+        bal   = abs(float(l.get('debit') or 0) - float(l.get('credit') or 0))
         n     = name.lower()
 
         # Tax ledgers

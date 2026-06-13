@@ -45,12 +45,12 @@ def _match_rule(ledger_name):
 
 def detect_missed_tds(tb_path, daybook_path=None):
     from audit_engine import parse_trial_balance
-    ledgers = parse_trial_balance(tb_path)
+    ledgers, _, _ = parse_trial_balance(tb_path)
 
     # Build set of ledgers where TDS was deducted
     tds_deducted_parties = set()
     for l in ledgers:
-        name = (l.get('ledger') or '').lower()
+        name = (l.get('name') or '').lower()
         for kw in TDS_DEDUCTED_KEYWORDS:
             if kw in name:
                 tds_deducted_parties.add(name)
@@ -60,10 +60,12 @@ def detect_missed_tds(tb_path, daybook_path=None):
 
     # Check trial balance ledgers (expense side) against TDS rules
     for l in ledgers:
-        name   = l.get('ledger') or ''
+        name   = l.get('name') or ''
         group  = (l.get('group') or '').lower()
-        bal    = abs(float(l.get('closing_balance') or l.get('balance') or 0))
-        dr_cr  = (l.get('dr_cr') or '').upper()
+        debit  = float(l.get('debit') or 0)
+        credit = float(l.get('credit') or 0)
+        bal    = abs(debit - credit)
+        dr_cr  = 'DR' if debit >= credit else 'CR'
 
         if bal < 1000:
             continue
