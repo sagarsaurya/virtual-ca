@@ -18,7 +18,7 @@ export const renameCompany   = (cid, name) => API.post(`/api/companies/${cid}/re
 
 export const getDashboard    = ()      => API.get('/api/dashboard')
 export const getFilesStatus  = ()      => API.get('/api/files/status')
-export const getHistory      = ()      => API.get('/api/history')
+export const getHistory      = ()      => API.get('/api/audit/history')
 export const getCompliance   = ()      => API.get('/api/compliance')
 export const getAdminStats   = ()      => API.get('/api/admin/stats')
 
