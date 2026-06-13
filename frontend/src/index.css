@@ -78,6 +78,12 @@ body { background: var(--navy-900); }
   background: var(--navy-900);
   background-image: radial-gradient(ellipse at 20% 50%, rgba(201,168,76,0.08) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(30,58,95,0.6) 0%, transparent 50%);
 }
+
+.glass {
+  background: rgba(13,27,46,0.8);
+  border: 1px solid rgba(201,168,76,0.15);
+  backdrop-filter: blur(12px);
+}
 .glass { background: rgba(255,255,255,0.04); backdrop-filter: blur(16px); border: 1px solid rgba(201,168,76,0.15); }
 
 .gradient-bg { background: linear-gradient(135deg, var(--navy-800) 0%, var(--navy-500) 100%); }
