@@ -119,10 +119,6 @@ def compute_score(results):
     score = max(0, 100 - (critical * 5) - (warnings * 2) - (questions * 1))
     return score, critical, warnings, questions
 
-# ── static ────────────────────────────────────────────────────────────────────
-@app.route('/')
-def index():
-    return send_from_directory('.', 'index.html')
 
 # ── POST /api/upload/files ────────────────────────────────────────────────────
 @app.route('/api/companies', methods=['GET'])
