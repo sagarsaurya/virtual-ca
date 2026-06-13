@@ -13,7 +13,7 @@ from audit_engine import run_full_audit
 from bankrec_engine import run_bankrec
 import supabase_client as sb
 
-app = Flask(__name__, static_folder='frontend/build', static_url_path='')
+app = Flask(__name__)
 CORS(app)
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
