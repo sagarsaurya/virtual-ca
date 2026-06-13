@@ -63,13 +63,13 @@ def _categorize(narration):
 
 def generate_cash_flow(tb_path, daybook_path=None):
     from audit_engine import parse_trial_balance
-    ledgers = parse_trial_balance(tb_path)
+    ledgers, _, _ = parse_trial_balance(tb_path)
 
     # Find bank and cash ledgers from TB
     bank_ledgers = []
     cash_ledgers = []
     for l in ledgers:
-        name  = (l.get('ledger') or '').lower()
+        name  = (l.get('name') or '').lower()
         group = (l.get('group') or '').lower()
         if any(kw in name for kw in BANK_KEYWORDS) or 'bank' in group:
             bank_ledgers.append(l)
@@ -94,10 +94,9 @@ def generate_cash_flow(tb_path, daybook_path=None):
             (financing_inflows if direction == 'inflow' else financing_outflows).append(entry)
 
     for l in ledgers:
-        name  = l.get('ledger') or ''
+        name  = l.get('name') or ''
         group = (l.get('group') or '').lower()
-        bal   = abs(float(l.get('closing_balance') or l.get('balance') or 0))
-        dr_cr = (l.get('dr_cr') or '').upper()
+        bal   = abs(float(l.get('debit') or 0) - float(l.get('credit') or 0))
 
         if bal < 500:
             continue
@@ -119,8 +118,8 @@ def generate_cash_flow(tb_path, daybook_path=None):
     net_financing  = total(financing_inflows)  - total(financing_outflows)
     net_cash_flow  = net_operating + net_investing + net_financing
 
-    open_cash  = sum(abs(float(l.get('opening_balance') or 0)) for l in bank_ledgers + cash_ledgers)
-    close_cash = sum(abs(float(l.get('closing_balance') or l.get('balance') or 0)) for l in bank_ledgers + cash_ledgers)
+    open_cash  = 0
+    close_cash = sum(abs(float(l.get('debit') or 0) - float(l.get('credit') or 0)) for l in bank_ledgers + cash_ledgers)
 
     return {
         'operating': {'inflows': operating_inflows, 'outflows': operating_outflows, 'net': round(net_operating, 0)},
@@ -129,7 +128,7 @@ def generate_cash_flow(tb_path, daybook_path=None):
         'net_cash_flow': round(net_cash_flow, 0),
         'opening_cash': round(open_cash, 0),
         'closing_cash': round(close_cash, 0),
-        'bank_ledgers': [l.get('ledger','') for l in bank_ledgers],
-        'cash_ledgers': [l.get('ledger','') for l in cash_ledgers],
+        'bank_ledgers': [l.get('name','') for l in bank_ledgers],
+        'cash_ledgers': [l.get('name','') for l in cash_ledgers],
         'note': 'Direct method — based on Trial Balance ledger groupings',
     }

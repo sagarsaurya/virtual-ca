@@ -35,12 +35,12 @@ def _holding_months(buy_date, sell_date):
 
 def calculate_shares_pnl(tb_path, daybook_path=None):
     from audit_engine import parse_trial_balance
-    ledgers = parse_trial_balance(tb_path)
+    ledgers, _, _ = parse_trial_balance(tb_path)
 
     # Find investment-related ledgers from TB
     inv_ledgers = []
     for l in ledgers:
-        name  = l.get('ledger') or ''
+        name  = l.get('name') or ''
         group = (l.get('group') or '').lower()
         n     = name.lower()
         if any(kw in n for kw in INVESTMENT_KEYWORDS) or 'investment' in group:
@@ -119,10 +119,10 @@ def calculate_shares_pnl(tb_path, daybook_path=None):
     # If no daybook transactions, estimate from TB balances
     if not trades and inv_ledgers:
         for l in inv_ledgers:
-            bal = abs(float(l.get('closing_balance') or l.get('balance') or 0))
+            bal = abs(float(l.get('debit') or 0) - float(l.get('credit') or 0))
             if bal > 0:
                 trades.append({
-                    'scrip': l.get('ledger', '')[:30],
+                    'scrip': l.get('name', '')[:30],
                     'buy_date': '—',
                     'sell_date': '—',
                     'buy_value': round(bal, 0),
@@ -152,5 +152,5 @@ def calculate_shares_pnl(tb_path, daybook_path=None):
         'ltcg_exempt': LTCG_EXEMPT,
         'open_positions': len([t for t in trades if t['type'] == 'Open Position']),
         'closed_trades': len([t for t in trades if t['type'] in ('STCG','LTCG')]),
-        'investment_ledgers': [l.get('ledger','') for l in inv_ledgers],
+        'investment_ledgers': [l.get('name','') for l in inv_ledgers],
     }

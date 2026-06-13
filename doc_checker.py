@@ -144,11 +144,11 @@ def _check_from_tb(tb_path):
                 'documented_count': 0, 'total_amount_at_risk': 0, 'high_risk_count': 0,
                 'note': 'Upload daybook for document checking'}
     from audit_engine import parse_trial_balance
-    ledgers = parse_trial_balance(tb_path)
+    ledgers, _, _ = parse_trial_balance(tb_path)
     flagged = []
     for l in ledgers:
-        name  = l.get('ledger') or ''
-        bal   = abs(float(l.get('closing_balance') or l.get('balance') or 0))
+        name  = l.get('name') or ''
+        bal   = abs(float(l.get('debit') or 0) - float(l.get('credit') or 0))
         group = (l.get('group') or '').lower()
         if bal < AMOUNT_THRESHOLD:
             continue
