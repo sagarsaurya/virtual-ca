@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, make_response
 from flask_cors import CORS
 import os, json, tempfile, datetime
 
@@ -857,7 +857,10 @@ def asset_manifest():
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve_react(path):
-    return send_from_directory(BUILD_DIR, 'index.html')
+    resp = make_response(send_from_directory(BUILD_DIR, 'index.html'))
+    resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    resp.headers['Pragma'] = 'no-cache'
+    return resp
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5050))
