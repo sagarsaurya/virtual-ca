@@ -62,11 +62,10 @@ export default function QuickAudit() {
   const [progress, setProgress] = useState(0)
   const [results, setResults] = useState(null)
   const [confirmedBank, setConfirmedBank] = useState(new Set())
-  const cid = localStorage.getItem('company_id') || 1
-  const headers = { 'X-Company-ID': cid }
+  const getHeaders = () => ({ 'X-Company-ID': localStorage.getItem('company_id') || 1 })
 
   const loadFilesStatus = useCallback(() => {
-    axios.get(`${API_URL}/api/files/status`, { headers }).then(r => setFilesStatus(r.data)).catch(() => {})
+    axios.get(`${API_URL}/api/files/status`, { headers: getHeaders() }).then(r => setFilesStatus(r.data)).catch(() => {})
   }, [])
 
   useEffect(() => { loadFilesStatus() }, [loadFilesStatus])
@@ -75,7 +74,7 @@ export default function QuickAudit() {
     if (!file) return
     const form = new FormData()
     form.append(key, file)
-    await axios.post(`${API_URL}/api/upload/files`, form, { headers })
+    await axios.post(`${API_URL}/api/upload/files`, form, { headers: getHeaders() })
     loadFilesStatus()
   }
 
@@ -85,7 +84,7 @@ export default function QuickAudit() {
     setResults(null)
     const iv = setInterval(() => setProgress(p => p < 60 ? p + 1 : p), 40)
     try {
-      const r = await axios.post(`${API_URL}/api/audit`, {}, { headers })
+      const r = await axios.post(`${API_URL}/api/audit`, {}, { headers: getHeaders() })
       clearInterval(iv)
       let p = 60
       const iv2 = setInterval(() => {
@@ -104,7 +103,7 @@ export default function QuickAudit() {
     setConfirmedBank(prev => new Set([...prev, key]))
     for (const v of items) {
       try {
-        await axios.post(`${API_URL}/api/audit/mark-personal`, { date: v.date, party: v.party, amount: v.amount, reason: 'Bank payment — confirmed' }, { headers })
+        await axios.post(`${API_URL}/api/audit/mark-personal`, { date: v.date, party: v.party, amount: v.amount, reason: 'Bank payment — confirmed' }, { headers: getHeaders() })
       } catch (e) {}
     }
   }
@@ -120,7 +119,7 @@ export default function QuickAudit() {
     const reason = window.prompt(`Mark "${v.party}" as personal?\nEnter reason:`, 'Personal expense')
     if (reason === null) return
     try {
-      await axios.post(`${API_URL}/api/audit/mark-personal`, { date: v.date, party: v.party, amount: v.amount, reason }, { headers })
+      await axios.post(`${API_URL}/api/audit/mark-personal`, { date: v.date, party: v.party, amount: v.amount, reason }, { headers: getHeaders() })
       alert('Marked as personal.')
     } catch (e) {}
   }
@@ -240,7 +239,7 @@ export default function QuickAudit() {
           </div>
 
           {/* 1. Cash Violations */}
-          <CashSection violations={results.cash_violations || []} bankCleared={results.cash_violations_bank_cleared || []} bankStatus={results.bank_crosscheck_status} confirmedBank={confirmedBank} onConfirmParty={confirmPartyBank} onConfirmAll={confirmAllBank} headers={headers} />
+          <CashSection violations={results.cash_violations || []} bankCleared={results.cash_violations_bank_cleared || []} bankStatus={results.bank_crosscheck_status} confirmedBank={confirmedBank} onConfirmParty={confirmPartyBank} onConfirmAll={confirmAllBank} headers={getHeaders()} />
 
           {/* 2. Ledger Classification */}
           <Section icon="📋" title="Ledger Classification" subtitle="Wrong groups · misclassified accounts"
