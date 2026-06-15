@@ -36,17 +36,43 @@
 
 ---
 
+## June 2026 — Session 3 Changelog
+
+### VPS Setup (Hostinger KVM2 — Mumbai)
+- Provisioned Hostinger KVM2 VPS (IP: 72.61.241.198, Ubuntu 24.04)
+- Installed Node.js 20.x
+- Installed and configured **Hermes Agent** (nousresearch) via `curl install.sh | bash`
+  - Gateway: Local (VPS), runs as systemd service (auto-start on reboot)
+  - Channel: Telegram bot (@NousHostedHermesBot) connected to Sagar's Telegram
+  - Model: claude-haiku-4-5 via Anthropic API key (stored in /root/.hermes/.env)
+  - Status: ✅ Working — responds on Telegram
+- Installed and configured **OpenClaw** (openclaw.ai) via `curl install.sh | bash`
+  - Gateway: Local (VPS), runs as systemd service
+  - Channel: Telegram bot (@openclaw_sagar_bot) — separate bot from Hermes
+  - Model: anthropic/claude-haiku-4-5 (Anthropic API direct)
+  - Anthropic API key set via `openclaw onboard --manual`
+  - Status: ✅ Working — responds on Telegram
+  - Note: OpenClaw loads heavy system prompt (~19k tokens per message) — Haiku used to reduce cost
+
+### VirtualCA Site Fix (Render)
+- Site was blank since June 14 — root cause: React build files missing on Render
+- Fix: Added `pip install -r requirements.txt && cd frontend && CI=false npm run build` as Render build command
+- Flask static handler conflict fixed — `Flask(__name__, static_folder=frontend/build/static)`
+- Removed duplicate "Bank Reconciliation" from sidebar Workspace section
+- Added **Delete Company** button in company dropdown — red trash icon on hover, confirmation dialog before delete
+- Fixed **company_id not updating** on new company switch in QuickAudit — `getHeaders()` now reads localStorage fresh on every request instead of capturing at mount time
+
 ## Pending / Next Build
 - `knowledge/accounting/` and `knowledge/tally/` — write Accounting Standards + Tally XML samples
-- TDS Analysis page (page-tds) — full UI
-- PT Analysis page (page-pt) — full UI
+- TDS Analysis page — full UI
+- PT Analysis page — full UI
 - Full Audit mode (deeper than Quick Audit)
-- VPS: Hermes + OpenClaw on Hostinger KVM2 (Phase 2, future)
+- Connect OpenClaw to VirtualCA backend (teach it CA rules via knowledge/ folder)
 
 ---
 
-**Status:** Prototype Complete — Ready for Real Build (original line preserved below)
-**Last Updated:** 11 June 2026 (Session 2)
+**Status:** Live on Render ✅ | VPS Running ✅ | Hermes + OpenClaw on Telegram ✅
+**Last Updated:** 15 June 2026 (Session 3)
 
 ---
 
