@@ -62,20 +62,36 @@ export default function QuickAudit() {
   const [progress, setProgress] = useState(0)
   const [results, setResults] = useState(null)
   const [confirmedBank, setConfirmedBank] = useState(new Set())
+  const [uploading, setUploading] = useState({})
   const getHeaders = () => ({ 'X-Company-ID': localStorage.getItem('company_id') || 1 })
 
   const loadFilesStatus = useCallback(() => {
-    axios.get(`${API_URL}/api/files/status`, { headers: getHeaders() }).then(r => setFilesStatus(r.data)).catch(() => {})
+    const cid = localStorage.getItem('company_id') || 1
+    axios.get(`${API_URL}/api/files/status`, { headers: { 'X-Company-ID': cid } }).then(r => setFilesStatus(r.data)).catch(() => {})
   }, [])
 
   useEffect(() => { loadFilesStatus() }, [loadFilesStatus])
 
   const uploadFile = async (key, file) => {
     if (!file) return
-    const form = new FormData()
-    form.append(key, file)
-    await axios.post(`${API_URL}/api/upload/files`, form, { headers: getHeaders() })
-    loadFilesStatus()
+    setUploading(u => ({ ...u, [key]: true }))
+    try {
+      const form = new FormData()
+      form.append(key, file)
+      const r = await axios.post(`${API_URL}/api/upload/files`, form, { headers: getHeaders() })
+      // Update UI directly from upload response — don't wait for Supabase refetch
+      const uploadedMeta = r.data.status || {}
+      setFilesStatus(prev => ({
+        ...prev,
+        ...uploadedMeta,
+        tb_exists: !!uploadedMeta.tb,
+        db_exists: !!uploadedMeta.db,
+      }))
+    } catch (e) {
+      alert('Upload failed: ' + (e.response?.data?.error || e.message))
+    } finally {
+      setUploading(u => ({ ...u, [key]: false }))
+    }
   }
 
   const runAudit = async () => {
@@ -159,8 +175,8 @@ export default function QuickAudit() {
                 <label htmlFor={f.key} style={{ display: 'block', border: '2px dashed var(--navy-500)', background: 'var(--navy-800)', borderRadius: 10, padding: 14, textAlign: 'center', cursor: 'pointer' }}>
                   <i className="fas fa-cloud-upload-alt" style={{ color: f.color, fontSize: 22, display: 'block', marginBottom: 6 }}></i>
                   <p style={{ color: '#94a3b8', fontSize: 11, marginBottom: 8 }}>{filesStatus[f.statusKey]?.filename || 'Drop file here'}</p>
-                  <input type="file" id={f.key} accept=".xlsx,.xls,.csv" style={{ display: 'none' }} onChange={e => uploadFile(f.key, e.target.files[0])} />
-                  <span style={{ background: f.color, color: '#070E1A', fontSize: 12, fontWeight: 700, padding: '5px 14px', borderRadius: 8 }}>Choose File</span>
+                  <input type="file" id={f.key} accept=".xlsx,.xls,.csv" style={{ display: 'none' }} onChange={e => uploadFile(f.key, e.target.files[0])} disabled={uploading[f.key]} />
+                  <span style={{ background: uploading[f.key] ? '#64748b' : f.color, color: '#070E1A', fontSize: 12, fontWeight: 700, padding: '5px 14px', borderRadius: 8 }}>{uploading[f.key] ? 'Uploading…' : 'Choose File'}</span>
                 </label>
               </div>
             ))}

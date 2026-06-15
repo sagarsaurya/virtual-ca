@@ -35,7 +35,15 @@ def create_company(name: str) -> dict:
     try:
         sb = get_client()
         res = sb.table('companies').insert({'name': name}).execute()
-        return res.data[0] if res.data else {}
+        if not res.data:
+            return {}
+        co = res.data[0]
+        # Pre-create empty files_meta row so uploads always do UPDATE (never INSERT)
+        try:
+            sb.table('files_meta').insert({'company_id': co['id'], 'meta': {}}).execute()
+        except Exception as e2:
+            print(f'[Supabase] pre-create files_meta error: {e2}')
+        return co
     except Exception as e:
         print(f'[Supabase] create_company error: {e}')
         return {}

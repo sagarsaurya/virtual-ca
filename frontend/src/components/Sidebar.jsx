@@ -44,11 +44,12 @@ export default function Sidebar() {
   const doAddCompany = () => {
     if (!newName.trim()) return
     addCompany(newName.trim()).then(r => {
+      if (!r.data?.id) { alert('Failed to create company. Please try again.'); return }
       setCompanies(prev => [...prev, r.data])
       switchCompany(r.data)
       setShowAddModal(false)
       setNewName('')
-    })
+    }).catch(() => alert('Failed to create company. Please try again.'))
   }
 
   const nav = (path) => navigate(path)
