@@ -101,7 +101,6 @@ export default function Sidebar() {
         <div className="nav-section-label">Workspace</div>
         <div className={active('/dashboard')} onClick={() => nav('/dashboard')}><i className="fas fa-th-large nav-icon"></i><span className="nav-label">Dashboard</span></div>
         <div className={active('/history')} onClick={() => nav('/history')}><i className="fas fa-clock-rotate-left nav-icon"></i><span className="nav-label">History</span></div>
-        <div className={active('/bankrec')} onClick={() => nav('/bankrec')}><i className="fas fa-right-left nav-icon"></i><span className="nav-label">Bank Reconciliation</span></div>
 
         <div className="nav-section-label">Audit</div>
         <div className={active('/quickaudit')} onClick={() => nav('/quickaudit')}><i className="fas fa-magnifying-glass-dollar nav-icon"></i><span className="nav-label">Quick Audit</span></div>
