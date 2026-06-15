@@ -13,7 +13,8 @@ from audit_engine import run_full_audit
 from bankrec_engine import run_bankrec
 import supabase_client as sb
 
-app = Flask(__name__)
+BUILD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'frontend', 'build')
+app = Flask(__name__, static_folder=os.path.join(BUILD_DIR, 'static'), static_url_path='/static')
 CORS(app)
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
@@ -843,13 +844,6 @@ def api_broker_rec():
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-# Explicit static asset routes (JS, CSS, images, favicon)
-BUILD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'frontend', 'build')
-
-@app.route('/static/<path:filename>')
-def static_assets(filename):
-    return send_from_directory(os.path.join(BUILD_DIR, 'static'), filename)
 
 @app.route('/favicon.ico')
 def favicon():
