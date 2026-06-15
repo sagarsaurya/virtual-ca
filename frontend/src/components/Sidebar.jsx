@@ -27,6 +27,20 @@ export default function Sidebar() {
     window.location.reload()
   }
 
+  const doDeleteCompany = (e, c) => {
+    e.stopPropagation()
+    if (!window.confirm(`Delete "${c.name}"? This cannot be undone.`)) return
+    deleteCompany(c.id).then(() => {
+      const updated = companies.filter(x => x.id !== c.id)
+      setCompanies(updated)
+      if (currentCompany?.id === c.id) {
+        const next = updated[0] || null
+        if (next) switchCompany(next)
+        else { setCurrentCompany(null); localStorage.removeItem('company_id') }
+      }
+    })
+  }
+
   const doAddCompany = () => {
     if (!newName.trim()) return
     addCompany(newName.trim()).then(r => {
@@ -81,10 +95,15 @@ export default function Sidebar() {
           <div className="absolute left-0 right-0 mt-1 rounded-xl overflow-hidden z-50" style={{background:'var(--navy-700)',border:'1px solid var(--navy-500)',boxShadow:'0 8px 32px rgba(0,0,0,0.5)'}}>
             <div className="max-h-48 overflow-y-auto py-1">
               {companies.map(c => (
-                <button key={c.id} onClick={() => switchCompany(c)} className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-white/5 transition" style={{color: c.id === currentCompany?.id ? 'var(--gold-400)' : '#94a3b8'}}>
-                  <i className="fas fa-building text-xs"></i>{c.name}
-                  {c.id === currentCompany?.id && <i className="fas fa-check ml-auto text-xs" style={{color:'var(--gold-400)'}}></i>}
-                </button>
+                <div key={c.id} className="flex items-center group hover:bg-white/5 transition">
+                  <button onClick={() => switchCompany(c)} className="flex-1 flex items-center gap-2 px-3 py-2 text-xs" style={{color: c.id === currentCompany?.id ? 'var(--gold-400)' : '#94a3b8'}}>
+                    <i className="fas fa-building text-xs"></i>{c.name}
+                    {c.id === currentCompany?.id && <i className="fas fa-check ml-auto text-xs" style={{color:'var(--gold-400)'}}></i>}
+                  </button>
+                  <button onClick={(e) => doDeleteCompany(e, c)} className="px-2 py-2 opacity-0 group-hover:opacity-100 transition" style={{color:'#ef4444'}} title="Delete company">
+                    <i className="fas fa-trash text-xs"></i>
+                  </button>
+                </div>
               ))}
             </div>
             <div style={{borderTop:'1px solid var(--navy-600)'}}>
