@@ -718,10 +718,20 @@ def upload_bank_files():
 
 # ── NEW FEATURES (Sandeep Bajoria) ────────────────────────────────────────────
 
+def _ensure_tb_db(cid):
+    """Download TB and DB from Supabase if not present locally. Returns (tb_path, db_path)."""
+    tb = cpath(cid, 'current_tb.xlsx')
+    db = cpath(cid, 'current_db.xlsx')
+    if not os.path.exists(tb):
+        _ensure_local(rname(cid, 'current_tb.xlsx'), tb)
+    if not os.path.exists(db):
+        _ensure_local(rname(cid, 'current_db.xlsx'), db)
+    return tb, db
+
 @app.route('/api/balance-sheet', methods=['POST'])
 def api_balance_sheet():
     cid = get_cid()
-    tb = cpath(cid, 'current_tb.xlsx')
+    tb, _ = _ensure_tb_db(cid)
     if not os.path.exists(tb):
         return jsonify({'error': 'Upload Trial Balance first'}), 400
     try:
@@ -733,12 +743,11 @@ def api_balance_sheet():
 @app.route('/api/tds-detect', methods=['POST'])
 def api_tds_detect():
     cid = get_cid()
-    tb = cpath(cid, 'current_tb.xlsx')
+    tb, db = _ensure_tb_db(cid)
     if not os.path.exists(tb):
         return jsonify({'error': 'Upload Trial Balance first'}), 400
     try:
         from tds_detector import detect_missed_tds
-        db = cpath(cid, 'current_daybook.xlsx')
         return jsonify(detect_missed_tds(tb, db if os.path.exists(db) else None))
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -746,12 +755,11 @@ def api_tds_detect():
 @app.route('/api/gst-return', methods=['POST'])
 def api_gst_return():
     cid = get_cid()
-    tb = cpath(cid, 'current_tb.xlsx')
+    tb, db = _ensure_tb_db(cid)
     if not os.path.exists(tb):
         return jsonify({'error': 'Upload Trial Balance first'}), 400
     try:
         from gst_return import parse_gst_data
-        db = cpath(cid, 'current_daybook.xlsx')
         return jsonify(parse_gst_data(tb, db if os.path.exists(db) else None))
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -759,12 +767,11 @@ def api_gst_return():
 @app.route('/api/shares-pnl', methods=['POST'])
 def api_shares_pnl():
     cid = get_cid()
-    tb = cpath(cid, 'current_tb.xlsx')
+    tb, db = _ensure_tb_db(cid)
     if not os.path.exists(tb):
         return jsonify({'error': 'Upload Trial Balance first'}), 400
     try:
         from shares_pnl import calculate_shares_pnl
-        db = cpath(cid, 'current_daybook.xlsx')
         return jsonify(calculate_shares_pnl(tb, db if os.path.exists(db) else None))
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -772,12 +779,11 @@ def api_shares_pnl():
 @app.route('/api/cash-flow', methods=['POST'])
 def api_cash_flow():
     cid = get_cid()
-    tb = cpath(cid, 'current_tb.xlsx')
+    tb, db = _ensure_tb_db(cid)
     if not os.path.exists(tb):
         return jsonify({'error': 'Upload Trial Balance first'}), 400
     try:
         from cash_flow import generate_cash_flow
-        db = cpath(cid, 'current_daybook.xlsx')
         return jsonify(generate_cash_flow(tb, db if os.path.exists(db) else None))
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -785,8 +791,7 @@ def api_cash_flow():
 @app.route('/api/doc-checker', methods=['POST'])
 def api_doc_checker():
     cid = get_cid()
-    tb = cpath(cid, 'current_tb.xlsx')
-    db = cpath(cid, 'current_daybook.xlsx')
+    tb, db = _ensure_tb_db(cid)
     try:
         from doc_checker import check_documents
         return jsonify(check_documents(
