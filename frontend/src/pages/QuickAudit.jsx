@@ -84,8 +84,8 @@ export default function QuickAudit() {
       setFilesStatus(prev => ({
         ...prev,
         ...uploadedMeta,
-        tb_exists: !!uploadedMeta.tb,
-        db_exists: !!uploadedMeta.db,
+        tb_exists: uploadedMeta.tb !== undefined ? !!uploadedMeta.tb : prev.tb_exists,
+        db_exists: uploadedMeta.db !== undefined ? !!uploadedMeta.db : prev.db_exists,
       }))
     } catch (e) {
       alert('Upload failed: ' + (e.response?.data?.error || e.message))
