@@ -101,7 +101,10 @@ export default function QuickAudit() {
   })
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [results, setResults] = useState(null)
+  const _arKey = () => `audit_result_${localStorage.getItem('company_id')||'1'}`
+  const [results, setResults] = useState(() => {
+    try { const r = JSON.parse(localStorage.getItem(`audit_result_${localStorage.getItem('company_id')||'1'}`) || 'null'); return r && r.findings ? r : null } catch { return null }
+  })
   const [confirmedBank, setConfirmedBank] = useState(new Set())
   const [uploading, setUploading] = useState({})
 
@@ -130,7 +133,7 @@ export default function QuickAudit() {
     const token = localStorage.getItem('auth_token')
     axios.get(`${API_URL}/api/audit/result`, {
       headers: token ? { Authorization: `Bearer ${token}`, 'X-Company-ID': localStorage.getItem('company_id')||1 } : { 'X-Company-ID': localStorage.getItem('company_id') || 1 }
-    }).then(r => { if (r.data && r.data.findings) setResults(r.data) }).catch(() => {})
+    }).then(r => { if (r.data && r.data.findings) { setResults(r.data); try { localStorage.setItem(`audit_result_${localStorage.getItem('company_id')||'1'}`, JSON.stringify(r.data)) } catch {} } }).catch(() => {})
   }, [loadFilesStatus])
 
   const uploadFile = async (key, file) => {
@@ -167,7 +170,7 @@ export default function QuickAudit() {
       const iv2 = setInterval(() => {
         p += 3
         setProgress(p)
-        if (p >= 100) { clearInterval(iv2); setResults(r.data); setLoading(false) }
+        if (p >= 100) { clearInterval(iv2); setResults(r.data); setLoading(false); try { localStorage.setItem(_arKey(), JSON.stringify(r.data)) } catch {} }
       }, 25)
     } catch (e) {
       clearInterval(iv)
