@@ -190,8 +190,7 @@ def compute_score(results):
 # ── POST /api/upload/files ────────────────────────────────────────────────────
 def _require_cid():
     """Get company_id or return a 401 response. Use in endpoints that need auth."""
-    cid, err, code = _require_cid()
-    if err: return err, code
+    cid = get_cid()
     if cid is None:
         return None, jsonify({'error': 'Unauthorized'}), 401
     return cid, None, None
