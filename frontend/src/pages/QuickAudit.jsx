@@ -93,24 +93,34 @@ function Section({ icon, title, subtitle, badgeText, badgeColor = '#f87171', bad
 }
 
 export default function QuickAudit() {
-  const [filesStatus, setFilesStatus] = useState({})
+  const getHeaders = () => { const t=localStorage.getItem('auth_token'); return {'X-Company-ID':localStorage.getItem('company_id')||1,...(t?{Authorization:`Bearer ${t}`}:{})} }
+  const _fsKey = () => `files_status_${localStorage.getItem('company_id')||'1'}`
+
+  const [filesStatus, setFilesStatus] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(_fsKey()) || '{}') } catch { return {} }
+  })
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [results, setResults] = useState(null)
   const [confirmedBank, setConfirmedBank] = useState(new Set())
   const [uploading, setUploading] = useState({})
-  const getHeaders = () => { const t=localStorage.getItem('auth_token'); return {'X-Company-ID':localStorage.getItem('company_id')||1,...(t?{Authorization:`Bearer ${t}`}:{})} }
+
+  const _setFilesStatus = useCallback((data) => {
+    setFilesStatus(data)
+    try { localStorage.setItem(_fsKey(), JSON.stringify(data)) } catch {}
+  }, [])
 
   const loadFilesStatus = useCallback(() => {
-    axios.get(`${API_URL}/api/files/status`, { headers: getHeaders() }).then(r => setFilesStatus(r.data)).catch(() => {})
-  }, [])
+    axios.get(`${API_URL}/api/files/status`, { headers: getHeaders() })
+      .then(r => { if (r.data && Object.keys(r.data).length) _setFilesStatus(r.data) })
+      .catch(() => {})
+  }, [_setFilesStatus])
 
   useEffect(() => {
     loadFilesStatus()
-    // Load previously saved audit results so user doesn't have to re-audit on navigation
     const token = localStorage.getItem('auth_token')
     axios.get(`${API_URL}/api/audit/result`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : { 'X-Company-ID': localStorage.getItem('company_id') || 1 }
+      headers: token ? { Authorization: `Bearer ${token}`, 'X-Company-ID': localStorage.getItem('company_id')||1 } : { 'X-Company-ID': localStorage.getItem('company_id') || 1 }
     }).then(r => { if (r.data && r.data.findings) setResults(r.data) }).catch(() => {})
   }, [loadFilesStatus])
 
@@ -121,14 +131,14 @@ export default function QuickAudit() {
       const form = new FormData()
       form.append(key, file)
       const r = await axios.post(`${API_URL}/api/upload/files`, form, { headers: getHeaders() })
-      // Update UI directly from upload response — don't wait for Supabase refetch
       const uploadedMeta = r.data.status || {}
-      setFilesStatus(prev => ({
-        ...prev,
+      const newStatus = {
+        ...filesStatus,
         ...uploadedMeta,
-        tb_exists: uploadedMeta.tb !== undefined ? !!uploadedMeta.tb : prev.tb_exists,
-        db_exists: uploadedMeta.db !== undefined ? !!uploadedMeta.db : prev.db_exists,
-      }))
+        tb_exists: uploadedMeta.tb !== undefined ? !!uploadedMeta.tb : filesStatus.tb_exists,
+        db_exists: uploadedMeta.db !== undefined ? !!uploadedMeta.db : filesStatus.db_exists,
+      }
+      _setFilesStatus(newStatus)
     } catch (e) {
       alert('Upload failed: ' + (e.response?.data?.error || e.message))
     } finally {
