@@ -10,6 +10,7 @@ except ImportError:
     pass
 
 from audit_engine import run_full_audit
+from ai_audit_engine import run_ai_audit
 from bankrec_engine import run_bankrec
 import supabase_client as sb
 
@@ -230,7 +231,7 @@ def run_audit():
         db_path = lp if _ensure_local(rname(cid, 'current_db.xlsx'), lp) else None
 
     try:
-        results = run_full_audit(tb_path, db_path)
+        results = run_ai_audit(tb_path, db_path)
 
         personal_marks = load_personal(cid)
         results['cash_violations'] = [v for v in results['cash_violations']
