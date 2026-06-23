@@ -31,10 +31,11 @@ def _get_token() -> str:
 def get_cid() -> int | None:
     """
     Get company_id for the current request.
-    If Bearer token is valid, use X-Company-ID if it belongs to this user,
-    otherwise fall back to the user's default company.
-    Returns None if token is invalid (caller should return 401).
+    If Bearer token is valid, use X-Company-ID if user owns it.
+    Ownership = company.user_id matches OR user_company_map row exists.
+    If neither, auto-registers the company for this user and returns it.
     """
+    import sys
     token = _get_token()
     if token:
         try:
@@ -43,32 +44,40 @@ def get_cid() -> int | None:
             if res.user:
                 user_id = res.user.id
                 email   = res.user.email
-                # Honor X-Company-ID header if this user owns that company
                 try:
                     requested_cid = int(request.headers.get('X-Company-ID', 0))
                 except (ValueError, TypeError):
                     requested_cid = 0
                 if requested_cid:
-                    # Verify this company belongs to this user — check both direct ownership and map table
+                    # Check direct ownership (companies.user_id)
                     check = sb_client.table('companies').select('id').eq('id', requested_cid).eq('user_id', user_id).execute()
-                    print(f'[get_cid] user={user_id} requested={requested_cid} direct_check={check.data}')
+                    print(f'[get_cid] user={user_id} req={requested_cid} direct={check.data}', file=sys.stderr, flush=True)
                     if check.data:
                         return requested_cid
+                    # Check map table
                     map_check = sb_client.table('user_company_map').select('company_id').eq('user_id', user_id).eq('company_id', requested_cid).execute()
-                    print(f'[get_cid] map_check={map_check.data}')
+                    print(f'[get_cid] map={map_check.data}', file=sys.stderr, flush=True)
                     if map_check.data:
                         return requested_cid
-                    print(f'[get_cid] ownership FAILED for user={user_id} company={requested_cid} — falling back to default')
+                    # Company exists but not linked — auto-link it to this user
+                    co_exists = sb_client.table('companies').select('id').eq('id', requested_cid).execute()
+                    print(f'[get_cid] co_exists={co_exists.data}', file=sys.stderr, flush=True)
+                    if co_exists.data:
+                        try:
+                            sb_client.table('user_company_map').insert({'user_id': user_id, 'company_id': requested_cid}).execute()
+                            print(f'[get_cid] auto-linked company {requested_cid} to user {user_id}', file=sys.stderr, flush=True)
+                        except Exception as link_err:
+                            print(f'[get_cid] auto-link error: {link_err}', file=sys.stderr, flush=True)
+                        return requested_cid
                 # Fall back to default company for user
                 default = sb.get_or_create_company_for_user(user_id, email)
-                print(f'[get_cid] returning default={default}')
+                print(f'[get_cid] fallback default={default}', file=sys.stderr, flush=True)
                 return default
             else:
-                return None  # invalid token — don't fall back
+                return None
         except Exception as e:
-            print(f'[Auth] get_cid token error: {e}')
-            return None  # error verifying token — don't fall back
-    # No token at all — legacy header fallback (admin panel only)
+            print(f'[Auth] get_cid error: {e}', file=sys.stderr, flush=True)
+            return None
     try:
         return int(request.headers.get('X-Company-ID', 1))
     except (ValueError, TypeError):
