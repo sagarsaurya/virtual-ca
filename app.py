@@ -183,16 +183,40 @@ def compute_score(results):
 
 
 # ── POST /api/upload/files ────────────────────────────────────────────────────
+def _get_user_id() -> str | None:
+    """Extract verified user_id from Bearer token, or None."""
+    token = _get_token()
+    if not token:
+        return None
+    try:
+        res = sb.get_client().auth.get_user(token)
+        return res.user.id if res.user else None
+    except Exception:
+        return None
+
+
 @app.route('/api/companies', methods=['GET'])
 def get_companies():
-    return jsonify(sb.load_companies())
+    user_id = _get_user_id()
+    return jsonify(sb.load_companies(user_id))
 
 @app.route('/api/companies', methods=['POST'])
 def add_company():
     name = (request.json or {}).get('name', '').strip()
     if not name:
         return jsonify({'error': 'name required'}), 400
-    co = sb.create_company(name)
+    user_id = _get_user_id()
+    if user_id:
+        co = sb.create_company_for_user(name, user_id)
+        # Also map it
+        try:
+            sb.get_client().table('user_company_map').insert({
+                'user_id': user_id, 'company_id': co['id']
+            }).execute()
+        except Exception:
+            pass
+    else:
+        co = sb.create_company(name)
     return jsonify(co)
 
 @app.route('/api/companies/<int:cid>', methods=['DELETE'])

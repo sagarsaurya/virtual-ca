@@ -74,43 +74,57 @@ def get_or_create_company_for_user(user_id: str, email: str = None) -> int:
     """Return the company_id for this user, creating one if needed."""
     sb = get_client()
 
-    # Check if this user already has a company
+    # Check if this user already has a company via map table
     res = sb.table('user_company_map').select('company_id').eq('user_id', user_id).execute()
     if res.data:
         return res.data[0]['company_id']
 
-    # No company yet — create one named after their email prefix
-    co_name = (email or user_id[:8]).split('@')[0].title()
-    co = create_company(co_name)
+    # Also check companies table directly (for users created before map table)
+    res2 = sb.table('companies').select('id').eq('user_id', user_id).limit(1).execute()
+    if res2.data:
+        cid = res2.data[0]['id']
+        # Backfill map table
+        try:
+            sb.table('user_company_map').insert({'user_id': user_id, 'company_id': cid}).execute()
+        except Exception:
+            pass
+        return cid
+
+    # No company yet — create one called "My Books"
+    co = create_company_for_user('My Books', user_id)
     cid = co.get('id')
     if not cid:
         raise Exception(f'Failed to create company for user {user_id}')
 
     sb.table('user_company_map').insert({'user_id': user_id, 'company_id': cid}).execute()
-    print(f'[Auth] Created company {cid} ({co_name}) for user {user_id}')
+    print(f'[Auth] Created company {cid} for user {user_id}')
     return cid
 
 
 # ── COMPANIES ─────────────────────────────────────────────────────────────────
 
-def load_companies() -> list:
+def load_companies(user_id: str = None) -> list:
+    """Return only companies belonging to this user."""
     try:
         sb = get_client()
-        res = sb.table('companies').select('*').order('id').execute()
+        if user_id:
+            res = sb.table('companies').select('*').eq('user_id', user_id).order('id').execute()
+        else:
+            res = sb.table('companies').select('*').order('id').execute()
         return res.data or []
     except Exception as e:
         print(f'[Supabase] load_companies error: {e}')
-        return [{'id': 1, 'name': 'Default Company'}]
+        return []
 
 
 def create_company(name: str) -> dict:
+    """Create company without user_id (legacy/admin use)."""
     try:
         sb = get_client()
         res = sb.table('companies').insert({'name': name}).execute()
         if not res.data:
             return {}
         co = res.data[0]
-        # Pre-create empty files_meta row so uploads always do UPDATE (never INSERT)
         try:
             sb.table('files_meta').insert({'company_id': co['id'], 'meta': {}}).execute()
         except Exception as e2:
@@ -118,6 +132,24 @@ def create_company(name: str) -> dict:
         return co
     except Exception as e:
         print(f'[Supabase] create_company error: {e}')
+        return {}
+
+
+def create_company_for_user(name: str, user_id: str) -> dict:
+    """Create a company tagged to a specific user."""
+    try:
+        sb = get_client()
+        res = sb.table('companies').insert({'name': name, 'user_id': user_id}).execute()
+        if not res.data:
+            return {}
+        co = res.data[0]
+        try:
+            sb.table('files_meta').insert({'company_id': co['id'], 'meta': {}}).execute()
+        except Exception as e2:
+            print(f'[Supabase] pre-create files_meta error: {e2}')
+        return co
+    except Exception as e:
+        print(f'[Supabase] create_company_for_user error: {e}')
         return {}
 
 
@@ -129,6 +161,7 @@ def delete_company(cid: int):
         sb.table('audit_result').delete().eq('company_id', cid).execute()
         sb.table('audit_history').delete().eq('company_id', cid).execute()
         sb.table('personal_marks').delete().eq('company_id', cid).execute()
+        sb.table('user_company_map').delete().eq('company_id', cid).execute()
     except Exception as e:
         print(f'[Supabase] delete_company error: {e}')
 
