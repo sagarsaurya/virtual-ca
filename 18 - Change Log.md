@@ -4,6 +4,65 @@
 
 ---
 
+## 23 June 2026
+
+### AI Audit Engine — Evidence Quality Upgrade
+
+- ✅ **Indian law citations mandatory in every finding** — Auditor AI prompt rewritten to cite specific Indian law/standard in every evidence field
+  - Ledger issues → cite AS number + ICAI Chart of Accounts + Schedule III Companies Act 2013
+  - TDS issues → cite exact Income Tax Act section (194C/194J/194I/194H/194A) + interest u/s 201(1A)
+  - Loan issues → cite Companies Act 2013 section + CBDT circular
+  - GST issues → cite CGST Act 2017 section
+  - Every evidence must include actual rupee amount + what is overstated/understated
+  - Eliminated vague evidence like "this is wrong" — now reads like a formal CA audit observation
+
+### Cash Violations — Complete Logic Fix
+
+- ✅ **Only flags actual Cash ledger transactions** — previous logic wrongly flagged bank transfers
+  - Old approach: flagged everything not detected as a bank account (reverse logic — wrong)
+  - New approach: ONLY flags vouchers where payment account is literally "Cash" / "Petty Cash" / "Cash in Hand"
+  - Sec 40A(3) and Sec 269ST apply to CASH only — bank/NEFT/UPI/cheque are fully exempt
+  - Family loans, bank receipts, investment redemptions no longer appear as violations
+  - Confirmed by web research: CBDT and legal sources confirm bank transfers are exempt from 269ST
+
+### Ask Your CA — Switched from Groq to Claude Haiku 4.5
+
+- ✅ **`ca_agent.py`** switched from Groq (Llama 3.3-70B) to Claude Haiku 4.5 (`claude-haiku-4-5`)
+- ✅ `requirements.txt` updated — added `anthropic` package
+
+### Two-AI Audit System (Actor-Critic Pattern)
+
+- ✅ **`ai_audit_engine.py`** — complete build of two-AI system
+  - **Auditor AI** (Claude Sonnet 4.6): reads raw Tally data, finds issues, writes evidence + law + impact
+  - **Critic AI** (Claude Sonnet 4.6): reviews Auditor's findings for logical soundness — does NOT see raw data
+  - Confidence badges: `verified` (green shield) / `disputed` (yellow warning) / `low_confidence` (red X)
+  - Weighted scoring: verified=1.0, disputed=0.4, low_confidence=0.0
+  - Falls back to rule-based engine if either AI call fails
+  - Users never know 2 AIs ran — one unified result shown
+- ✅ **`QuickAudit.jsx`** — `ConfidenceBadge` component added to every finding card
+  - Click badge → expand panel showing evidence, law, critic reasoning
+  - `fallbackIssue` prop ensures panel is never blank even when AI leaves evidence empty
+
+### PT Analysis — New Page
+
+- ✅ **`PTAnalysis.jsx`** — new page at `/pt-analysis`
+  - 3 summary cards: PT shortfall, not paid to govt, deducted OK
+  - Findings with Critical/Important/Info severity + law section
+  - Month-wise breakdown table when Daybook uploaded
+  - WB PT slabs reference
+- ✅ **`pt_engine.py`** — wraps `audit_salary_compliance()` from `audit_engine.py`
+- ✅ **`/api/pt-analysis`** endpoint added to `app.py`
+- ✅ PT Analysis added to Sidebar nav and App.js routes
+
+### TDS Analysis — Rebuilt
+
+- ✅ **`TDSAnalysis.jsx`** — complete rebuild using `/api/tds-detect`
+  - 3 summary cards: Missed TDS count + exposure, Interest penalty, Already covered
+  - Full table: ledger, section, rate, amount paid, TDS due, interest, action steps
+  - Green list for already-covered TDS
+
+---
+
 ## 8 June 2026
 
 ### Bank Reconciliation — Major Upgrades

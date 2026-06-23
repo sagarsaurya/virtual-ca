@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Option B — Audit UI Mockup</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: #0f1623; color: #e2e8f0; min-height: 100vh; padding: 24px; }
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  .page-title { font-size: 22px; font-weight: 700; color: #f8fafc; margin-bottom: 4px; }
+  .page-sub   { font-size: 13px; color: #64748b; margin-bottom: 24px; }
+
+  /* Score Banner */
+  .score-banner {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid #334155;
+    border-radius: 16px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .score-big { font-size: 48px; font-weight: 800; color: #f59e0b; line-height: 1; }
+  .score-label { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+  .score-meta { font-size: 13px; color: #64748b; }
+  .score-meta span { color: #e2e8f0; font-weight: 600; }
+  .progress-wrap { flex: 1; margin: 0 32px; }
+  .progress-label { font-size: 12px; color: #94a3b8; margin-bottom: 6px; display: flex; justify-content: space-between; }
+  .progress-bar { height: 8px; background: #1e293b; border-radius: 99px; overflow: hidden; border: 1px solid #334155; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #f59e0b, #10b981); border-radius: 99px; width: 30%; transition: width 0.5s; }
+
+  /* Section Card */
+  .section-card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 16px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .section-header:hover { background: #263147; }
+  .section-left { display: flex; align-items: center; gap: 14px; }
+  .section-icon {
+    width: 40px; height: 40px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .icon-red   { background: rgba(239,68,68,0.15); }
+  .icon-amber { background: rgba(245,158,11,0.15); }
+  .icon-blue  { background: rgba(96,165,250,0.15); }
+  .icon-green { background: rgba(16,185,129,0.15); }
+  .section-name { font-size: 15px; font-weight: 600; color: #f1f5f9; }
+  .section-desc { font-size: 12px; color: #64748b; margin-top: 2px; }
+  .section-right { display: flex; align-items: center; gap: 12px; }
+  .badge { padding: 4px 10px; border-radius: 99px; font-size: 12px; font-weight: 700; }
+  .badge-red   { background: rgba(239,68,68,0.2);  color: #f87171; }
+  .badge-amber { background: rgba(245,158,11,0.2); color: #fbbf24; }
+  .badge-blue  { background: rgba(96,165,250,0.2); color: #93c5fd; }
+  .badge-green { background: rgba(16,185,129,0.2); color: #34d399; }
+  .total-amt { font-size: 13px; font-weight: 600; color: #94a3b8; }
+  .chevron { font-size: 12px; color: #475569; transition: transform 0.2s; }
+  .chevron.open { transform: rotate(180deg); }
+
+  /* Expanded body */
+  .section-body { display: none; border-top: 1px solid #334155; }
+  .section-body.open { display: block; }
+
+  /* Toolbar */
+  .toolbar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 20px; background: #162032; flex-wrap: wrap;
+  }
+  .toolbar input {
+    flex: 1; min-width: 160px;
+    background: #1e293b; border: 1px solid #334155; border-radius: 8px;
+    color: #e2e8f0; padding: 7px 12px; font-size: 13px; outline: none;
+  }
+  .toolbar input:focus { border-color: #f59e0b; }
+  .filter-tabs { display: flex; gap: 6px; }
+  .ftab {
+    padding: 5px 12px; border-radius: 8px; font-size: 12px; font-weight: 600;
+    cursor: pointer; border: 1px solid #334155; color: #94a3b8; background: transparent;
+    transition: all 0.15s;
+  }
+  .ftab.active, .ftab:hover { background: #f59e0b; color: #0f1623; border-color: #f59e0b; }
+  .sort-select {
+    background: #1e293b; border: 1px solid #334155; border-radius: 8px;
+    color: #94a3b8; padding: 7px 12px; font-size: 12px; outline: none; cursor: pointer;
+  }
+  .bulk-btn {
+    padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
+    cursor: pointer; border: none;
+    background: rgba(16,185,129,0.2); color: #34d399;
+    transition: all 0.15s;
+  }
+  .bulk-btn:hover { background: rgba(16,185,129,0.35); }
+
+  /* Group Row */
+  .group-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 13px 20px; border-bottom: 1px solid #1e293b;
+    transition: background 0.1s; cursor: pointer;
+  }
+  .group-row:hover { background: #162032; }
+  .group-row:last-child { border-bottom: none; }
+  .group-left { display: flex; align-items: center; gap: 12px; }
+  .party-avatar {
+    width: 34px; height: 34px; border-radius: 10px;
+    background: linear-gradient(135deg, #1d4ed8, #7c3aed);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: white; flex-shrink: 0;
+  }
+  .party-name { font-size: 14px; font-weight: 600; color: #f1f5f9; }
+  .party-meta { font-size: 11px; color: #64748b; margin-top: 1px; }
+  .group-right { display: flex; align-items: center; gap: 10px; }
+  .amount-text { font-size: 14px; font-weight: 700; color: #f87171; }
+  .sec-tag {
+    padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700;
+    background: rgba(239,68,68,0.15); color: #f87171;
+  }
+  .action-btn {
+    padding: 5px 12px; border-radius: 8px; font-size: 11px; font-weight: 600;
+    cursor: pointer; border: none; transition: all 0.15s;
+  }
+  .btn-bank  { background: rgba(16,185,129,0.15); color: #34d399; }
+  .btn-bank:hover { background: rgba(16,185,129,0.3); }
+  .btn-cash  { background: rgba(239,68,68,0.15); color: #f87171; }
+  .btn-cash:hover { background: rgba(239,68,68,0.3); }
+  .btn-expand { background: rgba(100,116,139,0.15); color: #94a3b8; font-size: 10px; }
+  .btn-expand:hover { background: rgba(100,116,139,0.3); }
+
+  /* Sub-rows (drill-down) */
+  .sub-rows { display: none; background: #0f1623; }
+  .sub-rows.open { display: block; }
+  .sub-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 20px 9px 66px;
+    border-bottom: 1px solid #1a2540; font-size: 12px;
+  }
+  .sub-row:last-child { border-bottom: none; }
+  .sub-date { color: #64748b; width: 90px; flex-shrink: 0; }
+  .sub-vch  { color: #94a3b8; flex: 1; }
+  .sub-amt  { color: #fca5a5; font-weight: 600; width: 100px; text-align: right; }
+  .sub-actions { display: flex; gap: 6px; margin-left: 12px; }
+
+  /* Pagination */
+  .pagination { padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #1e293b; }
+  .page-info { font-size: 12px; color: #64748b; }
+  .load-more {
+    padding: 6px 16px; border-radius: 8px; font-size: 12px; font-weight: 600;
+    background: rgba(245,158,11,0.15); color: #fbbf24;
+    border: 1px solid rgba(245,158,11,0.3); cursor: pointer;
+    transition: all 0.15s;
+  }
+  .load-more:hover { background: rgba(245,158,11,0.3); }
+
+  /* Resolved row */
+  .resolved { opacity: 0.4; }
+  .resolved .party-name::after { content: ' ✓'; color: #34d399; }
+
+  /* Section 2 — Ledger table style */
+  .ledger-table { width: 100%; border-collapse: collapse; }
+  .ledger-table th {
+    text-align: left; font-size: 11px; font-weight: 600; color: #64748b;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 10px 20px; border-bottom: 1px solid #334155; background: #162032;
+  }
+  .ledger-table td { padding: 12px 20px; border-bottom: 1px solid #1e293b; font-size: 13px; }
+  .ledger-table tr:last-child td { border-bottom: none; }
+  .ledger-table tr:hover td { background: #162032; }
+  .fix-tag {
+    display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px;
+    font-weight: 600; background: rgba(245,158,11,0.15); color: #fbbf24;
+  }
+  .wrong-grp { color: #f87171; }
+  .right-grp { color: #34d399; }
+  .ledger-name { font-weight: 600; color: #f1f5f9; }
+  .ledger-bal  { font-weight: 600; color: #94a3b8; }
+
+  /* Note box */
+  .note-box {
+    margin: 0 20px 16px; padding: 10px 14px; border-radius: 10px;
+    background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2);
+    font-size: 12px; color: #fbbf24;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-title">Full Audit</div>
+<div class="page-sub">AJAY KUMAR LADDHA · 1 Apr 2025 – 31 Mar 2026</div>
+
+<!-- Score Banner -->
+<div class="score-banner">
+  <div>
+    <div class="score-big">62<span style="font-size:24px;color:#94a3b8">/100</span></div>
+    <div class="score-label">Compliance Health Score</div>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span>Issues Reviewed</span>
+      <span style="color:#f59e0b; font-weight:700;">48 / 160 resolved</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill"></div></div>
+    <div style="font-size:11px; color:#475569; margin-top:6px;">112 items still need your confirmation</div>
+  </div>
+  <div class="score-meta" style="text-align:right;">
+    <div>Critical <span>2</span></div>
+    <div style="margin-top:4px;">Warnings <span>160</span></div>
+    <div style="margin-top:4px;">Questions <span>67</span></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 1 — Cash Violations (OPEN by default) -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section-card">
+  <div class="section-header" onclick="toggleSection('cash')">
+    <div class="section-left">
+      <div class="section-icon icon-red">💸</div>
+      <div>
+        <div class="section-name">Cash Violations</div>
+        <div class="section-desc">Sec 40A(3) &gt;₹10k &nbsp;·&nbsp; Sec 269ST &gt;₹2L &nbsp;·&nbsp; Grouped by party</div>
+      </div>
+    </div>
+    <div class="section-right">
+      <div class="total-amt">₹68,42,800 total</div>
+      <span class="badge badge-red">158 items</span>
+      <span class="chevron open" id="chevron-cash">▼</span>
+    </div>
+  </div>
+
+  <div class="section-body open" id="body-cash">
+    <div class="toolbar">
+      <input type="text" placeholder="🔍  Search party name..." />
+      <div class="filter-tabs">
+        <button class="ftab active">All</button>
+        <button class="ftab">Sec 40A(3)</button>
+        <button class="ftab">Sec 269ST</button>
+        <button class="ftab">Unreviewed</button>
+      </div>
+      <select class="sort-select">
+        <option>Sort: Amount ↓</option>
+        <option>Sort: Date ↓</option>
+        <option>Sort: Party A–Z</option>
+      </select>
+      <button class="bulk-btn">✓ Confirm All as Bank</button>
+    </div>
+
+    <div class="note-box">
+      💡 <strong>Tip:</strong> If all payments were via Bank/NEFT/UPI, click <strong>"Confirm All as Bank"</strong> above to clear all 158 in one go. Or confirm party-by-party below.
+    </div>
+
+    <!-- Group: Anil Gupta -->
+    <div>
+      <div class="group-row" onclick="toggleSub('sub-anil')">
+        <div class="group-left">
+          <div class="party-avatar">AG</div>
+          <div>
+            <div class="party-name">Anil Gupta</div>
+            <div class="party-meta">14 transactions · 2025-04-02 to 2026-01-18</div>
+          </div>
+        </div>
+        <div class="group-right">
+          <span class="sec-tag">40A(3)</span>
+          <span class="amount-text">₹28,40,000</span>
+          <button class="action-btn btn-bank">✓ All Bank</button>
+          <button class="action-btn btn-cash">✗ Cash</button>
+          <button class="action-btn btn-expand" id="expand-anil">▶ 14 txns</button>
+        </div>
+      </div>
+      <!-- Sub rows -->
+      <div class="sub-rows" id="sub-anil">
+        <div class="sub-row">
+          <span class="sub-date">02 Apr 2025</span>
+          <span class="sub-vch">Payment #1042</span>
+          <span class="sub-amt">₹4,64,800</span>
+          <div class="sub-actions">
+            <button class="action-btn btn-bank" style="font-size:10px; padding:3px 8px;">Bank</button>
+            <button class="action-btn btn-cash" style="font-size:10px; padding:3px 8px;">Cash</button>
+          </div>
+        </div>
+        <div class="sub-row">
+          <span class="sub-date">15 Apr 2025</span>
+          <span class="sub-vch">Payment #1089</span>
+          <span class="sub-amt">₹2,10,000</span>
+          <div class="sub-actions">
+            <button class="action-btn btn-bank" style="font-size:10px; padding:3px 8px;">Bank</button>
+            <button class="action-btn btn-cash" style="font-size:10px; padding:3px 8px;">Cash</button>
+          </div>
+        </div>
+        <div class="sub-row" style="color:#475569; font-style:italic; padding-left:66px;">
+          + 12 more transactions — click "▶ 14 txns" to expand all
+        </div>
+      </div>
+    </div>
+
+    <!-- Group: Mridula Laddha -->
+    <div>
+      <div class="group-row">
+        <div class="group-left">
+          <div class="party-avatar" style="background: linear-gradient(135deg, #dc2626, #9333ea);">ML</div>
+          <div>
+            <div class="party-name">Mridula Laddha</div>
+            <div class="party-meta">6 transactions · 2025-04-02 to 2025-11-30</div>
+          </div>
+        </div>
+        <div class="group-right">
+          <span class="sec-tag">269ST</span>
+          <span class="amount-text">₹18,00,000</span>
+          <button class="action-btn btn-bank">✓ All Bank</button>
+          <button class="action-btn btn-cash">✗ Cash</button>
+          <button class="action-btn btn-expand">▶ 6 txns</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Group: AM Mobile Pvt Ltd — RESOLVED -->
+    <div class="resolved">
+      <div class="group-row">
+        <div class="group-left">
+          <div class="party-avatar" style="background: linear-gradient(135deg, #059669, #0284c7);">AM</div>
+          <div>
+            <div class="party-name">AM Mobile Pvt Ltd</div>
+            <div class="party-meta">3 transactions · confirmed as Bank payment</div>
+          </div>
+        </div>
+        <div class="group-right">
+          <span class="sec-tag">40A(3)</span>
+          <span class="amount-text" style="color:#64748b;">₹1,20,000</span>
+          <span style="font-size:12px; color:#34d399; font-weight:600;">✓ Confirmed Bank</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Group: Ram Prasad Trading -->
+    <div>
+      <div class="group-row">
+        <div class="group-left">
+          <div class="party-avatar" style="background: linear-gradient(135deg, #b45309, #d97706);">RP</div>
+          <div>
+            <div class="party-name">Ram Prasad Trading Co.</div>
+            <div class="party-meta">22 transactions · 2025-04-10 to 2026-02-28</div>
+          </div>
+        </div>
+        <div class="group-right">
+          <span class="sec-tag">40A(3)</span>
+          <span class="amount-text">₹12,60,000</span>
+          <button class="action-btn btn-bank">✓ All Bank</button>
+          <button class="action-btn btn-cash">✗ Cash</button>
+          <button class="action-btn btn-expand">▶ 22 txns</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="pagination">
+      <span class="page-info">Showing 4 of 42 parties &nbsp;·&nbsp; 48 transactions confirmed, 110 pending</span>
+      <button class="load-more">Load More Parties ▼</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 2 — Ledger Classification (CLOSED)   -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section-card">
+  <div class="section-header" onclick="toggleSection('ledger')">
+    <div class="section-left">
+      <div class="section-icon icon-amber">📋</div>
+      <div>
+        <div class="section-name">Ledger Classification</div>
+        <div class="section-desc">Wrong groups · misclassified accounts</div>
+      </div>
+    </div>
+    <div class="section-right">
+      <span class="badge badge-amber">1 issue</span>
+      <span class="chevron" id="chevron-ledger">▼</span>
+    </div>
+  </div>
+  <div class="section-body" id="body-ledger">
+    <table class="ledger-table">
+      <thead>
+        <tr>
+          <th>Ledger Name</th>
+          <th>Current Group</th>
+          <th>Should Be</th>
+          <th>Balance</th>
+          <th>Fix</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="ledger-name">Credit Card Membership Fee</span></td>
+          <td><span class="wrong-grp">Indirect Expenses ✗</span></td>
+          <td><span class="right-grp">Sundry Creditors ✓</span></td>
+          <td><span class="ledger-bal">₹60,500</span></td>
+          <td><span class="fix-tag">Tally: Alter Ledger</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 3 — TDS Compliance (CLOSED)          -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section-card">
+  <div class="section-header" onclick="toggleSection('tds')">
+    <div class="section-left">
+      <div class="section-icon icon-blue">🧾</div>
+      <div>
+        <div class="section-name">TDS Compliance</div>
+        <div class="section-desc">Sec 194C · 194J · 194I · 194H</div>
+      </div>
+    </div>
+    <div class="section-right">
+      <div class="total-amt">₹84,200 exposure</div>
+      <span class="badge badge-blue">5 parties</span>
+      <span class="chevron" id="chevron-tds">▼</span>
+    </div>
+  </div>
+  <div class="section-body" id="body-tds">
+    <table class="ledger-table">
+      <thead>
+        <tr>
+          <th>Party / Ledger</th>
+          <th>Section</th>
+          <th>Total Paid</th>
+          <th>TDS Due</th>
+          <th>Interest Est.</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="ledger-name">Office Rent Paid</span></td>
+          <td><span class="sec-tag" style="background:rgba(96,165,250,0.15); color:#93c5fd;">194I</span></td>
+          <td>₹3,60,000</td>
+          <td style="color:#f87171; font-weight:700;">₹36,000 @ 10%</td>
+          <td style="color:#fbbf24;">₹6,480</td>
+        </tr>
+        <tr>
+          <td><span class="ledger-name">Professional Charges</span></td>
+          <td><span class="sec-tag" style="background:rgba(96,165,250,0.15); color:#93c5fd;">194J</span></td>
+          <td>₹1,80,000</td>
+          <td style="color:#f87171; font-weight:700;">₹18,000 @ 10%</td>
+          <td style="color:#fbbf24;">₹3,240</td>
+        </tr>
+        <tr>
+          <td><span class="ledger-name">Freight & Transport</span></td>
+          <td><span class="sec-tag" style="background:rgba(96,165,250,0.15); color:#93c5fd;">194C</span></td>
+          <td>₹2,80,000</td>
+          <td style="color:#f87171; font-weight:700;">₹2,800 @ 1%</td>
+          <td style="color:#fbbf24;">₹504</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 4 — Outstanding Balances (CLOSED)    -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section-card">
+  <div class="section-header" onclick="toggleSection('outstanding')">
+    <div class="section-left">
+      <div class="section-icon icon-green">⚖️</div>
+      <div>
+        <div class="section-name">Outstanding Balances</div>
+        <div class="section-desc">Abnormal balances · suspense accounts</div>
+      </div>
+    </div>
+    <div class="section-right">
+      <span class="badge badge-green">3 items</span>
+      <span class="chevron" id="chevron-outstanding">▼</span>
+    </div>
+  </div>
+  <div class="section-body" id="body-outstanding">
+    <table class="ledger-table">
+      <thead>
+        <tr><th>Ledger</th><th>Issue</th><th>Balance</th><th>Severity</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="ledger-name">Difference in Opening Bal.</span></td>
+          <td style="color:#94a3b8; font-size:12px;">Last year closing ≠ this year opening</td>
+          <td>₹12,400</td>
+          <td><span class="badge badge-red" style="font-size:10px;">Critical</span></td>
+        </tr>
+        <tr>
+          <td><span class="ledger-name">Suspense A/c</span></td>
+          <td style="color:#94a3b8; font-size:12px;">Uncleared entries — identify & move</td>
+          <td>₹45,000</td>
+          <td><span class="badge badge-amber" style="font-size:10px;">Warning</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 5 — Large Expenses / TDS Bill Check  -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section-card">
+  <div class="section-header" onclick="toggleSection('large')">
+    <div class="section-left">
+      <div class="section-icon icon-amber">🧾</div>
+      <div>
+        <div class="section-name">Large Expenses — TDS Bill Check</div>
+        <div class="section-desc">Payments above TDS threshold · verify deduction</div>
+      </div>
+    </div>
+    <div class="section-right">
+      <div class="total-amt">₹12,40,000 total</div>
+      <span class="badge badge-amber">14 entries</span>
+      <span class="chevron" id="chevron-large">▼</span>
+    </div>
+  </div>
+  <div class="section-body" id="body-large">
+    <table class="ledger-table">
+      <thead>
+        <tr><th>Date</th><th>Party</th><th>Amount</th><th>Voucher Type</th><th>TDS Note</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color:#94a3b8;">12 May 2025</td>
+          <td><span class="ledger-name">Sharma & Associates</span></td>
+          <td style="font-weight:700; color:#fbbf24;">₹1,80,000</td>
+          <td><span class="fix-tag">Payment</span></td>
+          <td style="color:#f87171; font-size:12px;">194J — Professional fee &gt;₹50,000. Was TDS deducted?</td>
+        </tr>
+        <tr>
+          <td style="color:#94a3b8;">03 Jun 2025</td>
+          <td><span class="ledger-name">National Freight Co.</span></td>
+          <td style="font-weight:700; color:#fbbf24;">₹2,40,000</td>
+          <td><span class="fix-tag">Payment</span></td>
+          <td style="color:#f87171; font-size:12px;">194C — Transport &gt;₹75,000 annual. TDS @ 1% due.</td>
+        </tr>
+        <tr>
+          <td style="color:#94a3b8;">18 Jul 2025</td>
+          <td><span class="ledger-name">City Properties Ltd</span></td>
+          <td style="font-weight:700; color:#fbbf24;">₹3,60,000</td>
+          <td><span class="fix-tag">Journal</span></td>
+          <td style="color:#f87171; font-size:12px;">194I — Rent &gt;₹2,40,000 annual. TDS @ 10% = ₹36,000.</td>
+        </tr>
+        <tr>
+          <td style="color:#64748b; font-style:italic;" colspan="5">+ 11 more entries · click Load More</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="pagination">
+      <span class="page-info">Showing 3 of 14 entries</span>
+      <button class="load-more">Load More ▼</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 6 — Loans & Director Advances        -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section-card">
+  <div class="section-header" onclick="toggleSection('loans')">
+    <div class="section-left">
+      <div class="section-icon icon-red">🏦</div>
+      <div>
+        <div class="section-name">Loans & Director Advances</div>
+        <div class="section-desc">Sec 269SS/269T · director loans · long-pending advances</div>
+      </div>
+    </div>
+    <div class="section-right">
+      <div class="total-amt">₹8,50,000 balance</div>
+      <span class="badge badge-red">3 items</span>
+      <span class="chevron" id="chevron-loans">▼</span>
+    </div>
+  </div>
+  <div class="section-body" id="body-loans">
+    <table class="ledger-table">
+      <thead>
+        <tr><th>Ledger</th><th>Balance</th><th>Issue</th><th>Action</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="ledger-name">Loan from Director — Ajay Laddha</span></td>
+          <td style="color:#f87171; font-weight:700;">₹5,00,000 Cr</td>
+          <td style="color:#94a3b8; font-size:12px;">Director loan &gt;₹20,000 — must be via banking channel (Sec 269SS)</td>
+          <td><span class="fix-tag">Verify source</span></td>
+        </tr>
+        <tr>
+          <td><span class="ledger-name">Advance to Supplier — Ravi Traders</span></td>
+          <td style="color:#fbbf24; font-weight:700;">₹2,50,000 Dr</td>
+          <td style="color:#94a3b8; font-size:12px;">Advance pending &gt;180 days — no goods received. Write-off risk.</td>
+          <td><span class="fix-tag">Review</span></td>
+        </tr>
+        <tr>
+          <td><span class="ledger-name">Staff Advance — Mohan Kumar</span></td>
+          <td style="color:#fbbf24; font-weight:700;">₹1,00,000 Dr</td>
+          <td style="color:#94a3b8; font-size:12px;">Employee advance outstanding &gt;90 days</td>
+          <td><span class="fix-tag">Recover/Write-off</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 7 — Bank Accounts Detected           -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section-card">
+  <div class="section-header" onclick="toggleSection('bank')">
+    <div class="section-left">
+      <div class="section-icon icon-green">🏧</div>
+      <div>
+        <div class="section-name">Bank Accounts in Books</div>
+        <div class="section-desc">All bank ledgers detected · reconcile each with statement</div>
+      </div>
+    </div>
+    <div class="section-right">
+      <div class="total-amt">₹14,32,600 total</div>
+      <span class="badge badge-green">3 accounts</span>
+      <span class="chevron" id="chevron-bank">▼</span>
+    </div>
+  </div>
+  <div class="section-body" id="body-bank">
+    <table class="ledger-table">
+      <thead>
+        <tr><th>Bank Ledger</th><th>Book Balance</th><th>Dr / Cr</th><th>Note</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="ledger-name">HDFC Bank — Current A/c</span></td>
+          <td style="color:#34d399; font-weight:700;">₹8,42,600</td>
+          <td><span class="badge badge-green" style="font-size:10px;">Dr (Asset)</span></td>
+          <td style="color:#94a3b8; font-size:12px;">Reconcile with bank statement · check for uncleared cheques</td>
+        </tr>
+        <tr>
+          <td><span class="ledger-name">SBI — Savings A/c</span></td>
+          <td style="color:#34d399; font-weight:700;">₹4,90,000</td>
+          <td><span class="badge badge-green" style="font-size:10px;">Dr (Asset)</span></td>
+          <td style="color:#94a3b8; font-size:12px;">Reconcile with Oct–Mar statements</td>
+        </tr>
+        <tr>
+          <td><span class="ledger-name">Petty Cash</span></td>
+          <td style="color:#fbbf24; font-weight:700;">₹1,00,000</td>
+          <td><span class="badge badge-amber" style="font-size:10px;">Dr</span></td>
+          <td style="color:#f87171; font-size:12px;">⚠️ High cash balance — verify physical count</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 8 — Salary / PF / PT Compliance      -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section-card">
+  <div class="section-header" onclick="toggleSection('salary')">
+    <div class="section-left">
+      <div class="section-icon icon-blue">👥</div>
+      <div>
+        <div class="section-name">Salary / PF / PT Compliance</div>
+        <div class="section-desc">EPF Act · Professional Tax (WB) · salary deductions</div>
+      </div>
+    </div>
+    <div class="section-right">
+      <div class="total-amt">₹42,000 liability</div>
+      <span class="badge badge-blue">4 issues</span>
+      <span class="chevron" id="chevron-salary">▼</span>
+    </div>
+  </div>
+  <div class="section-body" id="body-salary">
+    <table class="ledger-table">
+      <thead>
+        <tr><th>Issue</th><th>Amount</th><th>Severity</th><th>Fix</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color:#f1f5f9; font-weight:600;">PF Contribution not found in books</td>
+          <td style="color:#f87171; font-weight:700;">₹28,800 est.</td>
+          <td><span class="badge badge-red" style="font-size:10px;">Critical</span></td>
+          <td style="color:#94a3b8; font-size:12px;">12% of ₹2,40,000 salary · EPF Act Sec 14B penalty</td>
+        </tr>
+        <tr>
+          <td style="color:#f1f5f9; font-weight:600;">PT Payable ledger missing</td>
+          <td style="color:#fbbf24; font-weight:700;">₹9,600 est.</td>
+          <td><span class="badge badge-amber" style="font-size:10px;">Warning</span></td>
+          <td style="color:#94a3b8; font-size:12px;">WB PT @ ₹200/month per employee · deposit via GRIPS by 21st</td>
+        </tr>
+        <tr>
+          <td style="color:#f1f5f9; font-weight:600;">Salary ledger under Direct Expenses</td>
+          <td style="color:#94a3b8;">₹2,40,000</td>
+          <td><span class="badge badge-amber" style="font-size:10px;">Warning</span></td>
+          <td style="color:#94a3b8; font-size:12px;">Move to Indirect Expenses group in Tally</td>
+        </tr>
+        <tr>
+          <td style="color:#f1f5f9; font-weight:600;">ESI not deducted (salary &lt;₹21,000/month)</td>
+          <td style="color:#34d399; font-weight:700;">N/A</td>
+          <td><span class="badge badge-green" style="font-size:10px;">Info</span></td>
+          <td style="color:#94a3b8; font-size:12px;">ESI threshold ₹21,000/month — check if any employee crosses</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div style="height:40px;"></div>
+
+<script>
+function toggleSection(id) {
+  const body    = document.getElementById('body-' + id);
+  const chevron = document.getElementById('chevron-' + id);
+  const isOpen  = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  if (chevron) chevron.classList.toggle('open', !isOpen);
+}
+
+function toggleSub(id) {
+  const sub    = document.getElementById(id);
+  const expand = document.getElementById('expand-' + id.replace('sub-',''));
+  if (!sub) return;
+  const isOpen = sub.classList.contains('open');
+  sub.classList.toggle('open', !isOpen);
+  if (expand) expand.textContent = isOpen ? '▶ 14 txns' : '▼ 14 txns';
+}
+</script>
+</body>
+</html>

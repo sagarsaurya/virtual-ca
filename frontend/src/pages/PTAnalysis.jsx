@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://virtual-ca.onrender.com'
@@ -12,6 +12,8 @@ export default function PTAnalysis() {
   const [data, setData]       = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState(null)
+
+  useEffect(()=>{axios.get(`${API_URL}/api/pt-analysis`,{headers:getHeaders()}).then(r=>{if(r.data&&Object.keys(r.data).length>0)setData(r.data)}).catch(()=>{})},[])
 
   const run = async () => {
     setLoading(true)

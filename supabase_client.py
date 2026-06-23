@@ -302,3 +302,31 @@ def load_audit_result(cid: int = 1) -> dict:
     except Exception as e:
         print(f'[Supabase] load_audit_result error: {e}')
         return {}
+
+
+# ── DATABASE: feature_cache (one row per company per feature) ─────────────────
+
+def save_feature_cache(feature: str, result: dict, cid: int = 1):
+    """Save a feature result so it persists across page navigation."""
+    try:
+        sb = get_client()
+        res = sb.table('feature_cache').select('id').eq('company_id', cid).eq('feature', feature).execute()
+        if res.data:
+            sb.table('feature_cache').update({'result': result}).eq('company_id', cid).eq('feature', feature).execute()
+        else:
+            sb.table('feature_cache').insert({'company_id': cid, 'feature': feature, 'result': result}).execute()
+    except Exception as e:
+        print(f'[Supabase] save_feature_cache error ({feature}): {e}')
+
+
+def load_feature_cache(feature: str, cid: int = 1) -> dict:
+    """Load last saved result for a feature. Returns {} if not yet run."""
+    try:
+        sb = get_client()
+        res = sb.table('feature_cache').select('result').eq('company_id', cid).eq('feature', feature).execute()
+        if res.data:
+            return res.data[0].get('result', {})
+        return {}
+    except Exception as e:
+        print(f'[Supabase] load_feature_cache error ({feature}): {e}')
+        return {}

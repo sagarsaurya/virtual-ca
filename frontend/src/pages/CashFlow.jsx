@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 const API = process.env.REACT_APP_API_URL || 'https://virtual-ca.onrender.com'
 const fmt = n => '₹' + Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:0})
@@ -45,6 +45,10 @@ export default function CashFlow() {
   const cid=localStorage.getItem('company_id')||1
   const token=localStorage.getItem('auth_token')
   const h={'X-Company-ID':cid,...(token?{Authorization:`Bearer ${token}`}:{})}
+
+  useEffect(()=>{
+    axios.get(`${API}/api/cash-flow`,{headers:h}).then(r=>{if(r.data&&Object.keys(r.data).length>0)setData(r.data)}).catch(()=>{})
+  },[])
 
   const run=async()=>{
     setLoading(true);setError('')

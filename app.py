@@ -854,6 +854,12 @@ def _ensure_tb_db(cid):
         _ensure_local(rname(cid, 'current_db.xlsx'), db)
     return tb, db
 
+@app.route('/api/balance-sheet', methods=['GET'])
+def api_balance_sheet_load():
+    cid, err, code = _require_cid()
+    if err: return err, code
+    return jsonify(sb.load_feature_cache('balance_sheet', cid))
+
 @app.route('/api/balance-sheet', methods=['POST'])
 def api_balance_sheet():
     cid, err, code = _require_cid()
@@ -866,9 +872,16 @@ def api_balance_sheet():
         from ai_insights import generate_insight
         result = generate_balance_sheet(tb)
         result['ai_insight'] = generate_insight('balance_sheet', result)
+        sb.save_feature_cache('balance_sheet', result, cid)
         return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/tds-detect', methods=['GET'])
+def api_tds_detect_load():
+    cid, err, code = _require_cid()
+    if err: return err, code
+    return jsonify(sb.load_feature_cache('tds_detect', cid))
 
 @app.route('/api/tds-detect', methods=['POST'])
 def api_tds_detect():
@@ -882,9 +895,16 @@ def api_tds_detect():
         from ai_insights import generate_insight
         result = detect_missed_tds(tb, db if os.path.exists(db) else None)
         result['ai_insight'] = generate_insight('tds_detect', result)
+        sb.save_feature_cache('tds_detect', result, cid)
         return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/gst-return', methods=['GET'])
+def api_gst_return_load():
+    cid, err, code = _require_cid()
+    if err: return err, code
+    return jsonify(sb.load_feature_cache('gst_return', cid))
 
 @app.route('/api/gst-return', methods=['POST'])
 def api_gst_return():
@@ -898,9 +918,16 @@ def api_gst_return():
         from ai_insights import generate_insight
         result = parse_gst_data(tb, db if os.path.exists(db) else None)
         result['ai_insight'] = generate_insight('gst_return', result)
+        sb.save_feature_cache('gst_return', result, cid)
         return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/shares-pnl', methods=['GET'])
+def api_shares_pnl_load():
+    cid, err, code = _require_cid()
+    if err: return err, code
+    return jsonify(sb.load_feature_cache('shares_pnl', cid))
 
 @app.route('/api/shares-pnl', methods=['POST'])
 def api_shares_pnl():
@@ -914,9 +941,16 @@ def api_shares_pnl():
         from ai_insights import generate_insight
         result = calculate_shares_pnl(tb, db if os.path.exists(db) else None)
         result['ai_insight'] = generate_insight('shares_pnl', result)
+        sb.save_feature_cache('shares_pnl', result, cid)
         return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/cash-flow', methods=['GET'])
+def api_cash_flow_load():
+    cid, err, code = _require_cid()
+    if err: return err, code
+    return jsonify(sb.load_feature_cache('cash_flow', cid))
 
 @app.route('/api/cash-flow', methods=['POST'])
 def api_cash_flow():
@@ -930,9 +964,16 @@ def api_cash_flow():
         from ai_insights import generate_insight
         result = generate_cash_flow(tb, db if os.path.exists(db) else None)
         result['ai_insight'] = generate_insight('cash_flow', result)
+        sb.save_feature_cache('cash_flow', result, cid)
         return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/doc-checker', methods=['GET'])
+def api_doc_checker_load():
+    cid, err, code = _require_cid()
+    if err: return err, code
+    return jsonify(sb.load_feature_cache('doc_checker', cid))
 
 @app.route('/api/doc-checker', methods=['POST'])
 def api_doc_checker():
@@ -948,9 +989,12 @@ def api_doc_checker():
         )
         insight = generate_insight('doc_checker', {'items': result} if isinstance(result, list) else result)
         if isinstance(result, list):
-            return jsonify({'items': result, 'ai_insight': insight})
-        result['ai_insight'] = insight
-        return jsonify(result)
+            final = {'items': result, 'ai_insight': insight}
+        else:
+            result['ai_insight'] = insight
+            final = result
+        sb.save_feature_cache('doc_checker', final, cid)
+        return jsonify(final)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -1006,6 +1050,12 @@ def api_broker_rec():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/pt-analysis', methods=['GET'])
+def api_pt_analysis_load():
+    cid, err, code = _require_cid()
+    if err: return err, code
+    return jsonify(sb.load_feature_cache('pt_analysis', cid))
+
 @app.route('/api/pt-analysis', methods=['POST'])
 def api_pt_analysis():
     cid, err, code = _require_cid()
@@ -1018,6 +1068,7 @@ def api_pt_analysis():
         from ai_insights import generate_insight
         result = run_pt_analysis(tb, db if os.path.exists(db) else None)
         result['ai_insight'] = generate_insight('pt_analysis', result)
+        sb.save_feature_cache('pt_analysis', result, cid)
         return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500

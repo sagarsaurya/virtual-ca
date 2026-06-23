@@ -4,22 +4,41 @@
 
 ---
 
-## All 12 Features at a Glance
+## All Features at a Glance
 
-| # | Feature | Status |
-|---|---|---|
-| 1 | Smart Upload & Data Mapping | ✅ Built |
-| 2 | Instant Analysis Results (colour-coded) | ✅ Built |
-| 3 | Error Explanation Panel | ✅ Built |
-| 4 | Ledger Drill-Down | ✅ Built |
-| 5 | Auto-Correction Journal Entry | ✅ Built |
-| 6 | Fix Workflow & Team Collaboration | ✅ Built |
-| 7 | Export Back to Tally (XML/Excel/CSV) | ✅ Built |
-| 8 | Bank Reconciliation Module | ✅ Built |
-| 9 | TDS Analysis (section-wise + interest) | ✅ Built |
-| 10 | PT Analysis — Kolkata/WB slabs | ✅ Built |
-| 11 | Ask Your CA — Contextual AI Chat | ✅ Built |
-| 12 | Compliance Calendar | ✅ Built |
+| # | Feature | Status | Source |
+|---|---|---|---|
+| 1 | Smart Upload & Data Mapping | ✅ Built | — |
+| 2 | Instant Analysis Results (colour-coded) | ✅ Built | — |
+| 3 | Error Explanation Panel | ✅ Built | — |
+| 4 | Ledger Drill-Down | ✅ Built | — |
+| 5 | Auto-Correction Journal Entry | ✅ Built | — |
+| 6 | Fix Workflow & Team Collaboration | ✅ Built | — |
+| 7 | Export Back to Tally (XML/Excel/CSV) | ✅ Built | — |
+| 8 | Bank Reconciliation Module | ❌ Dropped | Sandeep Bajoria — Tally already handles it |
+| 9 | Party-wise Ledger Reconciliation | ✅ Keep & improve | Sandeep Bajoria — confirmed good |
+| 10 | TDS Detection + AI Suggestions | 🔄 Upgrade needed | Sandeep Bajoria — detect missed TDS, suggest action |
+| 11 | PT Analysis — Kolkata/WB slabs | ✅ Built | — |
+| 12 | Ask Your CA — Contextual AI Chat | ✅ Built | — |
+| 13 | Compliance Calendar | ✅ Built | — |
+| 14 | Balance Sheet from Trial Balance | 🆕 New | Sandeep Bajoria |
+| 15 | P&L on Shares + Mutual Funds | 🆕 New | Sandeep Bajoria |
+| 16 | Tally vs Broker Statement Reconciliation | 🆕 New | Sandeep Bajoria |
+| 17 | Document Availability against Entries | 🆕 New | Sandeep Bajoria |
+| 18 | GST Return File Generator (GSTR format) | 🆕 New | Sandeep Bajoria |
+| 19 | Fund Flow + Cash Flow + Budget | 🆕 New | Sandeep Bajoria |
+
+---
+
+## Sandeep Bajoria Meeting — 12 June 2026
+
+Real feedback from CA/client meeting. Key decisions:
+
+- **Bank Rec DROPPED** — Tally already does it. Not worth building.
+- **Party-wise Ledger Rec CONFIRMED** — CAs actually use this.
+- **6 new high-value features identified** — all grounded in real CA workflows.
+
+See [[20 - Sandeep Bajoria Features]] for detailed build specs.
 
 ---
 

@@ -44,6 +44,23 @@
 
 ---
 
+## Phase 2B — CA Feedback Features (Sandeep Bajoria — 12 June 2026)
+
+**Goal:** Build what real CAs actually need
+
+- [ ] TDS Detection upgrade — detect missed TDS from ledger, AI suggests section + action
+- [ ] Balance Sheet generator — auto-build from Trial Balance groupings
+- [ ] P&L on Shares + MF — read trading/investment ledgers, calculate realized gains
+- [ ] Tally vs Broker Statement reconciliation — match trades both sides
+- [ ] Document availability checker — show what vouchers/bills exist per entry
+- [ ] GST Return file generator — raw Tally data → GSTR-1/3B ready format
+- [ ] Fund Flow + Cash Flow statements — from Tally bank/cash book data
+- [ ] Budget creation — from bank/cash book historical patterns
+
+**Note:** Bank Reconciliation DROPPED (Tally handles it). Party-wise Ledger Rec to be improved instead.
+
+---
+
 ## Phase 3 — Growth
 
 **Goal:** Full-featured product, paying customers

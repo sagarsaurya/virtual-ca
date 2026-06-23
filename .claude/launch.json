@@ -1,11 +1,1 @@
-{
-  "version": "0.0.1",
-  "configurations": [
-    {
-      "name": "virtualca",
-      "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "3456"],
-      "port": 3456
-    }
-  ]
-}
+{"version":"0.0.1","configurations":[{"name":"mockup","runtimeExecutable":"python","runtimeArgs":["-m","http.server","7788"],"port":7788}]}

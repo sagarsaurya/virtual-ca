@@ -1,0 +1,2252 @@
+{
+  "ledger_classification": [
+    {
+      "severity": "Critical",
+      "ledger": "INCOME TAX & TDS",
+      "current_group": "Bank Accounts",
+      "correct_group": "Duties & Taxes",
+      "balance": 641910.0,
+      "rule": "Income Tax / TDS ledger must be under Duties & Taxes, not Bank Accounts",
+      "fix": "Gateway \u2192 Accounts Info \u2192 Ledgers \u2192 Alter \u2192 INCOME TAX & TDS \u2192 Change Group to Duties & Taxes"
+    },
+    {
+      "severity": "Critical",
+      "ledger": "Investment Redemption",
+      "current_group": "Bank Accounts",
+      "correct_group": "Investments",
+      "balance": 684354.66,
+      "rule": "Investment Redemption is under Investments group, not Bank Accounts",
+      "fix": "Gateway \u2192 Accounts Info \u2192 Ledgers \u2192 Alter \u2192 Investment Redemption \u2192 Change Group to Investments"
+    },
+    {
+      "severity": "Critical",
+      "ledger": "Credit Card Membership Fee",
+      "current_group": "Indirect Expenses",
+      "correct_group": "Sundry Creditors",
+      "balance": 60500.0,
+      "rule": "Credit card outstanding is a liability (money owed), not an expense",
+      "fix": "Gateway \u2192 Accounts Info \u2192 Ledgers \u2192 Alter \u2192 Credit Card Membership Fee \u2192 Change Group to Sundry Creditors"
+    }
+  ],
+  "outstanding": [
+    {
+      "type": "opening_balance_diff",
+      "ledger": "Difference in opening balances",
+      "amount": 6366917.75,
+      "question": "Difference in Opening Balances = Rs.6,366,918. This means last year closing balance does not match this year opening balance. Needs investigation.",
+      "severity": "Critical"
+    }
+  ],
+  "cash_violations": [
+    {
+      "severity": "Critical",
+      "date": "2025-04-02",
+      "party": "Anil Gupta",
+      "amount": 464800.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.464,800 to Anil Gupta \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.464,800 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-04-02",
+      "party": "Mridula Laddha",
+      "amount": 500000.0,
+      "type": "cash_receipt",
+      "section": "269ST",
+      "issue": "Receipt of Rs.500,000 from Mridula Laddha \u2014 verify if received in cash",
+      "impact": "If received in CASH: penalty = 100% of amount = Rs.500,000. If via bank: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-04-06",
+      "party": "AM Mobile Pvt Ltd",
+      "amount": 40000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.40,000 to AM Mobile Pvt Ltd \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.40,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-04-06",
+      "party": "Education Loan",
+      "amount": 33656.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.33,656 to Education Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.33,656 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-04-07",
+      "party": "Anjali Laddha Loan",
+      "amount": 300000.0,
+      "type": "cash_receipt",
+      "section": "269ST",
+      "issue": "Receipt of Rs.300,000 from Anjali Laddha Loan \u2014 verify if received in cash",
+      "impact": "If received in CASH: penalty = 100% of amount = Rs.300,000. If via bank: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-04-16",
+      "party": "Silver Spring Maintenance",
+      "amount": 15732.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.15,732 to Silver Spring Maintenance \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.15,732 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-04-16",
+      "party": "Silver Spring Maintenance",
+      "amount": 51566.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.51,566 to Silver Spring Maintenance \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.51,566 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-04-24",
+      "party": "Jodhraj Arun Kumar Laddha (HUF)",
+      "amount": 750000.0,
+      "type": "cash_receipt",
+      "section": "269ST",
+      "issue": "Receipt of Rs.750,000 from Jodhraj Arun Kumar Laddha (HUF) \u2014 verify if received in cash",
+      "impact": "If received in CASH: penalty = 100% of amount = Rs.750,000. If via bank: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-04-25",
+      "party": "Suspense",
+      "amount": 25000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.25,000 to Suspense \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.25,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-04-29",
+      "party": "Anil Gupta",
+      "amount": 260000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.260,000 to Anil Gupta \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.260,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-04-29",
+      "party": "Anil Gupta",
+      "amount": 200000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.200,000 to Anil Gupta \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.200,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-04-30",
+      "party": "Aakash",
+      "amount": 70000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.70,000 to Aakash \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.70,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-04-30",
+      "party": "Aakash",
+      "amount": 69000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.69,000 to Aakash \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.69,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-04-30",
+      "party": "Anil Gupta",
+      "amount": 50000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.50,000 to Anil Gupta \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.50,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-05-05",
+      "party": "Education Loan",
+      "amount": 33428.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.33,428 to Education Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.33,428 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-05-05",
+      "party": "Hotel Expenses",
+      "amount": 20000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.20,000 to Hotel Expenses \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.20,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-05-05",
+      "party": "Mridula Laddha",
+      "amount": 100000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.100,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.100,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-05-14",
+      "party": "Prakash Chandra",
+      "amount": 600000.0,
+      "type": "cash_receipt",
+      "section": "269ST",
+      "issue": "Receipt of Rs.600,000 from Prakash Chandra \u2014 verify if received in cash",
+      "impact": "If received in CASH: penalty = 100% of amount = Rs.600,000. If via bank: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-05-19",
+      "party": "Mridula Laddha",
+      "amount": 400000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.400,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.400,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-05-20",
+      "party": "Mridula Laddha",
+      "amount": 300000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.300,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.300,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-05-20",
+      "party": "Anjali Laddha Loan",
+      "amount": 200000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.200,000 to Anjali Laddha Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.200,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-05-21",
+      "party": "Municipal Taxes",
+      "amount": 155400.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.155,400 to Municipal Taxes \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.155,400 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-05-30",
+      "party": "Anil Gupta",
+      "amount": 567426.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.567,426 to Anil Gupta \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.567,426 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-05-30",
+      "party": "Mridula Laddha",
+      "amount": 350000.0,
+      "type": "cash_receipt",
+      "section": "269ST",
+      "issue": "Receipt of Rs.350,000 from Mridula Laddha \u2014 verify if received in cash",
+      "impact": "If received in CASH: penalty = 100% of amount = Rs.350,000. If via bank: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-06-02",
+      "party": "Lawer Fees",
+      "amount": 53000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.53,000 to Lawer Fees \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.53,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-06-03",
+      "party": "College Fees",
+      "amount": 564580.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.564,580 to College Fees \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.564,580 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-06-03",
+      "party": "Silver Spring 15 A",
+      "amount": 30000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.30,000 to Silver Spring 15 A \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.30,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-06-03",
+      "party": "Mridula Laddha",
+      "amount": 300000.0,
+      "type": "cash_receipt",
+      "section": "269ST",
+      "issue": "Receipt of Rs.300,000 from Mridula Laddha \u2014 verify if received in cash",
+      "impact": "If received in CASH: penalty = 100% of amount = Rs.300,000. If via bank: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-06-03",
+      "party": "Anjali Laddha Loan",
+      "amount": 250000.0,
+      "type": "cash_receipt",
+      "section": "269ST",
+      "issue": "Receipt of Rs.250,000 from Anjali Laddha Loan \u2014 verify if received in cash",
+      "impact": "If received in CASH: penalty = 100% of amount = Rs.250,000. If via bank: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-06-05",
+      "party": "Education Loan",
+      "amount": 31947.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.31,947 to Education Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.31,947 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-06-07",
+      "party": "Mridula Laddha",
+      "amount": 75000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.75,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.75,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-06-09",
+      "party": "Mridula Laddha",
+      "amount": 75000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.75,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.75,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-06-10",
+      "party": "Niraj Daga",
+      "amount": 75000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.75,000 to Niraj Daga \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.75,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-06-12",
+      "party": "College Fees",
+      "amount": 564579.0,
+      "type": "cash_receipt",
+      "section": "269ST",
+      "issue": "Receipt of Rs.564,579 from College Fees \u2014 verify if received in cash",
+      "impact": "If received in CASH: penalty = 100% of amount = Rs.564,579. If via bank: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-06-13",
+      "party": "College Fees",
+      "amount": 617223.32,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.617,223 to College Fees \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.617,223 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-06-25",
+      "party": "Bank Charges",
+      "amount": 23600.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.23,600 to Bank Charges \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.23,600 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-06-30",
+      "party": "Mridula Laddha",
+      "amount": 40000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.40,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.40,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-07-01",
+      "party": "Niraj Daga",
+      "amount": 290000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.290,000 to Niraj Daga \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.290,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-07-01",
+      "party": "Ajay Kumar Laddha (HUF) Loan",
+      "amount": 275000.0,
+      "type": "cash_receipt",
+      "section": "269ST",
+      "issue": "Receipt of Rs.275,000 from Ajay Kumar Laddha (HUF) Loan \u2014 verify if received in cash",
+      "impact": "If received in CASH: penalty = 100% of amount = Rs.275,000. If via bank: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-07-05",
+      "party": "Education Loan",
+      "amount": 31947.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.31,947 to Education Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.31,947 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-07-07",
+      "party": "Mridula Laddha",
+      "amount": 45000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.45,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.45,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-07-07",
+      "party": "Mridula Laddha",
+      "amount": 30000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.30,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.30,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-07-10",
+      "party": "Mridula Laddha",
+      "amount": 150000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.150,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.150,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-07-10",
+      "party": "Ajay Kumar Laddha (HUF) Loan",
+      "amount": 250000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.250,000 to Ajay Kumar Laddha (HUF) Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.250,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-07-14",
+      "party": "D2D Loan",
+      "amount": 100000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.100,000 to D2D Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.100,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-07-14",
+      "party": "D2D Loan",
+      "amount": 50000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.50,000 to D2D Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.50,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-07-16",
+      "party": "Car Maintenance",
+      "amount": 25280.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.25,280 to Car Maintenance \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.25,280 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-07-18",
+      "party": "Mridula Laddha",
+      "amount": 150000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.150,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.150,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-07-18",
+      "party": "Mridula Laddha",
+      "amount": 125000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.125,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.125,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-07-18",
+      "party": "Ajay Kumar Laddha (HUF) Loan",
+      "amount": 60000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.60,000 to Ajay Kumar Laddha (HUF) Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.60,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-07-18",
+      "party": "Silver Spring Maintenance",
+      "amount": 15732.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.15,732 to Silver Spring Maintenance \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.15,732 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-07-18",
+      "party": "Mridula Laddha",
+      "amount": 275000.0,
+      "type": "cash_receipt",
+      "section": "269ST",
+      "issue": "Receipt of Rs.275,000 from Mridula Laddha \u2014 verify if received in cash",
+      "impact": "If received in CASH: penalty = 100% of amount = Rs.275,000. If via bank: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-07-21",
+      "party": "Mridula Laddha",
+      "amount": 450000.0,
+      "type": "cash_receipt",
+      "section": "269ST",
+      "issue": "Receipt of Rs.450,000 from Mridula Laddha \u2014 verify if received in cash",
+      "impact": "If received in CASH: penalty = 100% of amount = Rs.450,000. If via bank: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-07-21",
+      "party": "Mridula Laddha",
+      "amount": 450000.0,
+      "type": "cash_receipt",
+      "section": "269ST",
+      "issue": "Receipt of Rs.450,000 from Mridula Laddha \u2014 verify if received in cash",
+      "impact": "If received in CASH: penalty = 100% of amount = Rs.450,000. If via bank: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-07-21",
+      "party": "Mridula Laddha",
+      "amount": 250000.0,
+      "type": "cash_receipt",
+      "section": "269ST",
+      "issue": "Receipt of Rs.250,000 from Mridula Laddha \u2014 verify if received in cash",
+      "impact": "If received in CASH: penalty = 100% of amount = Rs.250,000. If via bank: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-08-05",
+      "party": "Education Loan",
+      "amount": 27128.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.27,128 to Education Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.27,128 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-08-06",
+      "party": "Travel Expenses",
+      "amount": 89450.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.89,450 to Travel Expenses \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.89,450 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-08-14",
+      "party": "Mridula Laddha",
+      "amount": 500000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.500,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.500,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-08-18",
+      "party": "Amex 1001 Credit Card",
+      "amount": 32235.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.32,235 to Amex 1001 Credit Card \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.32,235 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-08-19",
+      "party": "Amex 2007 Credit Card",
+      "amount": 15192.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.15,192 to Amex 2007 Credit Card \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.15,192 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-08-19",
+      "party": "Mridula Laddha",
+      "amount": 200000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.200,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.200,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-08-19",
+      "party": "Mridula Laddha",
+      "amount": 50000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.50,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.50,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-08-19",
+      "party": "D2D Loan",
+      "amount": 185000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.185,000 to D2D Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.185,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-08-19",
+      "party": "Anjali Laddha Loan",
+      "amount": 70000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.70,000 to Anjali Laddha Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.70,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-08-21",
+      "party": "Anjali Laddha Loan",
+      "amount": 50000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.50,000 to Anjali Laddha Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.50,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-08-23",
+      "party": "Mridula Laddha",
+      "amount": 50000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.50,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.50,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-09-02",
+      "party": "Bank OD Interest",
+      "amount": 13351.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.13,351 to Bank OD Interest \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.13,351 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-09-05",
+      "party": "Education Loan",
+      "amount": 19176.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.19,176 to Education Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.19,176 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-09-08",
+      "party": "Mridula Laddha",
+      "amount": 250000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.250,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.250,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-09-08",
+      "party": "Mridula Laddha",
+      "amount": 25000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.25,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.25,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-09-18",
+      "party": "Cash",
+      "amount": 25000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.25,000 to Cash \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.25,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-09-19",
+      "party": "Mridula Laddha",
+      "amount": 225000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.225,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.225,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-09-19",
+      "party": "Ajay Kumar Laddha (HUF) Loan",
+      "amount": 25000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.25,000 to Ajay Kumar Laddha (HUF) Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.25,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-09-24",
+      "party": "Niraj Daga",
+      "amount": 100000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.100,000 to Niraj Daga \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.100,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-09-24",
+      "party": "Niraj Daga",
+      "amount": 400000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.400,000 to Niraj Daga \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.400,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-09-26",
+      "party": "Niraj Daga",
+      "amount": 400000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.400,000 to Niraj Daga \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.400,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-09-26",
+      "party": "Gift",
+      "amount": 500000.0,
+      "type": "cash_receipt",
+      "section": "269ST",
+      "issue": "Receipt of Rs.500,000 from Gift \u2014 verify if received in cash",
+      "impact": "If received in CASH: penalty = 100% of amount = Rs.500,000. If via bank: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-10-01",
+      "party": "Mridula Laddha",
+      "amount": 100000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.100,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.100,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-10-03",
+      "party": "Bank OD Interest",
+      "amount": 19836.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.19,836 to Bank OD Interest \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.19,836 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-10-04",
+      "party": "D2D Loan",
+      "amount": 25000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.25,000 to D2D Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.25,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-10-05",
+      "party": "Education Loan",
+      "amount": 19176.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.19,176 to Education Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.19,176 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-10-07",
+      "party": "Mridula Laddha",
+      "amount": 200000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.200,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.200,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-10-08",
+      "party": "E-Biz Solutions",
+      "amount": 100000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.100,000 to E-Biz Solutions \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.100,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-10-09",
+      "party": "Silver Spring Maintenance",
+      "amount": 20071.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.20,071 to Silver Spring Maintenance \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.20,071 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-10-13",
+      "party": "Cash",
+      "amount": 25000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.25,000 to Cash \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.25,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-10-15",
+      "party": "Anjali Laddha Loan",
+      "amount": 25000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.25,000 to Anjali Laddha Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.25,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-10-21",
+      "party": "Anjali Laddha Loan",
+      "amount": 60000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.60,000 to Anjali Laddha Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.60,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-10-24",
+      "party": "Travel Expenses",
+      "amount": 17020.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.17,020 to Travel Expenses \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.17,020 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-11-03",
+      "party": "Bank OD Interest",
+      "amount": 29179.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.29,179 to Bank OD Interest \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.29,179 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-11-05",
+      "party": "Education Loan",
+      "amount": 19176.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.19,176 to Education Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.19,176 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-11-08",
+      "party": "Mridula Laddha",
+      "amount": 100000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.100,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.100,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-11-09",
+      "party": "Promotional Expenses",
+      "amount": 12000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.12,000 to Promotional Expenses \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.12,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-11-10",
+      "party": "Silver Spring Maintenance",
+      "amount": 15732.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.15,732 to Silver Spring Maintenance \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.15,732 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-11-12",
+      "party": "Mridula Laddha",
+      "amount": 115000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.115,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.115,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-11-14",
+      "party": "Sangeet Kala Mandir Expenses",
+      "amount": 479866.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.479,866 to Sangeet Kala Mandir Expenses \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.479,866 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-11-17",
+      "party": "Mridula Laddha",
+      "amount": 500000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.500,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.500,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-11-17",
+      "party": "Ajay Kumar Laddha (HUF) Loan",
+      "amount": 30000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.30,000 to Ajay Kumar Laddha (HUF) Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.30,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-11-18",
+      "party": "Anjali Laddha Loan",
+      "amount": 500000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.500,000 to Anjali Laddha Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.500,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-11-18",
+      "party": "Cash",
+      "amount": 25000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.25,000 to Cash \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.25,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-11-18",
+      "party": "Mridula Laddha",
+      "amount": 900000.0,
+      "type": "cash_receipt",
+      "section": "269ST",
+      "issue": "Receipt of Rs.900,000 from Mridula Laddha \u2014 verify if received in cash",
+      "impact": "If received in CASH: penalty = 100% of amount = Rs.900,000. If via bank: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-11-27",
+      "party": "Anjali Laddha Loan",
+      "amount": 500000.0,
+      "type": "cash_receipt",
+      "section": "269ST",
+      "issue": "Receipt of Rs.500,000 from Anjali Laddha Loan \u2014 verify if received in cash",
+      "impact": "If received in CASH: penalty = 100% of amount = Rs.500,000. If via bank: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-12-01",
+      "party": "Niraj Daga",
+      "amount": 75000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.75,000 to Niraj Daga \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.75,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-12-01",
+      "party": "Niraj Daga",
+      "amount": 25000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.25,000 to Niraj Daga \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.25,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-12-02",
+      "party": "Bank Charges",
+      "amount": 27315.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.27,315 to Bank Charges \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.27,315 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-12-05",
+      "party": "Education Loan",
+      "amount": 19176.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.19,176 to Education Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.19,176 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-12-06",
+      "party": "AIKIGAI EDTECH",
+      "amount": 500000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.500,000 to AIKIGAI EDTECH \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.500,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-12-08",
+      "party": "Mridula Laddha",
+      "amount": 230000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.230,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.230,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-12-16",
+      "party": "Cash",
+      "amount": 25000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.25,000 to Cash \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.25,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-12-17",
+      "party": "Mridula Laddha",
+      "amount": 25000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.25,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.25,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-12-17",
+      "party": "Amex 2009 Credit Card",
+      "amount": 50000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.50,000 to Amex 2009 Credit Card \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.50,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-12-17",
+      "party": "Mridula Laddha",
+      "amount": 200000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.200,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.200,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-12-22",
+      "party": "AIKIGAI EDTECH",
+      "amount": 15000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.15,000 to AIKIGAI EDTECH \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.15,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-12-26",
+      "party": "Investment Redemption",
+      "amount": 574631.91,
+      "type": "cash_receipt",
+      "section": "269ST",
+      "issue": "Receipt of Rs.574,632 from Investment Redemption \u2014 verify if received in cash",
+      "impact": "If received in CASH: penalty = 100% of amount = Rs.574,632. If via bank: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-12-26",
+      "party": "Mridula Laddha",
+      "amount": 500000.0,
+      "type": "cash_receipt",
+      "section": "269ST",
+      "issue": "Receipt of Rs.500,000 from Mridula Laddha \u2014 verify if received in cash",
+      "impact": "If received in CASH: penalty = 100% of amount = Rs.500,000. If via bank: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-12-26",
+      "party": "Mridula Laddha",
+      "amount": 500000.0,
+      "type": "cash_receipt",
+      "section": "269ST",
+      "issue": "Receipt of Rs.500,000 from Mridula Laddha \u2014 verify if received in cash",
+      "impact": "If received in CASH: penalty = 100% of amount = Rs.500,000. If via bank: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2025-12-29",
+      "party": "General Expenses",
+      "amount": 15500.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.15,500 to General Expenses \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.15,500 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-01-02",
+      "party": "AIKIGAI EDTECH",
+      "amount": 75000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.75,000 to AIKIGAI EDTECH \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.75,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-01-02",
+      "party": "AIKIGAI EDTECH",
+      "amount": 75000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.75,000 to AIKIGAI EDTECH \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.75,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-01-02",
+      "party": "Bank OD Interest",
+      "amount": 27120.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.27,120 to Bank OD Interest \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.27,120 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-01-05",
+      "party": "Education Loan",
+      "amount": 19176.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.19,176 to Education Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.19,176 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-01-07",
+      "party": "Mridula Laddha",
+      "amount": 150000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.150,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.150,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-01-07",
+      "party": "AIKIGAI EDTECH",
+      "amount": 50000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.50,000 to AIKIGAI EDTECH \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.50,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-01-07",
+      "party": "T2 AI CONSULTANCY  PRIVATE LIMITED",
+      "amount": 49000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.49,000 to T2 AI CONSULTANCY  PRIVATE LIMITED \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.49,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-01-07",
+      "party": "T2 AI CONSULTANCY  PRIVATE LIMITED",
+      "amount": 130000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.130,000 to T2 AI CONSULTANCY  PRIVATE LIMITED \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.130,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-01-14",
+      "party": "Mridula Laddha",
+      "amount": 100000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.100,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.100,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-01-14",
+      "party": "E-Biz Solutions",
+      "amount": 90000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.90,000 to E-Biz Solutions \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.90,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-01-18",
+      "party": "Ajay Kumar Laddha (HUF) Loan",
+      "amount": 20000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.20,000 to Ajay Kumar Laddha (HUF) Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.20,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-01-18",
+      "party": "Mridula Laddha",
+      "amount": 100000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.100,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.100,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-01-19",
+      "party": "Amex 2009 Credit Card",
+      "amount": 74528.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.74,528 to Amex 2009 Credit Card \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.74,528 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-01-20",
+      "party": "Ajay Kumar Laddha (HUF) Loan",
+      "amount": 35000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.35,000 to Ajay Kumar Laddha (HUF) Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.35,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-01-21",
+      "party": "Cash",
+      "amount": 25000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.25,000 to Cash \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.25,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-01-22",
+      "party": "Misc Expenses",
+      "amount": 19231.36,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.19,231 to Misc Expenses \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.19,231 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-02-01",
+      "party": "Mridula Laddha",
+      "amount": 335000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.335,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.335,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-02-02",
+      "party": "Bank OD Interest",
+      "amount": 23027.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.23,027 to Bank OD Interest \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.23,027 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-02-06",
+      "party": "Mridula Laddha",
+      "amount": 150000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.150,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.150,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-02-07",
+      "party": "Education Loan",
+      "amount": 19723.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.19,723 to Education Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.19,723 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-02-08",
+      "party": "Mridula Laddha",
+      "amount": 50000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.50,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.50,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-02-08",
+      "party": "AIKIGAI EDTECH",
+      "amount": 35000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.35,000 to AIKIGAI EDTECH \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.35,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-02-14",
+      "party": "Mridula Laddha",
+      "amount": 50000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.50,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.50,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-02-18",
+      "party": "Medical Expenses",
+      "amount": 29000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.29,000 to Medical Expenses \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.29,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-03-02",
+      "party": "Bank OD Interest",
+      "amount": 26244.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.26,244 to Bank OD Interest \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.26,244 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-03-05",
+      "party": "Education Loan",
+      "amount": 18635.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.18,635 to Education Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.18,635 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-03-07",
+      "party": "Mridula Laddha",
+      "amount": 300000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.300,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.300,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-03-09",
+      "party": "Silver Spring Maintenance",
+      "amount": 15732.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.15,732 to Silver Spring Maintenance \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.15,732 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-03-09",
+      "party": "AIKIGAI EDTECH",
+      "amount": 50000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.50,000 to AIKIGAI EDTECH \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.50,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-03-09",
+      "party": "Sunoj Loan",
+      "amount": 24000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.24,000 to Sunoj Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.24,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-03-11",
+      "party": "Sunoj Loan",
+      "amount": 75000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.75,000 to Sunoj Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.75,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-03-16",
+      "party": "Mridula Laddha",
+      "amount": 25000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.25,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.25,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-03-29",
+      "party": "Mridula Laddha",
+      "amount": 120000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.120,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.120,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-03-29",
+      "party": "Mridula Laddha",
+      "amount": 150000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.150,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.150,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-03-29",
+      "party": "Mridula Laddha",
+      "amount": 30000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.30,000 to Mridula Laddha \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.30,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-03-29",
+      "party": "Cash",
+      "amount": 25000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.25,000 to Cash \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.25,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-03-29",
+      "party": "Cash",
+      "amount": 25000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.25,000 to Cash \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.25,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-03-29",
+      "party": "Cash",
+      "amount": 25000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.25,000 to Cash \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.25,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-03-31",
+      "party": "AIKIGAI EDTECH",
+      "amount": 90000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.90,000 to AIKIGAI EDTECH \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.90,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-03-31",
+      "party": "AIKIGAI EDTECH",
+      "amount": 20000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.20,000 to AIKIGAI EDTECH \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.20,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-03-31",
+      "party": "Ajay Kumar Laddha (HUF) Loan",
+      "amount": 60000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.60,000 to Ajay Kumar Laddha (HUF) Loan \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.60,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    },
+    {
+      "severity": "Critical",
+      "date": "2026-03-31",
+      "party": "Rama Barik",
+      "amount": 59000.0,
+      "type": "cash_expense",
+      "section": "40A(3)",
+      "issue": "Payment of Rs.59,000 to Rama Barik \u2014 verify payment mode (cash or bank)",
+      "impact": "If paid in CASH: Rs.59,000 will be disallowed. If paid via Bank/IMPS/NEFT: no violation \u2014 reply to dismiss."
+    }
+  ],
+  "loans": [
+    {
+      "ledger": "AM Mobile Pvt Ltd",
+      "group": "Loans (Liability)",
+      "balance": 306018.38,
+      "documents_required": [
+        "Bank statement showing loan receipt of Rs.306,018",
+        "Loan agreement with repayment terms and interest rate",
+        "If Director loan \u2014 Board resolution + compliance with Sec 269SS (must be via banking channel)"
+      ],
+      "question": "Loan account 'AM Mobile Pvt Ltd' has balance of Rs.306,018. Please provide bank statement and loan agreement for verification."
+    },
+    {
+      "ledger": "Arun Laddha SC",
+      "group": "Loans (Liability)",
+      "balance": 94464.0,
+      "documents_required": [
+        "Bank statement showing loan receipt of Rs.94,464",
+        "Loan agreement with repayment terms and interest rate",
+        "If Director loan \u2014 Board resolution + compliance with Sec 269SS (must be via banking channel)"
+      ],
+      "question": "Loan account 'Arun Laddha SC' has balance of Rs.94,464. Please provide bank statement and loan agreement for verification."
+    },
+    {
+      "ledger": "EDUCATIONAL LOAN-ICICI (L1CAL00100007583)",
+      "group": "Loans (Liability)",
+      "balance": 37616.0,
+      "documents_required": [
+        "Bank statement showing loan receipt of Rs.37,616",
+        "Loan agreement with repayment terms and interest rate",
+        "If Director loan \u2014 Board resolution + compliance with Sec 269SS (must be via banking channel)"
+      ],
+      "question": "Loan account 'EDUCATIONAL LOAN-ICICI (L1CAL00100007583)' has balance of Rs.37,616. Please provide bank statement and loan agreement for verification."
+    },
+    {
+      "ledger": "EDUCATIONAL LOAN-ICICI (L1CAL00100031882)ANJALI LAD",
+      "group": "Loans (Liability)",
+      "balance": 1924796.77,
+      "documents_required": [
+        "Bank statement showing loan receipt of Rs.1,924,797",
+        "Loan agreement with repayment terms and interest rate",
+        "If Director loan \u2014 Board resolution + compliance with Sec 269SS (must be via banking channel)"
+      ],
+      "question": "Loan account 'EDUCATIONAL LOAN-ICICI (L1CAL00100031882)ANJALI LAD' has balance of Rs.1,924,797. Please provide bank statement and loan agreement for verification."
+    },
+    {
+      "ledger": "Education Loan",
+      "group": "Loans (Liability)",
+      "balance": 593397.46,
+      "documents_required": [
+        "Bank statement showing loan receipt of Rs.593,397",
+        "Loan agreement with repayment terms and interest rate",
+        "If Director loan \u2014 Board resolution + compliance with Sec 269SS (must be via banking channel)"
+      ],
+      "question": "Loan account 'Education Loan' has balance of Rs.593,397. Please provide bank statement and loan agreement for verification."
+    },
+    {
+      "ledger": "JRLADDHA ARUN KUMAR HUF",
+      "group": "Loans (Liability)",
+      "balance": 33119.0,
+      "documents_required": [
+        "Bank statement showing loan receipt of Rs.33,119",
+        "Loan agreement with repayment terms and interest rate",
+        "If Director loan \u2014 Board resolution + compliance with Sec 269SS (must be via banking channel)"
+      ],
+      "question": "Loan account 'JRLADDHA ARUN KUMAR HUF' has balance of Rs.33,119. Please provide bank statement and loan agreement for verification."
+    },
+    {
+      "ledger": "Manoj Kumar Joshi",
+      "group": "Loans (Liability)",
+      "balance": 75000.0,
+      "documents_required": [
+        "Bank statement showing loan receipt of Rs.75,000",
+        "Loan agreement with repayment terms and interest rate",
+        "If Director loan \u2014 Board resolution + compliance with Sec 269SS (must be via banking channel)"
+      ],
+      "question": "Loan account 'Manoj Kumar Joshi' has balance of Rs.75,000. Please provide bank statement and loan agreement for verification."
+    },
+    {
+      "ledger": "Milapchand Roopchand Laddha HUF",
+      "group": "Loans (Liability)",
+      "balance": 279313.4,
+      "documents_required": [
+        "Bank statement showing loan receipt of Rs.279,313",
+        "Loan agreement with repayment terms and interest rate",
+        "If Director loan \u2014 Board resolution + compliance with Sec 269SS (must be via banking channel)"
+      ],
+      "question": "Loan account 'Milapchand Roopchand Laddha HUF' has balance of Rs.279,313. Please provide bank statement and loan agreement for verification."
+    }
+  ],
+  "large_expenses": [
+    {
+      "date": "2025-04-02",
+      "party": "Anil Gupta",
+      "amount": 464800.0,
+      "question": "Large payment of Rs.464,800 to Anil Gupta on 2025-04-02. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-04-07",
+      "party": "Zerodha Securities Limited",
+      "amount": 100000.0,
+      "question": "Large payment of Rs.100,000 to Zerodha Securities Limited on 2025-04-07. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-04-25",
+      "party": "Zerodha Securities Limited",
+      "amount": 100000.0,
+      "question": "Large payment of Rs.100,000 to Zerodha Securities Limited on 2025-04-25. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-04-29",
+      "party": "Anil Gupta",
+      "amount": 260000.0,
+      "question": "Large payment of Rs.260,000 to Anil Gupta on 2025-04-29. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-04-29",
+      "party": "Anil Gupta",
+      "amount": 200000.0,
+      "question": "Large payment of Rs.200,000 to Anil Gupta on 2025-04-29. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-05-05",
+      "party": "Mridula Laddha",
+      "amount": 100000.0,
+      "question": "Large payment of Rs.100,000 to Mridula Laddha on 2025-05-05. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-05-09",
+      "party": "Zerodha Securities Limited",
+      "amount": 100000.0,
+      "question": "Large payment of Rs.100,000 to Zerodha Securities Limited on 2025-05-09. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-05-19",
+      "party": "Mridula Laddha",
+      "amount": 400000.0,
+      "question": "Large payment of Rs.400,000 to Mridula Laddha on 2025-05-19. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-05-20",
+      "party": "Mridula Laddha",
+      "amount": 300000.0,
+      "question": "Large payment of Rs.300,000 to Mridula Laddha on 2025-05-20. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-05-20",
+      "party": "Anjali Laddha Loan",
+      "amount": 200000.0,
+      "question": "Large payment of Rs.200,000 to Anjali Laddha Loan on 2025-05-20. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-05-21",
+      "party": "Municipal Taxes",
+      "amount": 155400.0,
+      "question": "Large payment of Rs.155,400 to Municipal Taxes on 2025-05-21. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-05-22",
+      "party": "Anand Rathi  Securities - Capital NSe",
+      "amount": 100000.0,
+      "question": "Large payment of Rs.100,000 to Anand Rathi  Securities - Capital NSe on 2025-05-22. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-05-23",
+      "party": "Anand Rathi  Securities - Capital NSe",
+      "amount": 100000.0,
+      "question": "Large payment of Rs.100,000 to Anand Rathi  Securities - Capital NSe on 2025-05-23. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-05-30",
+      "party": "Anil Gupta",
+      "amount": 567426.0,
+      "question": "Large payment of Rs.567,426 to Anil Gupta on 2025-05-30. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-06-03",
+      "party": "College Fees",
+      "amount": 564580.0,
+      "question": "Large payment of Rs.564,580 to College Fees on 2025-06-03. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-06-13",
+      "party": "College Fees",
+      "amount": 617223.32,
+      "question": "Large payment of Rs.617,223 to College Fees on 2025-06-13. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-07-01",
+      "party": "Niraj Daga",
+      "amount": 290000.0,
+      "question": "Large payment of Rs.290,000 to Niraj Daga on 2025-07-01. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-07-10",
+      "party": "Mridula Laddha",
+      "amount": 150000.0,
+      "question": "Large payment of Rs.150,000 to Mridula Laddha on 2025-07-10. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-07-10",
+      "party": "Ajay Kumar Laddha (HUF) Loan",
+      "amount": 250000.0,
+      "question": "Large payment of Rs.250,000 to Ajay Kumar Laddha (HUF) Loan on 2025-07-10. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-07-14",
+      "party": "D2D Loan",
+      "amount": 100000.0,
+      "question": "Large payment of Rs.100,000 to D2D Loan on 2025-07-14. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-07-18",
+      "party": "Mridula Laddha",
+      "amount": 150000.0,
+      "question": "Large payment of Rs.150,000 to Mridula Laddha on 2025-07-18. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-07-18",
+      "party": "Mridula Laddha",
+      "amount": 125000.0,
+      "question": "Large payment of Rs.125,000 to Mridula Laddha on 2025-07-18. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-07-23",
+      "party": "EDUCATIONAL LOAN-ICICI (L1CAL00100031882)ANJALI LAD",
+      "amount": 1500000.0,
+      "question": "Large payment of Rs.1,500,000 to EDUCATIONAL LOAN-ICICI (L1CAL00100031882)ANJALI LAD on 2025-07-23. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-08-14",
+      "party": "Mridula Laddha",
+      "amount": 500000.0,
+      "question": "Large payment of Rs.500,000 to Mridula Laddha on 2025-08-14. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-08-19",
+      "party": "Mridula Laddha",
+      "amount": 200000.0,
+      "question": "Large payment of Rs.200,000 to Mridula Laddha on 2025-08-19. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-08-19",
+      "party": "D2D Loan",
+      "amount": 185000.0,
+      "question": "Large payment of Rs.185,000 to D2D Loan on 2025-08-19. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-09-08",
+      "party": "Mridula Laddha",
+      "amount": 250000.0,
+      "question": "Large payment of Rs.250,000 to Mridula Laddha on 2025-09-08. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-09-19",
+      "party": "Mridula Laddha",
+      "amount": 225000.0,
+      "question": "Large payment of Rs.225,000 to Mridula Laddha on 2025-09-19. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-09-24",
+      "party": "Niraj Daga",
+      "amount": 100000.0,
+      "question": "Large payment of Rs.100,000 to Niraj Daga on 2025-09-24. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-09-24",
+      "party": "Niraj Daga",
+      "amount": 400000.0,
+      "question": "Large payment of Rs.400,000 to Niraj Daga on 2025-09-24. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-09-26",
+      "party": "Niraj Daga",
+      "amount": 400000.0,
+      "question": "Large payment of Rs.400,000 to Niraj Daga on 2025-09-26. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-10-01",
+      "party": "Mridula Laddha",
+      "amount": 100000.0,
+      "question": "Large payment of Rs.100,000 to Mridula Laddha on 2025-10-01. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-10-07",
+      "party": "Mridula Laddha",
+      "amount": 200000.0,
+      "question": "Large payment of Rs.200,000 to Mridula Laddha on 2025-10-07. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-10-08",
+      "party": "E-Biz Solutions",
+      "amount": 100000.0,
+      "question": "Large payment of Rs.100,000 to E-Biz Solutions on 2025-10-08. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-10-21",
+      "party": "Zerodha Securities Limited",
+      "amount": 100000.0,
+      "question": "Large payment of Rs.100,000 to Zerodha Securities Limited on 2025-10-21. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-11-08",
+      "party": "Mridula Laddha",
+      "amount": 100000.0,
+      "question": "Large payment of Rs.100,000 to Mridula Laddha on 2025-11-08. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-11-12",
+      "party": "Mridula Laddha",
+      "amount": 115000.0,
+      "question": "Large payment of Rs.115,000 to Mridula Laddha on 2025-11-12. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-11-14",
+      "party": "Sangeet Kala Mandir Expenses",
+      "amount": 479866.0,
+      "question": "Large payment of Rs.479,866 to Sangeet Kala Mandir Expenses on 2025-11-14. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-11-17",
+      "party": "Mridula Laddha",
+      "amount": 500000.0,
+      "question": "Large payment of Rs.500,000 to Mridula Laddha on 2025-11-17. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-11-18",
+      "party": "Anjali Laddha Loan",
+      "amount": 500000.0,
+      "question": "Large payment of Rs.500,000 to Anjali Laddha Loan on 2025-11-18. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-12-06",
+      "party": "AIKIGAI EDTECH",
+      "amount": 500000.0,
+      "question": "Large payment of Rs.500,000 to AIKIGAI EDTECH on 2025-12-06. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-12-08",
+      "party": "Mridula Laddha",
+      "amount": 230000.0,
+      "question": "Large payment of Rs.230,000 to Mridula Laddha on 2025-12-08. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2025-12-17",
+      "party": "Mridula Laddha",
+      "amount": 200000.0,
+      "question": "Large payment of Rs.200,000 to Mridula Laddha on 2025-12-17. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2026-01-07",
+      "party": "Mridula Laddha",
+      "amount": 150000.0,
+      "question": "Large payment of Rs.150,000 to Mridula Laddha on 2026-01-07. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2026-01-07",
+      "party": "T2 AI CONSULTANCY  PRIVATE LIMITED",
+      "amount": 130000.0,
+      "question": "Large payment of Rs.130,000 to T2 AI CONSULTANCY  PRIVATE LIMITED on 2026-01-07. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2026-01-14",
+      "party": "Mridula Laddha",
+      "amount": 100000.0,
+      "question": "Large payment of Rs.100,000 to Mridula Laddha on 2026-01-14. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2026-01-18",
+      "party": "Mridula Laddha",
+      "amount": 100000.0,
+      "question": "Large payment of Rs.100,000 to Mridula Laddha on 2026-01-18. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2026-01-19",
+      "party": "Zerodha Securities Limited",
+      "amount": 100000.0,
+      "question": "Large payment of Rs.100,000 to Zerodha Securities Limited on 2026-01-19. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2026-01-21",
+      "party": "Zerodha Securities Limited",
+      "amount": 200000.0,
+      "question": "Large payment of Rs.200,000 to Zerodha Securities Limited on 2026-01-21. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2026-02-01",
+      "party": "Mridula Laddha",
+      "amount": 335000.0,
+      "question": "Large payment of Rs.335,000 to Mridula Laddha on 2026-02-01. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2026-02-06",
+      "party": "Mridula Laddha",
+      "amount": 150000.0,
+      "question": "Large payment of Rs.150,000 to Mridula Laddha on 2026-02-06. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2026-03-07",
+      "party": "Mridula Laddha",
+      "amount": 300000.0,
+      "question": "Large payment of Rs.300,000 to Mridula Laddha on 2026-03-07. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2026-03-09",
+      "party": "Anand Rathi  Securities - Capital NSe",
+      "amount": 100000.0,
+      "question": "Large payment of Rs.100,000 to Anand Rathi  Securities - Capital NSe on 2026-03-09. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2026-03-12",
+      "party": "Anand Rathi  Securities - Capital NSe",
+      "amount": 200000.0,
+      "question": "Large payment of Rs.200,000 to Anand Rathi  Securities - Capital NSe on 2026-03-12. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2026-03-12",
+      "party": "Anand Rathi  Securities - Capital NSe",
+      "amount": 165000.0,
+      "question": "Large payment of Rs.165,000 to Anand Rathi  Securities - Capital NSe on 2026-03-12. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2026-03-16",
+      "party": "HDFC 5449 Credit Card",
+      "amount": 403238.0,
+      "question": "Large payment of Rs.403,238 to HDFC 5449 Credit Card on 2026-03-16. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2026-03-19",
+      "party": "Zerodha Securities Limited",
+      "amount": 150000.0,
+      "question": "Large payment of Rs.150,000 to Zerodha Securities Limited on 2026-03-19. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2026-03-29",
+      "party": "Mridula Laddha",
+      "amount": 120000.0,
+      "question": "Large payment of Rs.120,000 to Mridula Laddha on 2026-03-29. Please provide supporting bill/invoice/agreement."
+    },
+    {
+      "date": "2026-03-29",
+      "party": "Mridula Laddha",
+      "amount": 150000.0,
+      "question": "Large payment of Rs.150,000 to Mridula Laddha on 2026-03-29. Please provide supporting bill/invoice/agreement."
+    }
+  ],
+  "itr": [
+    {
+      "ledger": "College Fees",
+      "amount": 613723.32,
+      "issue": "'College Fees' (Rs.613,723) may be a personal expense \u2014 not deductible as business expense",
+      "action": "Verify \u2014 if personal, move to Drawings account"
+    },
+    {
+      "ledger": "Credit Card Membership Fee",
+      "amount": 60500.0,
+      "issue": "'Credit Card Membership Fee' (Rs.60,500) may be a personal expense \u2014 not deductible as business expense",
+      "action": "Verify \u2014 if personal, move to Drawings account"
+    },
+    {
+      "ledger": "Food Expenses",
+      "amount": 15624.97,
+      "issue": "'Food Expenses' (Rs.15,625) may be a personal expense \u2014 not deductible as business expense",
+      "action": "Verify \u2014 if personal, move to Drawings account"
+    },
+    {
+      "ledger": "Hindustan Club",
+      "amount": 9687.0,
+      "issue": "'Hindustan Club' (Rs.9,687) may be a personal expense \u2014 not deductible as business expense",
+      "action": "Verify \u2014 if personal, move to Drawings account"
+    },
+    {
+      "ledger": "Hotel Expenses",
+      "amount": 461844.79,
+      "issue": "'Hotel Expenses' (Rs.461,845) may be a personal expense \u2014 not deductible as business expense",
+      "action": "Verify \u2014 if personal, move to Drawings account"
+    },
+    {
+      "ledger": "Medical Expenses",
+      "amount": 55855.0,
+      "issue": "'Medical Expenses' (Rs.55,855) may be a personal expense \u2014 not deductible as business expense",
+      "action": "Verify \u2014 if personal, move to Drawings account"
+    },
+    {
+      "ledger": "Membership Fees",
+      "amount": 590.0,
+      "issue": "'Membership Fees' (Rs.590) may be a personal expense \u2014 not deductible as business expense",
+      "action": "Verify \u2014 if personal, move to Drawings account"
+    },
+    {
+      "ledger": "Cash Payments (Sec 40A(3))",
+      "amount": 15229312.68,
+      "issue": "Total cash payments above Rs.10,000 = Rs.15,229,313 \u2014 will be disallowed under Section 40A(3)",
+      "action": "Estimated additional tax (30% bracket) = Rs.4,568,794"
+    }
+  ],
+  "bank_accounts": [
+    {
+      "ledger": "Icici Bank",
+      "balance": 0,
+      "dr_cr": "Dr",
+      "debit": 0,
+      "credit": 0,
+      "group": "",
+      "question": "Bank account 'Icici Bank' (found in daybook \u2014 verify balance) \u2014 balance \u20b90 (Dr). Please reconcile with the bank statement."
+    },
+    {
+      "ledger": "ICICI Bank (129105500329)",
+      "balance": 0,
+      "dr_cr": "Dr",
+      "debit": 0,
+      "credit": 0,
+      "group": "",
+      "question": "Bank account 'ICICI Bank (129105500329)' (found in daybook \u2014 verify balance) \u2014 balance \u20b90 (Dr). Please reconcile with the bank statement."
+    },
+    {
+      "ledger": "AXIS BANK (SAVINGS)",
+      "balance": 0,
+      "dr_cr": "Dr",
+      "debit": 0,
+      "credit": 0,
+      "group": "",
+      "question": "Bank account 'AXIS BANK (SAVINGS)' (found in daybook \u2014 verify balance) \u2014 balance \u20b90 (Dr). Please reconcile with the bank statement."
+    }
+  ],
+  "tds_compliance": [
+    {
+      "party": "Legal Expenses",
+      "section": "194J",
+      "description": "Professional / Technical Fees",
+      "total_paid": 1547126.0,
+      "rate": 10.0,
+      "tds_expected": 154713.0,
+      "interest_est": 27848.0,
+      "type": "payment_check",
+      "severity": "Critical",
+      "issue": "Total payments to 'Legal Expenses' = Rs.1,547,126. TDS under Sec 194J (Professional / Technical Fees) @ 10.0% applies \u2014 TDS should have been Rs.154,713.",
+      "impact": "If TDS not deducted: interest @ 1%/month until deduction + 1.5%/month until deposit. Estimated exposure = Rs.27,848. File 26Q/27Q return and pay TDS now to stop further interest."
+    },
+    {
+      "party": "Maintainance & Repairing",
+      "section": "194C",
+      "description": "Contractor / Manpower / Freight",
+      "total_paid": 124981.0,
+      "rate": 1.0,
+      "tds_expected": 1250.0,
+      "interest_est": 225.0,
+      "type": "payment_check",
+      "severity": "Critical",
+      "issue": "Total payments to 'Maintainance & Repairing' = Rs.124,981. TDS under Sec 194C (Contractor / Manpower / Freight) @ 1.0% applies \u2014 TDS should have been Rs.1,250.",
+      "impact": "If TDS not deducted: interest @ 1%/month until deduction + 1.5%/month until deposit. Estimated exposure = Rs.225. File 26Q/27Q return and pay TDS now to stop further interest."
+    },
+    {
+      "party": "Silver Spring Maintenance",
+      "section": "194C",
+      "description": "Contractor / Manpower / Freight",
+      "total_paid": 134565.0,
+      "rate": 1.0,
+      "tds_expected": 1346.0,
+      "interest_est": 242.0,
+      "type": "payment_check",
+      "severity": "Critical",
+      "issue": "Total payments to 'Silver Spring Maintenance' = Rs.134,565. TDS under Sec 194C (Contractor / Manpower / Freight) @ 1.0% applies \u2014 TDS should have been Rs.1,346.",
+      "impact": "If TDS not deducted: interest @ 1%/month until deduction + 1.5%/month until deposit. Estimated exposure = Rs.242. File 26Q/27Q return and pay TDS now to stop further interest."
+    },
+    {
+      "party": "TDS Payable Ledger",
+      "section": "General",
+      "description": "TDS deposit check",
+      "total_paid": 0,
+      "rate": 0,
+      "tds_expected": 0,
+      "interest_est": 0,
+      "type": "deposit_check",
+      "severity": "Critical",
+      "issue": "No 'TDS Payable' ledger found in Duties & Taxes. Either TDS was not deducted, or it is recorded in wrong ledger.",
+      "impact": "TDS must be deposited by 7th of the following month (March: by 30 April). Late deposit attracts interest @ 1.5%/month. Also verify: is there a TDS Payable ledger under Current Liabilities instead of Duties & Taxes?"
+    }
+  ],
+  "salary_compliance": [],
+  "module_status": {
+    "ledger_classification": {
+      "count": 3,
+      "ok_msg": "All 58 ledgers checked \u2014 no mis-classification found. Groups are correct as per ICAI standards."
+    },
+    "cash_violations": {
+      "count": 158,
+      "ok_msg": "No cash violations found \u2014 all payments appear to be within Sec 40A(3) limits or made via bank."
+    },
+    "tds_compliance": {
+      "count": 4,
+      "ok_msg": "No TDS compliance issues detected \u2014 payments to contractors/professionals appear within threshold limits."
+    },
+    "outstanding": {
+      "count": 1,
+      "ok_msg": "No abnormal balances \u2014 suspense accounts are nil, debtors/creditors look normal."
+    },
+    "large_expenses": {
+      "count": 59,
+      "ok_msg": "No payments above \u20b91L found in daybook \u2014 or all large payments already verified."
+    },
+    "loans": {
+      "count": 8,
+      "ok_msg": "No loan accounts found requiring documentation."
+    },
+    "itr": {
+      "count": 8,
+      "ok_msg": "No personal expenses detected in business books \u2014 books appear clean for ITR filing."
+    },
+    "salary_compliance": {
+      "count": 0,
+      "ok_msg": "No salary/PF/PT issues found \u2014 compliance appears in order."
+    },
+    "bank_accounts": {
+      "count": 3,
+      "ok_msg": "No bank accounts detected in books \u2014 upload daybook to enable bank detection."
+    }
+  },
+  "summary": {
+    "company": "AJAY KUMAR LADDHA",
+    "period": "1-Apr-25 to 31-Mar-26",
+    "total_ledgers": 58,
+    "total_vouchers": 660,
+    "critical": 4,
+    "warnings": 158,
+    "questions": 70,
+    "cash_violations_count": 158,
+    "score": 0,
+    "generated_at": "09-Jun-2026 12:56"
+  }
+}
