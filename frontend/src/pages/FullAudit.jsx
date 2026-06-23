@@ -8,7 +8,7 @@ export default function FullAudit() {
   const [loading, setLoading] = useState(false)
   const [results, setResults] = useState(null)
   const cid = localStorage.getItem('company_id') || 1
-  const headers = { 'X-Company-ID': cid }
+  const token=localStorage.getItem('auth_token'); const headers = { 'X-Company-ID': cid, ...(token ? { Authorization: `Bearer ${token}` } : {}) }
 
   const uploadFile = async (key, file) => {
     if (!file) return

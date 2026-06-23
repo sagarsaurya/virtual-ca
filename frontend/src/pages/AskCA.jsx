@@ -3,7 +3,7 @@ import axios from 'axios'
 import { askCA } from '../api'
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://virtual-ca.onrender.com'
-const getHeaders = () => ({ 'X-Company-ID': localStorage.getItem('company_id') || 1 })
+const getHeaders = () => { const t=localStorage.getItem('auth_token'); return {'X-Company-ID':localStorage.getItem('company_id')||1,...(t?{Authorization:`Bearer ${t}`}:{})} }
 
 const SEVERITY_COLOR = { critical: '#ef4444', warning: '#f97316', info: '#60a5fa' }
 const SEVERITY_BG    = { critical: 'rgba(239,68,68,0.08)', warning: 'rgba(249,115,22,0.08)', info: 'rgba(96,165,250,0.08)' }

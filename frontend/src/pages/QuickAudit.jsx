@@ -99,7 +99,7 @@ export default function QuickAudit() {
   const [results, setResults] = useState(null)
   const [confirmedBank, setConfirmedBank] = useState(new Set())
   const [uploading, setUploading] = useState({})
-  const getHeaders = () => ({ 'X-Company-ID': localStorage.getItem('company_id') || 1 })
+  const getHeaders = () => { const t=localStorage.getItem('auth_token'); return {'X-Company-ID':localStorage.getItem('company_id')||1,...(t?{Authorization:`Bearer ${t}`}:{})} }
 
   const loadFilesStatus = useCallback(() => {
     const cid = localStorage.getItem('company_id') || 1

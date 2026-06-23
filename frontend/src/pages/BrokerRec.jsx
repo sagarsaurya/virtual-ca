@@ -14,6 +14,7 @@ export default function BrokerRec() {
   const tallyRef=useRef()
   const brokerRef=useRef()
   const cid=localStorage.getItem('company_id')||1
+  const getH=(extra={})=>{const t=localStorage.getItem('auth_token');return{'X-Company-ID':cid,...(t?{Authorization:`Bearer ${t}`}:{}), ...extra}}
 
   const run=async()=>{
     if(!tallyFile||!brokerFile){setError('Please upload both files');return}
@@ -23,7 +24,7 @@ export default function BrokerRec() {
     fd.append('broker_file',brokerFile)
     fd.append('broker',broker)
     try{
-      const r=await axios.post(`${API}/api/broker-rec`,fd,{headers:{'X-Company-ID':cid,'Content-Type':'multipart/form-data'}})
+      const r=await axios.post(`${API}/api/broker-rec`,fd,{headers:getH({'Content-Type':'multipart/form-data'})})
       setData(r.data)
     }catch(e){setError(e.response?.data?.error||e.message)}
     setLoading(false)

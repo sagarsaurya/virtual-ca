@@ -2,7 +2,7 @@ import { useState } from 'react'
 import axios from 'axios'
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://virtual-ca.onrender.com'
-const getHeaders = () => ({ 'X-Company-ID': localStorage.getItem('company_id') || 1 })
+const getHeaders = () => { const t=localStorage.getItem('auth_token'); return {'X-Company-ID':localStorage.getItem('company_id')||1,...(t?{Authorization:`Bearer ${t}`}:{})} }
 
 export default function TDSAnalysis() {
   const [data, setData]       = useState(null)

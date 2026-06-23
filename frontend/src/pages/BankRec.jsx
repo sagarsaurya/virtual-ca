@@ -11,10 +11,10 @@ export default function BankRec() {
   const [results, setResults] = useState(null)
   const [activeTab, setActiveTab] = useState('wrongdate')
   const cid = localStorage.getItem('company_id') || 1
+  const getH = () => { const t=localStorage.getItem('auth_token'); return {'X-Company-ID':cid,...(t?{Authorization:`Bearer ${t}`}:{})} }
 
   useEffect(() => {
-    // Check if files already uploaded
-    axios.get(`${API_URL}/api/bankrec/status`, { headers: { 'X-Company-ID': cid } })
+    axios.get(`${API_URL}/api/bankrec/status`, { headers: getH() })
       .then(r => { if (r.data.bstmt_exists) setBankFile({ name: r.data.bstmt_filename }) })
       .catch(() => {})
   }, [])
@@ -25,7 +25,7 @@ export default function BankRec() {
     setBankFile(file)
     const form = new FormData()
     form.append('bank_statement', file)
-    await axios.post(`${API_URL}/api/upload/files`, form, { headers: { 'X-Company-ID': cid } })
+    await axios.post(`${API_URL}/api/upload/files`, form, { headers: getH() })
   }
 
   const handleTallyUpload = async (e) => {
@@ -34,13 +34,13 @@ export default function BankRec() {
     setTallyFile(file)
     const form = new FormData()
     form.append('bank_tally', file)
-    await axios.post(`${API_URL}/api/upload/files`, form, { headers: { 'X-Company-ID': cid } })
+    await axios.post(`${API_URL}/api/upload/files`, form, { headers: getH() })
   }
 
   const doRunBankRec = async () => {
     setLoading(true)
     try {
-      const r = await axios.post(`${API_URL}/api/bankrec`, {}, { headers: { 'X-Company-ID': cid } })
+      const r = await axios.post(`${API_URL}/api/bankrec`, {}, { headers: getH() })
       setResults(r.data)
       setActiveTab('wrongdate')
     } catch (e) { alert('Error running reconciliation') }

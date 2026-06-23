@@ -2,7 +2,7 @@ import { useState } from 'react'
 import axios from 'axios'
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://virtual-ca.onrender.com'
-const getHeaders = () => ({ 'X-Company-ID': localStorage.getItem('company_id') || 1 })
+const getHeaders = () => { const t=localStorage.getItem('auth_token'); return {'X-Company-ID':localStorage.getItem('company_id')||1,...(t?{Authorization:`Bearer ${t}`}:{})} }
 
 const SEV_COLOR = { Critical: '#ef4444', Important: '#f97316', Info: '#34d399' }
 const SEV_BG    = { Critical: 'rgba(239,68,68,0.08)', Important: 'rgba(249,115,22,0.08)', Info: 'rgba(52,211,153,0.08)' }

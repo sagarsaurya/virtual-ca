@@ -9,7 +9,8 @@ export default function BalanceSheet() {
   const [data,setData]=useState(null)
   const [error,setError]=useState('')
   const cid=localStorage.getItem('company_id')||1
-  const h={'X-Company-ID':cid}
+  const token=localStorage.getItem('auth_token')
+  const h={'X-Company-ID':cid,...(token?{Authorization:`Bearer ${token}`}:{})}
 
   const run=async()=>{
     setLoading(true);setError('')
