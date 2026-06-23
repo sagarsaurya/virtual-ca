@@ -1260,7 +1260,7 @@ def audit_salary_compliance(ledgers, daybook=None):
 
             # Get voucher date
             date_val = grp_df['Date'].dropna().iloc[0] if not grp_df['Date'].dropna().empty else None
-            month_str = date_val.strftime('%b %Y') if date_val is not None else 'Unknown month'
+            month_str = date_val.strftime('%b %Y') if (date_val is not None and pd.notna(date_val)) else 'Unknown month'
 
             if pt_expected > 0 and pt_deducted == 0:
                 salary_months_missing_pt.append({
