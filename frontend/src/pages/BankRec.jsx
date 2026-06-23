@@ -113,6 +113,7 @@ export default function BankRec() {
 
       {results && (
         <>
+          {results.ai_insight&&<div style={{background:'rgba(167,139,250,0.08)',border:'1px solid rgba(167,139,250,0.25)',borderRadius:12,padding:'14px 16px',marginBottom:14,display:'flex',gap:12,alignItems:'flex-start'}}><span style={{fontSize:20}}>🤖</span><div><div style={{color:'#a78bfa',fontSize:11,fontWeight:700,marginBottom:4}}>CA AI INSIGHT</div><div style={{color:'#e2e8f0',fontSize:12,lineHeight:1.6}}>{results.ai_insight}</div></div></div>}
           <div className="flex justify-between items-center mb-4">
             <button onClick={() => { setResults(null); setBankFile(null); setTallyFile(null) }} className="text-xs px-4 py-2 rounded-xl font-semibold flex items-center gap-2" style={{background:'var(--navy-700)',color:'#94a3b8',border:'1px solid var(--navy-500)'}}>
               <i className="fas fa-arrow-left"></i> Change Files

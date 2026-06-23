@@ -55,6 +55,15 @@ export default function BalanceSheet() {
       {loading&&<div style={{textAlign:'center',padding:40,color:'#C9A84C'}}>Generating...</div>}
       {data&&(
         <>
+          {data.ai_insight&&(
+            <div style={{background:'rgba(167,139,250,0.08)',border:'1px solid rgba(167,139,250,0.25)',borderRadius:12,padding:'14px 16px',marginBottom:14,display:'flex',gap:12,alignItems:'flex-start'}}>
+              <span style={{fontSize:20}}>🤖</span>
+              <div>
+                <div style={{color:'#a78bfa',fontSize:11,fontWeight:700,marginBottom:4}}>CA AI INSIGHT</div>
+                <div style={{color:'#e2e8f0',fontSize:12,lineHeight:1.6}}>{data.ai_insight}</div>
+              </div>
+            </div>
+          )}
           <div style={{display:'flex',gap:10,marginBottom:14,flexWrap:'wrap'}}>
             <div style={{...card,flex:1,minWidth:140,margin:0}}>
               <div style={{color:'#4A6A8A',fontSize:11}}>Total Assets</div>

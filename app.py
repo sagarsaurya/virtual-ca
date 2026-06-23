@@ -863,7 +863,10 @@ def api_balance_sheet():
         return jsonify({'error': 'Upload Trial Balance first'}), 400
     try:
         from balance_sheet import generate_balance_sheet
-        return jsonify(generate_balance_sheet(tb))
+        from ai_insights import generate_insight
+        result = generate_balance_sheet(tb)
+        result['ai_insight'] = generate_insight('balance_sheet', result)
+        return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -876,7 +879,10 @@ def api_tds_detect():
         return jsonify({'error': 'Upload Trial Balance first'}), 400
     try:
         from tds_detector import detect_missed_tds
-        return jsonify(detect_missed_tds(tb, db if os.path.exists(db) else None))
+        from ai_insights import generate_insight
+        result = detect_missed_tds(tb, db if os.path.exists(db) else None)
+        result['ai_insight'] = generate_insight('tds_detect', result)
+        return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -889,7 +895,10 @@ def api_gst_return():
         return jsonify({'error': 'Upload Trial Balance first'}), 400
     try:
         from gst_return import parse_gst_data
-        return jsonify(parse_gst_data(tb, db if os.path.exists(db) else None))
+        from ai_insights import generate_insight
+        result = parse_gst_data(tb, db if os.path.exists(db) else None)
+        result['ai_insight'] = generate_insight('gst_return', result)
+        return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -902,7 +911,10 @@ def api_shares_pnl():
         return jsonify({'error': 'Upload Trial Balance first'}), 400
     try:
         from shares_pnl import calculate_shares_pnl
-        return jsonify(calculate_shares_pnl(tb, db if os.path.exists(db) else None))
+        from ai_insights import generate_insight
+        result = calculate_shares_pnl(tb, db if os.path.exists(db) else None)
+        result['ai_insight'] = generate_insight('shares_pnl', result)
+        return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -915,7 +927,10 @@ def api_cash_flow():
         return jsonify({'error': 'Upload Trial Balance first'}), 400
     try:
         from cash_flow import generate_cash_flow
-        return jsonify(generate_cash_flow(tb, db if os.path.exists(db) else None))
+        from ai_insights import generate_insight
+        result = generate_cash_flow(tb, db if os.path.exists(db) else None)
+        result['ai_insight'] = generate_insight('cash_flow', result)
+        return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -926,10 +941,16 @@ def api_doc_checker():
     tb, db = _ensure_tb_db(cid)
     try:
         from doc_checker import check_documents
-        return jsonify(check_documents(
+        from ai_insights import generate_insight
+        result = check_documents(
             db if os.path.exists(db) else None,
             tb if os.path.exists(tb) else None
-        ))
+        )
+        insight = generate_insight('doc_checker', {'items': result} if isinstance(result, list) else result)
+        if isinstance(result, list):
+            return jsonify({'items': result, 'ai_insight': insight})
+        result['ai_insight'] = insight
+        return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -952,8 +973,10 @@ def api_party_rec():
             party_file.save(pf.name)
             pp = pf.name
         from party_rec import reconcile_party
+        from ai_insights import generate_insight
         result = reconcile_party(tp, pp, party_name)
         os.unlink(tp); os.unlink(pp)
+        result['ai_insight'] = generate_insight('party_rec', result)
         return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -992,7 +1015,10 @@ def api_pt_analysis():
         return jsonify({'error': 'Upload Trial Balance first'}), 400
     try:
         from pt_engine import run_pt_analysis
-        return jsonify(run_pt_analysis(tb, db if os.path.exists(db) else None))
+        from ai_insights import generate_insight
+        result = run_pt_analysis(tb, db if os.path.exists(db) else None)
+        result['ai_insight'] = generate_insight('pt_analysis', result)
+        return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
