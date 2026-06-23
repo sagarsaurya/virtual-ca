@@ -20,7 +20,7 @@ from audit_engine import (
     audit_salary_compliance,
 )
 
-MODEL = 'claude-sonnet-4-6'
+MODEL = 'claude-haiku-4-5-20251001'
 
 
 # ── BUILD INPUT TEXT FOR AUDITOR ──────────────────────────────────────────────
