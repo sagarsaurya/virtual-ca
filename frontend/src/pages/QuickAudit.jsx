@@ -12,23 +12,29 @@ const CONF = {
   low_confidence:{ icon: 'fa-circle-xmark', color: '#f87171', bg: 'rgba(248,113,113,0.1)', label: 'Low Confidence' },
 }
 
-function ConfidenceBadge({ confidence, reasoning, evidence, law }) {
+function ConfidenceBadge({ confidence, reasoning, evidence, law, fallbackIssue }) {
   const [open, setOpen] = useState(false)
   const c = CONF[confidence] || CONF.verified
+  const hasContent = evidence || law || reasoning || fallbackIssue
   return (
     <div style={{ marginTop: 6 }}>
-      <span onClick={() => setOpen(o => !o)}
+      <span onClick={() => hasContent && setOpen(o => !o)}
         style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10, fontWeight: 700,
-          padding: '3px 8px', borderRadius: 99, cursor: 'pointer',
+          padding: '3px 8px', borderRadius: 99, cursor: hasContent ? 'pointer' : 'default',
           background: c.bg, color: c.color, border: `1px solid ${c.color}33` }}>
         <i className={`fas ${c.icon}`}></i> {c.label}
-        <i className={`fas fa-chevron-${open ? 'up' : 'down'}`} style={{ fontSize: 8, marginLeft: 2 }}></i>
+        {hasContent && <i className={`fas fa-chevron-${open ? 'up' : 'down'}`} style={{ fontSize: 8, marginLeft: 2 }}></i>}
       </span>
       {open && (
         <div style={{ marginTop: 6, padding: '10px 12px', borderRadius: 8,
           background: 'rgba(15,23,42,0.6)', border: `1px solid ${c.color}33` }}>
-          {evidence && <div style={{ color: '#e2e8f0', fontSize: 11, marginBottom: 6 }}><span style={{ color: '#60a5fa', fontWeight: 600 }}>Evidence: </span>{evidence}</div>}
-          {law      && <div style={{ color: '#94a3b8', fontSize: 11, marginBottom: 6 }}><span style={{ color: '#a78bfa', fontWeight: 600 }}>Law: </span>{law}</div>}
+          {(evidence || fallbackIssue) && (
+            <div style={{ color: '#e2e8f0', fontSize: 11, marginBottom: law || reasoning ? 6 : 0 }}>
+              <span style={{ color: '#60a5fa', fontWeight: 600 }}>Evidence: </span>
+              {evidence || fallbackIssue}
+            </div>
+          )}
+          {law && <div style={{ color: '#94a3b8', fontSize: 11, marginBottom: reasoning ? 6 : 0 }}><span style={{ color: '#a78bfa', fontWeight: 600 }}>Law: </span>{law}</div>}
           {reasoning && <div style={{ color: c.color, fontSize: 11 }}><span style={{ fontWeight: 600 }}>Audit Review: </span>{reasoning}</div>}
         </div>
       )}
@@ -490,7 +496,7 @@ function LedgerSection({ findings }) {
             <div style={{ flex: 1, minWidth: 200 }}>
               <div style={{ color: '#e2e8f0', fontWeight: 700, fontSize: 13 }}>{f.ledger}</div>
               <div style={{ color: '#64748b', fontSize: 11, marginTop: 2 }}>{f.rule || f.issue || ''}</div>
-              <ConfidenceBadge confidence={f.confidence} reasoning={f.critic_reasoning} evidence={f.evidence} law={f.law} />
+              <ConfidenceBadge confidence={f.confidence} reasoning={f.critic_reasoning} evidence={f.evidence} law={f.law} fallbackIssue={f.rule || f.issue} />
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
               <div style={{ textAlign: 'center' }}>
@@ -530,7 +536,7 @@ function TDSSection({ items }) {
               {secTag('Sec ' + t.section, '#93c5fd', 'rgba(96,165,250,0.15)')}
             </div>
             <div style={{ color: '#64748b', fontSize: 11 }}>{t.issue || ''}</div>
-            <ConfidenceBadge confidence={t.confidence} reasoning={t.critic_reasoning} evidence={t.evidence} law={t.law} />
+            <ConfidenceBadge confidence={t.confidence} reasoning={t.critic_reasoning} evidence={t.evidence} law={t.law} fallbackIssue={t.issue} />
           </div>
           <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
             <div style={{ textAlign: 'center' }}>
@@ -557,7 +563,7 @@ function OutstandingSection({ items }) {
           <div style={{ flex: 1, minWidth: 200 }}>
             <div style={{ color: '#e2e8f0', fontWeight: 700, fontSize: 13 }}>{f.ledger}</div>
             <div style={{ color: '#94a3b8', fontSize: 11, marginTop: 2 }}>{f.question || f.issue || ''}</div>
-            <ConfidenceBadge confidence={f.confidence} reasoning={f.critic_reasoning} evidence={f.evidence} law={f.law} />
+            <ConfidenceBadge confidence={f.confidence} reasoning={f.critic_reasoning} evidence={f.evidence} law={f.law} fallbackIssue={f.question || f.issue} />
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <div style={{ color: '#f87171', fontWeight: 700, fontSize: 14 }}>{fmt(f.amount || f.balance || 0)}</div>
