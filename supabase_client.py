@@ -11,13 +11,10 @@ SUPABASE_KEY = os.environ.get('SUPABASE_SERVICE_KEY', 'eyJhbGciOiJIUzI1NiIsInR5c
 
 BUCKET = 'virtualca-files'
 
-_client: Client = None
-
 def get_client() -> Client:
-    global _client
-    if _client is None:
-        _client = create_client(SUPABASE_URL, SUPABASE_KEY)
-    return _client
+    # Create a fresh client per call — avoids [Errno 11] EAGAIN from shared
+    # socket state when Flask handles concurrent requests in multiple threads.
+    return create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
 # ── AUTH ─────────────────────────────────────────────────────────────────────
