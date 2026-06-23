@@ -410,115 +410,95 @@ def audit_outstanding(ledgers):
 # ── MODULE 3: CASH VIOLATIONS ────────────────────────────────────────────────
 def audit_cash_violations(daybook):
     """
-    Correctly identifies CASH payments/receipts by checking the actual
-    account used in each voucher — not just the party name.
+    Flags ONLY transactions where the actual payment/receipt account is the
+    Cash ledger in Tally (ledger named 'cash' or 'petty cash').
 
-    Logic:
-    1. Assign a voucher_id to every row (continuation rows inherit from header row)
-    2. For each Payment/Receipt voucher, collect ALL account names across its rows
-    3. If ANY account is a bank/digital account → it's a bank transaction → SKIP
-    4. Only flag vouchers where all accounts are cash/unknown → true cash transaction
+    Law:
+    - Sec 40A(3): cash PAYMENT > ₹10,000 → expense disallowed
+    - Sec 269ST:  cash RECEIPT  > ₹2,00,000 → penalty = 100% of amount
+
+    Key rule: if payment is via Bank/NEFT/UPI/Cheque → NOT a violation at all.
+    Only flag if the voucher explicitly uses a Cash ledger as the payment account.
     """
     if daybook.empty:
         return []
 
-    BANK_ACCOUNT_KEYWORDS = [
-        'hdfc', 'icici', 'sbi', 'axis', 'kotak', 'yes bank', 'rbl', 'indusind',
-        'federal bank', 'bank of baroda', 'bank of india', 'union bank', 'canara',
-        'pnb', 'punjab national', 'current a/c', 'savings a/c', 'bank account',
-        'zerodha', 'anand rathi', 'tapinvest', 'icici prudential', 'mutual fund',
-        'nps', 'ppf', 'epf', 'neft', 'rtgs', 'upi', 'imps', 'online transfer',
-        # Bank income/charges — always a bank transaction, never cash
-        'bank interest', 'interest received', 'interest on od', 'od interest',
-        'bank charges', 'bank commission', 'bank fees', 'bank service',
-        'interest on loan', 'interest on cc', 'interest on overdraft',
-        'processing fee', 'gst on bank', 'cash deposit', 'cheque deposit',
-    ]
+    # Ledger names that mean actual physical cash in Tally
+    CASH_LEDGER_NAMES = ['cash', 'petty cash', 'hand cash', 'cash in hand']
 
-    # ── Step 1: assign voucher_id to every row (continuation rows get same id) ──
+    # ── Step 1: assign voucher_id to every row ────────────────────────────────
     db = daybook.copy().reset_index(drop=True)
-    db['_vid']   = None   # voucher id (running counter)
-    db['_vtype'] = None   # voucher type for this group
+    db['_vid']   = None
+    db['_vtype'] = None
 
     vid = 0
     current_type = None
     for idx, row in db.iterrows():
         vtype = str(row['VchType']).strip() if pd.notna(row['VchType']) else ''
-        vno   = str(row['VchNo']).strip()   if pd.notna(row['VchNo'])   else ''
-
         is_header = vtype in ['Payment', 'Receipt', 'Journal', 'Contra', 'Sales', 'Purchase']
         if is_header:
             vid += 1
             current_type = vtype
-
         db.at[idx, '_vid']   = vid
         db.at[idx, '_vtype'] = current_type
 
-    # ── Step 2: for each Payment/Receipt voucher, collect all account names ──
+    # ── Step 2: find vouchers that explicitly use a Cash ledger ───────────────
     pay_rcpt = db[db['_vtype'].isin(['Payment', 'Receipt'])]
 
-    # Map vid → set of lowercase account names in that voucher
-    vch_accounts = {}
+    cash_vids = set()
     for _, row in db[db['_vid'].isin(pay_rcpt['_vid'].unique())].iterrows():
-        v = row['_vid']
         name = str(row['Particulars']).strip().lower()
-        if v not in vch_accounts:
-            vch_accounts[v] = {'type': row['_vtype'], 'accounts': set()}
-        if name and name != 'nan':
-            vch_accounts[v]['accounts'].add(name)
+        if any(name == c or name.startswith(c) for c in CASH_LEDGER_NAMES):
+            cash_vids.add(row['_vid'])
 
-    # ── Step 3: identify vouchers that use a bank account ──
-    bank_vids = set()
-    for v, info in vch_accounts.items():
-        for acc in info['accounts']:
-            if any(kw in acc for kw in BANK_ACCOUNT_KEYWORDS):
-                bank_vids.add(v)
-                break
-
-    # ── Step 4: flag only true cash vouchers ──
+    # ── Step 3: flag only vouchers that used Cash ledger ─────────────────────
     findings = []
-    seen = set()  # avoid duplicate flags for same voucher
+    seen = set()
 
     for _, row in pay_rcpt.iterrows():
         v = row['_vid']
-        if v in bank_vids:
-            continue          # bank payment — not a cash violation
+        if v not in cash_vids:
+            continue   # not a cash transaction — bank/cheque/UPI → skip
         if v in seen:
-            continue          # already flagged this voucher
+            continue
         seen.add(v)
 
-        party  = str(row['Particulars']).strip()
-        date   = str(row['Date'].date()) if pd.notna(row['Date']) else ''
+        party = str(row['Particulars']).strip()
+        date  = str(row['Date'].date()) if pd.notna(row['Date']) else ''
 
-        # Skip if the party name itself is a bank-type ledger (bank interest, charges, etc.)
+        # Skip the Cash ledger row itself — we want the party row
         party_lower = party.lower()
-        if any(kw in party_lower for kw in BANK_ACCOUNT_KEYWORDS):
+        if any(party_lower == c or party_lower.startswith(c) for c in CASH_LEDGER_NAMES):
             continue
 
-        # Sec 40A(3) — payment > ₹10,000 (verify if cash or bank)
+        # Sec 40A(3) — cash payment > ₹10,000
         if row['Debit'] > CASH_EXPENSE_LIMIT:
             findings.append({
-                'severity': 'Critical',
-                'date': date,
-                'party': party,
-                'amount': row['Debit'],
-                'type': 'cash_expense',
-                'section': '40A(3)',
-                'issue': f"Payment of Rs.{row['Debit']:,.0f} to {party} — verify payment mode (cash or bank)",
-                'impact': f"If paid in CASH: Rs.{row['Debit']:,.0f} will be disallowed. If paid via Bank/IMPS/NEFT: no violation — reply to dismiss."
+                'severity':    'Critical',
+                'date':        date,
+                'party':       party,
+                'amount':      row['Debit'],
+                'type':        'cash_expense',
+                'section':     '40A(3)',
+                'voucher_type': str(row['VchType']).strip(),
+                'issue':       f"Cash payment of ₹{row['Debit']:,.0f} to {party} exceeds ₹10,000 limit",
+                'impact':      f"₹{row['Debit']:,.0f} will be disallowed as business expense u/s 40A(3). Pay via bank to avoid disallowance.",
+                'law':         'Section 40A(3) Income Tax Act 1961 — cash payments above ₹10,000 to a single person in a day are disallowed',
             })
 
-        # Sec 269ST — receipt > ₹2,00,000 (verify if cash)
+        # Sec 269ST — cash receipt > ₹2,00,000
         if row['Credit'] > CASH_RECEIPT_LIMIT:
             findings.append({
-                'severity': 'Critical',
-                'date': date,
-                'party': party,
-                'amount': row['Credit'],
-                'type': 'cash_receipt',
-                'section': '269ST',
-                'issue': f"Receipt of Rs.{row['Credit']:,.0f} from {party} — verify if received in cash",
-                'impact': f"If received in CASH: penalty = 100% of amount = Rs.{row['Credit']:,.0f}. If via bank: no violation — reply to dismiss."
+                'severity':    'Critical',
+                'date':        date,
+                'party':       party,
+                'amount':      row['Credit'],
+                'type':        'cash_receipt',
+                'section':     '269ST',
+                'voucher_type': str(row['VchType']).strip(),
+                'issue':       f"Cash receipt of ₹{row['Credit']:,.0f} from {party} exceeds ₹2,00,000 limit",
+                'impact':      f"Penalty = 100% of amount = ₹{row['Credit']:,.0f} u/s 271DA. Receive via account payee cheque or bank transfer only.",
+                'law':         'Section 269ST Income Tax Act 1961 — receiving ₹2L or more in cash from one person in a day is prohibited',
             })
 
     return findings
