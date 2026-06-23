@@ -216,16 +216,19 @@ def load_files_meta(cid: int = 1) -> dict:
 
 
 def save_files_meta(meta: dict, cid: int = 1):
+    import sys
     try:
         sb = get_client()
-        # Check if row exists for this company
         res = sb.table('files_meta').select('id').eq('company_id', cid).execute()
+        print(f'[save_files_meta] cid={cid} existing={res.data}', file=sys.stderr, flush=True)
         if res.data:
-            sb.table('files_meta').update({'meta': meta}).eq('company_id', cid).execute()
+            r2 = sb.table('files_meta').update({'meta': meta}).eq('company_id', cid).execute()
+            print(f'[save_files_meta] updated cid={cid} result={r2.data}', file=sys.stderr, flush=True)
         else:
-            sb.table('files_meta').insert({'company_id': cid, 'meta': meta}).execute()
+            r2 = sb.table('files_meta').insert({'company_id': cid, 'meta': meta}).execute()
+            print(f'[save_files_meta] inserted cid={cid} result={r2.data}', file=sys.stderr, flush=True)
     except Exception as e:
-        print(f'[Supabase] save_files_meta error: {e}')
+        print(f'[save_files_meta] ERROR cid={cid}: {e}', file=sys.stderr, flush=True)
 
 
 # ── DATABASE: audit_history ───────────────────────────────────────────────────
