@@ -105,14 +105,23 @@ export default function QuickAudit() {
   const [confirmedBank, setConfirmedBank] = useState(new Set())
   const [uploading, setUploading] = useState({})
 
-  const _setFilesStatus = useCallback((data) => {
+  const _setFilesStatus = useCallback((data, persist = true) => {
     setFilesStatus(data)
-    try { localStorage.setItem(_fsKey(), JSON.stringify(data)) } catch {}
+    // Only persist to localStorage if there are actual files — don't overwrite with empty server response
+    if (persist && (data.tb_exists || data.db_exists || data.tb || data.db)) {
+      try { localStorage.setItem(_fsKey(), JSON.stringify(data)) } catch {}
+    }
   }, [])
 
   const loadFilesStatus = useCallback(() => {
     axios.get(`${API_URL}/api/files/status`, { headers: getHeaders() })
-      .then(r => { if (r.data && Object.keys(r.data).length) _setFilesStatus(r.data) })
+      .then(r => {
+        if (r.data && (r.data.tb_exists || r.data.db_exists)) {
+          // Server has files — update state and localStorage
+          _setFilesStatus(r.data, true)
+        }
+        // If server returns no files, keep whatever is in localStorage (don't overwrite)
+      })
       .catch(() => {})
   }, [_setFilesStatus])
 
