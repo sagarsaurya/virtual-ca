@@ -298,7 +298,8 @@ def files_status():
 # ── POST /api/audit ───────────────────────────────────────────────────────────
 @app.route('/api/audit', methods=['POST'])
 def run_audit():
-    cid     = get_cid()
+    cid, err, code = _require_cid()
+    if err: return err, code
     tb_file = request.files.get('trial_balance')
     db_file = request.files.get('daybook')
     meta    = load_files_meta(cid)
@@ -388,16 +389,21 @@ def last_audit():
 
 @app.route('/api/audit/clear', methods=['POST'])
 def clear_audit():
-    sb.save_audit_result({}, get_cid())
+    cid, err, code = _require_cid()
+    if err: return err, code
+    sb.save_audit_result({}, cid)
     return jsonify({'ok': True})
 
 @app.route('/api/audit/history', methods=['GET'])
 def audit_history():
-    return jsonify(load_history(get_cid()))
+    cid, err, code = _require_cid()
+    if err: return err, code
+    return jsonify(load_history(cid))
 
 @app.route('/api/dashboard', methods=['GET'])
 def dashboard():
-    cid     = get_cid()
+    cid, err, code = _require_cid()
+    if err: return err, code
     history = load_history(cid)
     last    = sb.load_audit_result(cid) or {}
     return jsonify({
@@ -499,7 +505,8 @@ def compliance():
 # ── mark/unmark personal ──────────────────────────────────────────────────────
 @app.route('/api/audit/mark-personal', methods=['POST'])
 def mark_personal():
-    cid   = get_cid()
+    cid, err, code = _require_cid()
+    if err: return err, code
     data  = request.json
     marks = load_personal(cid)
     entry = {'date': data['date'], 'party': data['party'], 'amount': data['amount'], 'reason': data.get('reason', 'Personal')}
@@ -517,7 +524,9 @@ def unmark_personal():
 
 @app.route('/api/audit/personal-marks', methods=['GET'])
 def get_personal_marks():
-    return jsonify(load_personal(get_cid()))
+    cid, err, code = _require_cid()
+    if err: return err, code
+    return jsonify(load_personal(cid))
 
 # ── POST /api/bankrec-existing ────────────────────────────────────────────────
 @app.route('/api/bankrec-existing', methods=['POST'])
@@ -548,7 +557,8 @@ def bank_reconciliation_existing():
 # ── POST /api/bankrec ─────────────────────────────────────────────────────────
 @app.route('/api/bankrec', methods=['POST'])
 def bank_reconciliation():
-    cid     = get_cid()
+    cid, err, code = _require_cid()
+    if err: return err, code
     bs_file = request.files.get('bank_statement')
     tl_file = request.files.get('tally_ledger')
     if not bs_file or not bs_file.filename:
@@ -599,7 +609,8 @@ def ai_explain():
     data    = request.json or {}
     finding = data.get('finding', {})
     ftype   = data.get('type', 'ledger')
-    cid     = get_cid()
+    cid, err, code = _require_cid()
+    if err: return err, code
 
     if not finding:
         return jsonify({'error': 'finding required'}), 400
@@ -666,7 +677,7 @@ def ca_chat():
     if not user_msg:
         return jsonify({'error': 'message required'}), 400
 
-    audit_data = sb.load_audit_result(get_cid()) or None
+    audit_data = sb.load_audit_result(get_cid() or 1) or None
 
     try:
         from ca_agent import chat as ca_chat_fn
