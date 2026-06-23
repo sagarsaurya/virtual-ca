@@ -102,8 +102,7 @@ export default function QuickAudit() {
   const getHeaders = () => { const t=localStorage.getItem('auth_token'); return {'X-Company-ID':localStorage.getItem('company_id')||1,...(t?{Authorization:`Bearer ${t}`}:{})} }
 
   const loadFilesStatus = useCallback(() => {
-    const cid = localStorage.getItem('company_id') || 1
-    axios.get(`${API_URL}/api/files/status`, { headers: { 'X-Company-ID': cid } }).then(r => setFilesStatus(r.data)).catch(() => {})
+    axios.get(`${API_URL}/api/files/status`, { headers: getHeaders() }).then(r => setFilesStatus(r.data)).catch(() => {})
   }, [])
 
   useEffect(() => {

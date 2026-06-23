@@ -172,12 +172,13 @@ def parse_trial_balance(filepath):
 
         else:
             # Ledger — add under current_group (or current_level1 as fallback)
-            grp = current_group or current_level1
-            if grp:
-                ledgers.append({
-                    'name': name, 'group': grp,
-                    'debit': debit, 'credit': credit, 'balance': debit - credit
-                })
+            # For flat TBs (no group hierarchy like D2D), grp is None — still add
+            # with empty group so keyword classifier in balance_sheet.py can work
+            grp = current_group or current_level1 or ''
+            ledgers.append({
+                'name': name, 'group': grp,
+                'debit': debit, 'credit': credit, 'balance': debit - credit
+            })
 
     return ledgers, company_name, period_str
 

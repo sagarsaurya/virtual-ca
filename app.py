@@ -31,8 +31,8 @@ def _get_token() -> str:
 def get_cid() -> int | None:
     """
     Get company_id for the current request.
-    If a valid token is present, ALWAYS use that user's company.
-    Never fall back to company 1 when a real token exists.
+    If Bearer token is valid, use X-Company-ID if it belongs to this user,
+    otherwise fall back to the user's default company.
     Returns None if token is invalid (caller should return 401).
     """
     token = _get_token()
@@ -43,6 +43,17 @@ def get_cid() -> int | None:
             if res.user:
                 user_id = res.user.id
                 email   = res.user.email
+                # Honor X-Company-ID header if this user owns that company
+                try:
+                    requested_cid = int(request.headers.get('X-Company-ID', 0))
+                except (ValueError, TypeError):
+                    requested_cid = 0
+                if requested_cid:
+                    # Verify this company belongs to this user
+                    check = sb_client.table('companies').select('id').eq('id', requested_cid).eq('user_id', user_id).execute()
+                    if check.data:
+                        return requested_cid
+                # Fall back to default company for user
                 return sb.get_or_create_company_for_user(user_id, email)
             else:
                 return None  # invalid token — don't fall back

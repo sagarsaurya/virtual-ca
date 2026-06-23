@@ -78,12 +78,14 @@ def check_documents(daybook_path=None, tb_path=None):
         party     = ''
 
         for v in vals:
-            # Date
-            for fmt in ('%d-%m-%Y','%d/%m/%Y','%Y-%m-%d','%d-%b-%Y'):
+            # Date — handle pandas Timestamp strings and standard formats
+            if date_val is None:
                 try:
                     import datetime
-                    date_val = datetime.datetime.strptime(v, fmt).date()
-                    break
+                    import pandas as _pd
+                    parsed = _pd.to_datetime(v, errors='coerce')
+                    if not _pd.isna(parsed):
+                        date_val = parsed.date()
                 except:
                     pass
             # Amount

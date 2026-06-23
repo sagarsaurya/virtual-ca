@@ -1,4 +1,5 @@
 import pandas as pd
+import re
 from datetime import datetime, date
 
 LTCG_EXEMPT = 100000   # ₹1L exempt for equity LTCG
@@ -6,11 +7,27 @@ LTCG_RATE   = 0.10
 STCG_RATE   = 0.15
 HOLDING_MONTHS_LONG = 12  # >12 months = LTCG for equity
 
+# Short keywords (<=4 chars) need whole-word match to avoid false positives
+# e.g. 'nse' matches inside "expenses", 'mf' inside names, 'bse' inside words
 INVESTMENT_KEYWORDS = ['shares','equity','stock','nse','bse','mutual fund','mf','etf',
                        'zerodha','groww','angel','icicidirect','hdfc sec','sbi sec',
                        'investment','portfolio','demat']
 BUY_KEYWORDS  = ['purchase','buy','bought','subscribed','allotment','invest']
 SELL_KEYWORDS = ['sale','sell','sold','redemption','redeemed','exit']
+
+def _is_investment_ledger(name, group=''):
+    n = name.lower()
+    g = group.lower()
+    if 'investment' in g:
+        return True
+    for kw in INVESTMENT_KEYWORDS:
+        if len(kw) <= 4:
+            if re.search(r'\b' + re.escape(kw) + r'\b', n):
+                return True
+        else:
+            if kw in n:
+                return True
+    return False
 
 def _parse_date(d):
     if not d or str(d).strip() in ('', 'nan', 'NaT'):
@@ -41,9 +58,8 @@ def calculate_shares_pnl(tb_path, daybook_path=None):
     inv_ledgers = []
     for l in ledgers:
         name  = l.get('name') or ''
-        group = (l.get('group') or '').lower()
-        n     = name.lower()
-        if any(kw in n for kw in INVESTMENT_KEYWORDS) or 'investment' in group:
+        group = l.get('group') or ''
+        if _is_investment_ledger(name, group):
             inv_ledgers.append(l)
 
     # Try to parse daybook for buy/sell transactions
@@ -54,7 +70,7 @@ def calculate_shares_pnl(tb_path, daybook_path=None):
             # Look for rows with investment keywords + amounts
             for _, row in df.iterrows():
                 row_str = ' '.join(str(c).lower() for c in row if pd.notna(c))
-                if not any(kw in row_str for kw in INVESTMENT_KEYWORDS):
+                if not _is_investment_ledger(row_str):
                     continue
                 # Try to extract date, party, amount
                 date_val = None

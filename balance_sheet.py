@@ -62,6 +62,33 @@ KEYWORD_GROUPS = [
      ('liabilities', 'current', 'Other Current Liabilities')),
     (['salary payable','outstanding salary','audit fee payable'],
      ('liabilities', 'current', 'Other Current Liabilities')),
+    # Expense accounts → P&L (treated as DR balance = Net Loss carried to equity)
+    (['salary','wages','rent','commission','marketing','general expenses','office',
+      'telephone','travel','hotel','food','stationery','subscription','printing',
+      'discount allowed','staff incentive','business promotion','buisness promotion',
+      'consulting','consult','training','gen ai','workshop'],
+     ('liabilities', 'equity', 'Profit & Loss / Net Result')),
+    # Income accounts → P&L
+    (['fees','income','revenue','workshop fees','gen ai training','service'],
+     ('liabilities', 'equity', 'Profit & Loss / Net Result')),
+    # Credit cards → liabilities
+    (['credit card','amex','rbl credit'],
+     ('liabilities', 'current', 'Other Current Liabilities')),
+    # Loans taken / loan from individuals → liabilities
+    (['loan','laddha','mridula','anjali'],
+     ('liabilities', 'noncurrent', 'Long-term Borrowings')),
+    # TDS payable → duties & taxes
+    (['tds payable','ptax payable','pt payable','professional tax payable'],
+     ('liabilities', 'current', 'Other Current Liabilities')),
+    # TDS receivable → asset
+    (['tds receivable','tds refund'],
+     ('assets', 'current', 'Other Current Assets')),
+    # Advance paid to staff / vendors → asset
+    (['advance to','advance paid'],
+     ('assets', 'current', 'Short-term Loans & Advances')),
+    # Suspense → current asset by default
+    (['suspense'],
+     ('assets', 'current', 'Other Current Assets')),
 ]
 
 def _classify(group_name, ledger_name):
@@ -97,8 +124,14 @@ def generate_balance_sheet(tb_path):
 
         mapping = _classify(group, name)
         if not mapping:
-            unclassified.append({'ledger': name, 'group': group, 'balance': abs(bal), 'dr_cr': dr_cr})
-            continue
+            # Fallback: DR-balance = receivable/advance (asset), CR-balance = payable (liability)
+            # Skip pure reconciliation entries
+            if 'difference in opening' in name.lower():
+                continue
+            if dr_cr == 'DR':
+                mapping = ('assets', 'current', 'Other Current Assets')
+            else:
+                mapping = ('liabilities', 'current', 'Trade Payables')
 
         side, section, subsection = mapping
         bucket = assets if side == 'assets' else liabilities
