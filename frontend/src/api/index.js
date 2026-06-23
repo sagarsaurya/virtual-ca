@@ -4,8 +4,13 @@ const API = axios.create({
   baseURL: process.env.REACT_APP_API_URL || 'https://virtual-ca.onrender.com',
 })
 
-// attach company id header to every request
+// attach auth token (and legacy company id) to every request
 API.interceptors.request.use(cfg => {
+  const token = localStorage.getItem('auth_token')
+  if (token) {
+    cfg.headers['Authorization'] = `Bearer ${token}`
+  }
+  // legacy fallback for admin/unauthenticated calls
   const cid = localStorage.getItem('company_id') || 1
   cfg.headers['X-Company-ID'] = cid
   return cfg
