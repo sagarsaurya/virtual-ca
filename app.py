@@ -35,9 +35,15 @@ def get_cid() -> int:
     """
     token = _get_token()
     if token:
-        user_id = sb.get_user_from_token(token)
-        if user_id:
-            return sb.get_or_create_company_for_user(user_id)
+        try:
+            sb_client = sb.get_client()
+            res = sb_client.auth.get_user(token)
+            if res.user:
+                user_id = res.user.id
+                email   = res.user.email
+                return sb.get_or_create_company_for_user(user_id, email)
+        except Exception as e:
+            print(f'[Auth] get_cid token error: {e}')
     # Legacy fallback — header-based (admin panel / unauthenticated dev)
     try:
         return int(request.headers.get('X-Company-ID', 1))

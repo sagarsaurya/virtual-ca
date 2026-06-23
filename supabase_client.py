@@ -70,32 +70,25 @@ def get_user_from_token(token: str) -> str | None:
         return None
 
 
-def get_or_create_company_for_user(user_id: str) -> int:
+def get_or_create_company_for_user(user_id: str, email: str = None) -> int:
     """Return the company_id for this user, creating one if needed."""
-    try:
-        sb = get_client()
-        # Ensure user_company_map table exists (silent if already exists)
-        try:
-            sb.table('user_company_map').select('company_id').limit(1).execute()
-        except Exception:
-            pass  # table may not exist yet — will fail gracefully below
+    sb = get_client()
 
-        res = sb.table('user_company_map').select('company_id').eq('user_id', user_id).execute()
-        if res.data:
-            return res.data[0]['company_id']
+    # Check if this user already has a company
+    res = sb.table('user_company_map').select('company_id').eq('user_id', user_id).execute()
+    if res.data:
+        return res.data[0]['company_id']
 
-        # No company yet — create one
-        email_res = sb.auth.admin.get_user_by_id(user_id)
-        email = email_res.user.email if email_res.user else user_id[:8]
-        co_name = email.split('@')[0].title()
-        co = create_company(co_name)
-        cid = co.get('id', 1)
+    # No company yet — create one named after their email prefix
+    co_name = (email or user_id[:8]).split('@')[0].title()
+    co = create_company(co_name)
+    cid = co.get('id')
+    if not cid:
+        raise Exception(f'Failed to create company for user {user_id}')
 
-        sb.table('user_company_map').insert({'user_id': user_id, 'company_id': cid}).execute()
-        return cid
-    except Exception as e:
-        print(f'[Supabase] get_or_create_company_for_user error: {e}')
-        return 1
+    sb.table('user_company_map').insert({'user_id': user_id, 'company_id': cid}).execute()
+    print(f'[Auth] Created company {cid} ({co_name}) for user {user_id}')
+    return cid
 
 
 # ── COMPANIES ─────────────────────────────────────────────────────────────────
