@@ -51,13 +51,18 @@ def get_cid() -> int | None:
                 if requested_cid:
                     # Verify this company belongs to this user — check both direct ownership and map table
                     check = sb_client.table('companies').select('id').eq('id', requested_cid).eq('user_id', user_id).execute()
+                    print(f'[get_cid] user={user_id} requested={requested_cid} direct_check={check.data}')
                     if check.data:
                         return requested_cid
                     map_check = sb_client.table('user_company_map').select('company_id').eq('user_id', user_id).eq('company_id', requested_cid).execute()
+                    print(f'[get_cid] map_check={map_check.data}')
                     if map_check.data:
                         return requested_cid
+                    print(f'[get_cid] ownership FAILED for user={user_id} company={requested_cid} — falling back to default')
                 # Fall back to default company for user
-                return sb.get_or_create_company_for_user(user_id, email)
+                default = sb.get_or_create_company_for_user(user_id, email)
+                print(f'[get_cid] returning default={default}')
+                return default
             else:
                 return None  # invalid token — don't fall back
         except Exception as e:
