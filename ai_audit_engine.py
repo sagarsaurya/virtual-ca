@@ -13,6 +13,7 @@ import json
 import re
 from datetime import datetime
 import anthropic
+import pandas as pd
 from audit_engine import (
     parse_trial_balance, parse_daybook,
     audit_cash_violations, audit_bank_accounts,
@@ -44,7 +45,7 @@ def _format_daybook_summary(daybook):
     top = daybook[daybook['Debit'] > 0].nlargest(30, 'Debit')
     for _, row in top.iterrows():
         date = row.get('Date', '')
-        if hasattr(date, 'strftime'):
+        if hasattr(date, 'strftime') and pd.notna(date):
             date = date.strftime('%d-%b-%Y')
         lines.append(
             f"  {date} | {str(row.get('Particulars',''))[:50]} | "
