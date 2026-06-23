@@ -850,6 +850,18 @@ def api_broker_rec():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/pt-analysis', methods=['POST'])
+def api_pt_analysis():
+    cid = get_cid()
+    tb, db = _ensure_tb_db(cid)
+    if not os.path.exists(tb):
+        return jsonify({'error': 'Upload Trial Balance first'}), 400
+    try:
+        from pt_engine import run_pt_analysis
+        return jsonify(run_pt_analysis(tb, db if os.path.exists(db) else None))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory(BUILD_DIR, 'favicon.ico')

@@ -22,6 +22,7 @@ import CashFlow from './pages/CashFlow'
 import PartyRec from './pages/PartyRec'
 import DocChecker from './pages/DocChecker'
 import BrokerRec from './pages/BrokerRec'
+import PTAnalysis from './pages/PTAnalysis'
 
 function PrivateLayout({ children }) {
   const loggedIn = localStorage.getItem('logged_in')
@@ -59,6 +60,7 @@ export default function App() {
         <Route path="/party-rec"   element={<PrivateLayout><PartyRec /></PrivateLayout>} />
         <Route path="/doc-checker" element={<PrivateLayout><DocChecker /></PrivateLayout>} />
         <Route path="/broker-rec"  element={<PrivateLayout><BrokerRec /></PrivateLayout>} />
+        <Route path="/pt-analysis" element={<PrivateLayout><PTAnalysis /></PrivateLayout>} />
         <Route path="*"            element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
