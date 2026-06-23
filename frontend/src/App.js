@@ -25,8 +25,9 @@ import BrokerRec from './pages/BrokerRec'
 import PTAnalysis from './pages/PTAnalysis'
 
 function PrivateLayout({ children }) {
+  const token = localStorage.getItem('auth_token')
   const loggedIn = localStorage.getItem('logged_in')
-  if (!loggedIn) return <Navigate to="/" replace />
+  if (!token && !loggedIn) return <Navigate to="/" replace />
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
       <Sidebar />

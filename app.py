@@ -21,13 +21,67 @@ CORS(app)
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 os.makedirs(DATA_DIR, exist_ok=True)
 
-# ── Multi-company helpers ──────────────────────────────────────────────────────
+# ── Auth helpers ──────────────────────────────────────────────────────────────
+def _get_token() -> str:
+    """Extract Bearer token from Authorization header."""
+    auth = request.headers.get('Authorization', '')
+    return auth.replace('Bearer ', '').strip()
+
+
 def get_cid() -> int:
-    """Get company_id from request header. Defaults to 1."""
+    """
+    Get company_id for the current request.
+    Priority: JWT token (real user) → X-Company-ID header (legacy/admin) → 1 (default).
+    """
+    token = _get_token()
+    if token:
+        user_id = sb.get_user_from_token(token)
+        if user_id:
+            return sb.get_or_create_company_for_user(user_id)
+    # Legacy fallback — header-based (admin panel / unauthenticated dev)
     try:
         return int(request.headers.get('X-Company-ID', 1))
     except (ValueError, TypeError):
         return 1
+
+
+# ── Auth endpoints ────────────────────────────────────────────────────────────
+@app.route('/api/auth/signup', methods=['POST'])
+def api_auth_signup():
+    data = request.json or {}
+    email    = data.get('email', '').strip()
+    password = data.get('password', '')
+    if not email or not password:
+        return jsonify({'error': 'Email and password required'}), 400
+    result = sb.auth_signup(email, password)
+    if 'error' in result:
+        return jsonify(result), 400
+    return jsonify(result)
+
+
+@app.route('/api/auth/login', methods=['POST'])
+def api_auth_login():
+    data = request.json or {}
+    email    = data.get('email', '').strip()
+    password = data.get('password', '')
+    if not email or not password:
+        return jsonify({'error': 'Email and password required'}), 400
+    result = sb.auth_login(email, password)
+    if 'error' in result:
+        return jsonify(result), 401
+    return jsonify(result)
+
+
+@app.route('/api/auth/me', methods=['GET'])
+def api_auth_me():
+    token = _get_token()
+    if not token:
+        return jsonify({'error': 'No token'}), 401
+    user_id = sb.get_user_from_token(token)
+    if not user_id:
+        return jsonify({'error': 'Invalid or expired token'}), 401
+    cid = sb.get_or_create_company_for_user(user_id)
+    return jsonify({'user_id': user_id, 'company_id': cid})
 
 def company_dir(cid: int) -> str:
     """Local temp directory for a company."""

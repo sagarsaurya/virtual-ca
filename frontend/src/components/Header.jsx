@@ -1,5 +1,12 @@
 import { useNavigate } from 'react-router-dom'
 
+function logout(navigate) {
+  localStorage.removeItem('auth_token')
+  localStorage.removeItem('auth_email')
+  localStorage.removeItem('logged_in')
+  navigate('/')
+}
+
 const titles = {
   '/dashboard': ['Dashboard', 'Welcome back, Sagar'],
   '/history': ['History', 'All your past audits'],
@@ -38,6 +45,15 @@ export default function Header({ filesStatus }) {
         <div className="text-xs font-medium px-3 py-1.5 rounded-lg" style={{background:'var(--navy-700)',color:'#94a3b8',border:'1px solid var(--navy-600)'}}>FY 2025–26</div>
         <button onClick={() => navigate('/quickaudit')} className="btn-gold px-4 py-2 rounded-xl text-sm">
           <i className="fas fa-arrow-up-from-bracket mr-2"></i>Upload Files
+        </button>
+        <button
+          onClick={() => logout(navigate)}
+          title={localStorage.getItem('auth_email') || 'Log out'}
+          style={{background:'rgba(248,113,113,0.08)',border:'1px solid rgba(248,113,113,0.2)',color:'#f87171',borderRadius:'10px',padding:'7px 12px',fontSize:'12px',fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:'6px'}}>
+          <i className="fas fa-sign-out-alt"></i>
+          <span style={{maxWidth:'120px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+            {localStorage.getItem('auth_email') || 'Log out'}
+          </span>
         </button>
       </div>
     </div>

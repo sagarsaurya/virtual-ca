@@ -1,6 +1,7 @@
 """
 Supabase client — storage + database for VirtualCA.
 All functions accept company_id (cid) for multi-company support.
+Auth: Supabase Auth (email/password) → JWT token → user_id → company_id
 """
 import os
 from supabase import create_client, Client
@@ -17,6 +18,84 @@ def get_client() -> Client:
     if _client is None:
         _client = create_client(SUPABASE_URL, SUPABASE_KEY)
     return _client
+
+
+# ── AUTH ─────────────────────────────────────────────────────────────────────
+
+def auth_signup(email: str, password: str) -> dict:
+    """Create a new user. Returns {token, email} or {error}."""
+    try:
+        sb = get_client()
+        res = sb.auth.sign_up({'email': email, 'password': password})
+        if res.user is None:
+            return {'error': 'Signup failed — check email format'}
+        session = res.session
+        if session:
+            return {'token': session.access_token, 'email': res.user.email, 'user_id': res.user.id}
+        # Email confirmation required
+        return {'email': res.user.email, 'needs_confirmation': True}
+    except Exception as e:
+        msg = str(e)
+        if 'already registered' in msg.lower() or 'already been registered' in msg.lower():
+            return {'error': 'This email is already registered. Please sign in.'}
+        return {'error': msg}
+
+
+def auth_login(email: str, password: str) -> dict:
+    """Sign in existing user. Returns {token, email, user_id} or {error}."""
+    try:
+        sb = get_client()
+        res = sb.auth.sign_in_with_password({'email': email, 'password': password})
+        if res.user is None:
+            return {'error': 'Invalid email or password'}
+        return {
+            'token': res.session.access_token,
+            'email': res.user.email,
+            'user_id': res.user.id,
+        }
+    except Exception as e:
+        msg = str(e)
+        if 'invalid' in msg.lower() or 'credentials' in msg.lower():
+            return {'error': 'Invalid email or password'}
+        return {'error': msg}
+
+
+def get_user_from_token(token: str) -> str | None:
+    """Verify JWT and return user_id, or None if invalid."""
+    try:
+        sb = get_client()
+        res = sb.auth.get_user(token)
+        return res.user.id if res.user else None
+    except Exception:
+        return None
+
+
+def get_or_create_company_for_user(user_id: str) -> int:
+    """Return the company_id for this user, creating one if needed."""
+    try:
+        sb = get_client()
+        # Ensure user_company_map table exists (silent if already exists)
+        try:
+            sb.table('user_company_map').select('company_id').limit(1).execute()
+        except Exception:
+            pass  # table may not exist yet — will fail gracefully below
+
+        res = sb.table('user_company_map').select('company_id').eq('user_id', user_id).execute()
+        if res.data:
+            return res.data[0]['company_id']
+
+        # No company yet — create one
+        email_res = sb.auth.admin.get_user_by_id(user_id)
+        email = email_res.user.email if email_res.user else user_id[:8]
+        co_name = email.split('@')[0].title()
+        co = create_company(co_name)
+        cid = co.get('id', 1)
+
+        sb.table('user_company_map').insert({'user_id': user_id, 'company_id': cid}).execute()
+        return cid
+    except Exception as e:
+        print(f'[Supabase] get_or_create_company_for_user error: {e}')
+        return 1
 
 
 # ── COMPANIES ─────────────────────────────────────────────────────────────────
