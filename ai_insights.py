@@ -57,6 +57,10 @@ Cite IT Act Sec 111A (STCG) and 112A (LTCG). Use ₹ Indian format. Be direct.""
     'doc_checker': """You are a senior Indian CA. Analyse this Missing Documents report.
 Give a 3-line insight: total payment amount without supporting docs, audit risk, recommended action.
 Reference IT Act Sec 40A(3) and ICAI SA-500. Use ₹ Indian format. Be direct.""",
+
+    'audit': """You are a senior Indian CA reviewing a Quick Audit result.
+Give a 3-line insight: overall health score, top risk area, most urgent action needed.
+Reference IT Act / Companies Act / ICAI standards where relevant. Use ₹ Indian format. Be direct.""",
 }
 
 
@@ -137,38 +141,44 @@ def _summarise(feature: str, data: dict) -> str:
 
     elif feature == 'pt_analysis':
         lines.append(f"Total Salary: ₹{data.get('total_salary', 0):,.0f}")
-        lines.append(f"PT Liability: ₹{data.get('pt_liability', 0):,.0f}")
-        lines.append(f"PT Deposited: ₹{data.get('pt_deposited', 0):,.0f}")
-        lines.append(f"PT Pending: ₹{data.get('pt_pending', 0):,.0f}")
+        lines.append(f"PT Shortfall (not deducted): ₹{data.get('pt_shortfall', 0):,.0f}")
+        lines.append(f"PT Deducted OK: ₹{data.get('pt_deducted', 0):,.0f}")
+        lines.append(f"PT Not Paid to Govt: ₹{data.get('pt_unpaid_govt', 0):,.0f}")
+        lines.append(f"Findings: {len(data.get('findings', []))}")
 
     elif feature == 'bank_rec':
         s = data.get('summary', {})
-        lines.append(f"Matched: {s.get('matched', 0)}")
-        lines.append(f"Missing in Tally: {s.get('bank_only', 0)}")
-        lines.append(f"Extra in Tally: {s.get('tally_only', 0)}")
-        lines.append(f"Wrong Date: {s.get('wrong_date', 0)}")
-        lines.append(f"Duplicates: {s.get('duplicates', 0)}")
+        lines.append(f"Matched: {s.get('matched', 0)} | Match %: {s.get('match_pct', 0)}%")
+        lines.append(f"In Bank not in Tally: {s.get('bank_only', 0)}")
+        lines.append(f"In Tally not in Bank: {s.get('tally_only', 0)}")
+        lines.append(f"Wrong Date: {s.get('wrong_date', 0)} | Duplicates: {s.get('duplicates', 0)}")
+        lines.append(f"Closing Balance — Bank: ₹{s.get('closing_balance_bank', 0):,.0f} | Tally: ₹{s.get('closing_balance_tally', 0):,.0f}")
+        lines.append(f"Balance Match: {s.get('closing_balance_match', False)}")
 
     elif feature == 'party_rec':
         lines.append(f"Party: {data.get('party_name', '')}")
-        lines.append(f"Your Books Balance: ₹{data.get('tally_balance', 0):,.0f}")
+        lines.append(f"Your Books Balance: ₹{data.get('our_balance', data.get('tally_balance', 0)):,.0f}")
         lines.append(f"Party's Books Balance: ₹{data.get('party_balance', 0):,.0f}")
-        lines.append(f"Gap: ₹{data.get('gap', 0):,.0f}")
-        lines.append(f"Unmatched entries: {len(data.get('unmatched_tally', []))} in your books, {len(data.get('unmatched_party', []))} in party books")
+        lines.append(f"Gap: ₹{data.get('difference', data.get('gap', 0)):,.0f}")
+        lines.append(f"Unmatched in your books: {len(data.get('unmatched_ours', data.get('unmatched_tally', [])))} | In party books: {len(data.get('unmatched_party', []))}")
 
     elif feature == 'shares_pnl':
-        lines.append(f"Total Trades: {data.get('total_trades', 0)}")
-        lines.append(f"STCG: ₹{data.get('stcg', 0):,.0f} — Tax: ₹{data.get('stcg_tax', 0):,.0f}")
-        lines.append(f"LTCG: ₹{data.get('ltcg', 0):,.0f} — Tax: ₹{data.get('ltcg_tax', 0):,.0f}")
-        lines.append(f"Total P&L: ₹{data.get('total_pnl', 0):,.0f}")
+        lines.append(f"Closed Trades: {data.get('closed_trades', 0)} | Open Positions: {data.get('open_positions', 0)}")
+        lines.append(f"STCG: ₹{data.get('stcg_total', 0):,.0f} — Tax: ₹{data.get('stcg_tax', 0):,.0f} @ 15%")
+        lines.append(f"LTCG: ₹{data.get('ltcg_total', 0):,.0f} — Tax: ₹{data.get('ltcg_tax', 0):,.0f} @ 10%")
+        lines.append(f"Total Gain: ₹{data.get('total_gain', 0):,.0f} | Total Tax: ₹{data.get('total_tax', 0):,.0f}")
 
     elif feature == 'doc_checker':
-        items = data.get('items', []) if isinstance(data, dict) else data
-        high  = [i for i in items if i.get('risk') == 'high']
-        total_amt = sum(i.get('amount', 0) for i in high)
-        lines.append(f"High risk missing docs: {len(high)}")
-        lines.append(f"Total amount at risk: ₹{total_amt:,.0f}")
+        flagged = data.get('flagged', [])
+        high    = [i for i in flagged if i.get('risk') == 'High']
+        lines.append(f"Total flagged: {len(flagged)} | High risk: {len(high)}")
+        lines.append(f"Total amount at risk: ₹{data.get('total_amount_at_risk', 0):,.0f}")
         for i in high[:5]:
-            lines.append(f"  {i.get('date','')} {i.get('party','')} ₹{i.get('amount',0):,.0f}")
+            lines.append(f"  {i.get('date','')} — {i.get('ledger', i.get('narration',''))[:40]} ₹{i.get('amount',0):,.0f}")
+
+    elif feature == 'audit':
+        lines.append(f"Company: {data.get('company', '')} | Period: {data.get('period', '')}")
+        lines.append(f"Audit Score: {data.get('score', 0)}/100")
+        lines.append(f"Critical Issues: {data.get('critical', 0)} | Warnings: {data.get('warnings', 0)} | Questions: {data.get('questions', 0)}")
 
     return '\n'.join(lines) if lines else json.dumps(data, default=str)[:1500]

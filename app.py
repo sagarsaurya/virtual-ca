@@ -373,6 +373,12 @@ def run_audit():
         results['tb_filename']          = tb_name
         results['audited_at']           = datetime.datetime.now().isoformat()
 
+        from ai_insights import generate_insight
+        results['ai_insight'] = generate_insight('audit', {
+            'score': score, 'critical': critical, 'warnings': warnings,
+            'questions': questions, 'company': results['summary'].get('company',''),
+            'period': results['summary'].get('period',''),
+        })
         sb.save_audit_result(results, cid)
         sb.save_history_entry({'filename': tb_name, 'audited_at': results['audited_at'],
             'company': results['summary'].get('company', ''), 'period': results['summary'].get('period', ''),
@@ -568,7 +574,10 @@ def bank_reconciliation_existing():
     else:
         return jsonify({'error': 'No Tally ledger or Daybook found.'}), 400
     try:
-        return jsonify(run_bankrec(bstmt_lp, tl_path, meta['bstmt'].get('filename', 'bank_statement.xlsx')))
+        result = run_bankrec(bstmt_lp, tl_path, meta['bstmt'].get('filename', 'bank_statement.xlsx'))
+        from ai_insights import generate_insight
+        result['ai_insight'] = generate_insight('bank_rec', result)
+        return jsonify(result)
     except Exception as e:
         import traceback; traceback.print_exc()
         return jsonify({'error': str(e)}), 500
@@ -610,6 +619,8 @@ def bank_reconciliation():
 
     try:
         result = run_bankrec(bs_path, tl_path, bs_file.filename)
+        from ai_insights import generate_insight
+        result['ai_insight'] = generate_insight('bank_rec', result)
         return jsonify(result)
     except Exception as e:
         import traceback; traceback.print_exc()
