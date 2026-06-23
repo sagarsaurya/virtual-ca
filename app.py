@@ -28,10 +28,12 @@ def _get_token() -> str:
     return auth.replace('Bearer ', '').strip()
 
 
-def get_cid() -> int:
+def get_cid() -> int | None:
     """
     Get company_id for the current request.
-    Priority: JWT token (real user) → X-Company-ID header (legacy/admin) → 1 (default).
+    If a valid token is present, ALWAYS use that user's company.
+    Never fall back to company 1 when a real token exists.
+    Returns None if token is invalid (caller should return 401).
     """
     token = _get_token()
     if token:
@@ -42,9 +44,12 @@ def get_cid() -> int:
                 user_id = res.user.id
                 email   = res.user.email
                 return sb.get_or_create_company_for_user(user_id, email)
+            else:
+                return None  # invalid token — don't fall back
         except Exception as e:
             print(f'[Auth] get_cid token error: {e}')
-    # Legacy fallback — header-based (admin panel / unauthenticated dev)
+            return None  # error verifying token — don't fall back
+    # No token at all — legacy header fallback (admin panel only)
     try:
         return int(request.headers.get('X-Company-ID', 1))
     except (ValueError, TypeError):
@@ -183,6 +188,15 @@ def compute_score(results):
 
 
 # ── POST /api/upload/files ────────────────────────────────────────────────────
+def _require_cid():
+    """Get company_id or return a 401 response. Use in endpoints that need auth."""
+    cid, err, code = _require_cid()
+    if err: return err, code
+    if cid is None:
+        return None, jsonify({'error': 'Unauthorized'}), 401
+    return cid, None, None
+
+
 def _get_user_id() -> str | None:
     """Extract verified user_id from Bearer token, or None."""
     token = _get_token()
@@ -237,7 +251,8 @@ def rename_company(cid):
 
 @app.route('/api/upload/files', methods=['POST'])
 def upload_files():
-    cid  = get_cid()
+    cid, err, code = _require_cid()
+    if err: return err, code
     meta = load_files_meta(cid)
     saved = []
 
@@ -267,7 +282,8 @@ def upload_files():
 # ── GET /api/files/status ─────────────────────────────────────────────────────
 @app.route('/api/files/status', methods=['GET'])
 def files_status():
-    cid  = get_cid()
+    cid, err, code = _require_cid()
+    if err: return err, code
     meta = load_files_meta(cid)
     meta['tb_exists']       = bool(meta.get('tb'))
     meta['db_exists']       = bool(meta.get('db'))
@@ -359,7 +375,8 @@ def run_audit():
 # ── GET /api/audit/last ───────────────────────────────────────────────────────
 @app.route('/api/audit/last', methods=['GET'])
 def last_audit():
-    cid  = get_cid()
+    cid, err, code = _require_cid()
+    if err: return err, code
     data = sb.load_audit_result(cid)
     if data:
         s = data.get('summary', {})
@@ -493,7 +510,8 @@ def mark_personal():
 
 @app.route('/api/audit/mark-personal', methods=['DELETE'])
 def unmark_personal():
-    cid  = get_cid()
+    cid, err, code = _require_cid()
+    if err: return err, code
     data = request.json
     sb.delete_personal_mark(data['date'], data['party'], cid)
     return jsonify({'success': True})
@@ -505,7 +523,8 @@ def get_personal_marks():
 # ── POST /api/bankrec-existing ────────────────────────────────────────────────
 @app.route('/api/bankrec-existing', methods=['POST'])
 def bank_reconciliation_existing():
-    cid  = get_cid()
+    cid, err, code = _require_cid()
+    if err: return err, code
     meta = load_files_meta(cid)
     if not meta.get('bstmt'):
         return jsonify({'error': 'No bank statement uploaded yet. Upload files first.'}), 400
@@ -666,7 +685,8 @@ def run_full_audit_all():
     Full Audit — accepts BS + P&L uploads, auto-pulls TB/DB/bank files.
     Runs all 9 existing modules + BS/P&L compliance modules.
     """
-    cid  = get_cid()
+    cid, err, code = _require_cid()
+    if err: return err, code
     meta = load_files_meta(cid)
 
     bs_file = request.files.get('balance_sheet')
@@ -759,7 +779,8 @@ def run_full_audit_all():
 # ── POST /api/clear-bank-files ───────────────────────────────────────────────
 @app.route('/api/clear-bank-files', methods=['POST'])
 def clear_bank_files():
-    cid  = get_cid()
+    cid, err, code = _require_cid()
+    if err: return err, code
     meta = load_files_meta(cid)
     meta.pop('bstmt', None)
     meta.pop('btally', None)
@@ -774,7 +795,8 @@ def clear_bank_files():
 @app.route('/api/upload/bank-files', methods=['POST'])
 def upload_bank_files():
     """Save bank statement and/or bank tally ledger persistently."""
-    cid  = get_cid()
+    cid, err, code = _require_cid()
+    if err: return err, code
     meta = load_files_meta(cid)
     saved = []
 
@@ -815,7 +837,8 @@ def _ensure_tb_db(cid):
 
 @app.route('/api/balance-sheet', methods=['POST'])
 def api_balance_sheet():
-    cid = get_cid()
+    cid, err, code = _require_cid()
+    if err: return err, code
     tb, _ = _ensure_tb_db(cid)
     if not os.path.exists(tb):
         return jsonify({'error': 'Upload Trial Balance first'}), 400
@@ -827,7 +850,8 @@ def api_balance_sheet():
 
 @app.route('/api/tds-detect', methods=['POST'])
 def api_tds_detect():
-    cid = get_cid()
+    cid, err, code = _require_cid()
+    if err: return err, code
     tb, db = _ensure_tb_db(cid)
     if not os.path.exists(tb):
         return jsonify({'error': 'Upload Trial Balance first'}), 400
@@ -839,7 +863,8 @@ def api_tds_detect():
 
 @app.route('/api/gst-return', methods=['POST'])
 def api_gst_return():
-    cid = get_cid()
+    cid, err, code = _require_cid()
+    if err: return err, code
     tb, db = _ensure_tb_db(cid)
     if not os.path.exists(tb):
         return jsonify({'error': 'Upload Trial Balance first'}), 400
@@ -851,7 +876,8 @@ def api_gst_return():
 
 @app.route('/api/shares-pnl', methods=['POST'])
 def api_shares_pnl():
-    cid = get_cid()
+    cid, err, code = _require_cid()
+    if err: return err, code
     tb, db = _ensure_tb_db(cid)
     if not os.path.exists(tb):
         return jsonify({'error': 'Upload Trial Balance first'}), 400
@@ -863,7 +889,8 @@ def api_shares_pnl():
 
 @app.route('/api/cash-flow', methods=['POST'])
 def api_cash_flow():
-    cid = get_cid()
+    cid, err, code = _require_cid()
+    if err: return err, code
     tb, db = _ensure_tb_db(cid)
     if not os.path.exists(tb):
         return jsonify({'error': 'Upload Trial Balance first'}), 400
@@ -875,7 +902,8 @@ def api_cash_flow():
 
 @app.route('/api/doc-checker', methods=['POST'])
 def api_doc_checker():
-    cid = get_cid()
+    cid, err, code = _require_cid()
+    if err: return err, code
     tb, db = _ensure_tb_db(cid)
     try:
         from doc_checker import check_documents
@@ -888,7 +916,8 @@ def api_doc_checker():
 
 @app.route('/api/party-rec', methods=['POST'])
 def api_party_rec():
-    cid = get_cid()
+    cid, err, code = _require_cid()
+    if err: return err, code
     headers = {'X-Company-ID': str(cid)}
     tally_file = request.files.get('tally_ledger')
     party_file = request.files.get('party_statement')
@@ -937,7 +966,8 @@ def api_broker_rec():
 
 @app.route('/api/pt-analysis', methods=['POST'])
 def api_pt_analysis():
-    cid = get_cid()
+    cid, err, code = _require_cid()
+    if err: return err, code
     tb, db = _ensure_tb_db(cid)
     if not os.path.exists(tb):
         return jsonify({'error': 'Upload Trial Balance first'}), 400
