@@ -387,6 +387,15 @@ def last_audit():
         return jsonify(data)
     return jsonify({'error': 'No audit run yet'}), 404
 
+@app.route('/api/audit/result', methods=['GET'])
+def get_audit_result():
+    cid, err, code = _require_cid()
+    if err: return err, code
+    result = sb.load_audit_result(cid)
+    if not result:
+        return jsonify({}), 200
+    return jsonify(result)
+
 @app.route('/api/audit/clear', methods=['POST'])
 def clear_audit():
     cid, err, code = _require_cid()

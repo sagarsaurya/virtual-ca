@@ -106,7 +106,14 @@ export default function QuickAudit() {
     axios.get(`${API_URL}/api/files/status`, { headers: { 'X-Company-ID': cid } }).then(r => setFilesStatus(r.data)).catch(() => {})
   }, [])
 
-  useEffect(() => { loadFilesStatus() }, [loadFilesStatus])
+  useEffect(() => {
+    loadFilesStatus()
+    // Load previously saved audit results so user doesn't have to re-audit on navigation
+    const token = localStorage.getItem('auth_token')
+    axios.get(`${API_URL}/api/audit/result`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : { 'X-Company-ID': localStorage.getItem('company_id') || 1 }
+    }).then(r => { if (r.data && r.data.findings) setResults(r.data) }).catch(() => {})
+  }, [loadFilesStatus])
 
   const uploadFile = async (key, file) => {
     if (!file) return
