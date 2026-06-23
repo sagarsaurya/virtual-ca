@@ -6,6 +6,36 @@ const fmt = n => '₹' + Number(n || 0).toLocaleString('en-IN', { maximumFractio
 const secTag = (text, color = '#93c5fd', bg = 'rgba(96,165,250,0.15)') =>
   <span style={{ fontSize: 10, background: bg, color, padding: '2px 8px', borderRadius: 6, fontWeight: 700 }}>{text}</span>
 
+const CONF = {
+  verified:      { icon: 'fa-shield-check', color: '#34d399', bg: 'rgba(52,211,153,0.1)',  label: 'Verified' },
+  disputed:      { icon: 'fa-triangle-exclamation', color: '#fbbf24', bg: 'rgba(251,191,36,0.1)', label: 'Disputed' },
+  low_confidence:{ icon: 'fa-circle-xmark', color: '#f87171', bg: 'rgba(248,113,113,0.1)', label: 'Low Confidence' },
+}
+
+function ConfidenceBadge({ confidence, reasoning, evidence, law }) {
+  const [open, setOpen] = useState(false)
+  const c = CONF[confidence] || CONF.verified
+  return (
+    <div style={{ marginTop: 6 }}>
+      <span onClick={() => setOpen(o => !o)}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10, fontWeight: 700,
+          padding: '3px 8px', borderRadius: 99, cursor: 'pointer',
+          background: c.bg, color: c.color, border: `1px solid ${c.color}33` }}>
+        <i className={`fas ${c.icon}`}></i> {c.label}
+        <i className={`fas fa-chevron-${open ? 'up' : 'down'}`} style={{ fontSize: 8, marginLeft: 2 }}></i>
+      </span>
+      {open && (
+        <div style={{ marginTop: 6, padding: '10px 12px', borderRadius: 8,
+          background: 'rgba(15,23,42,0.6)', border: `1px solid ${c.color}33` }}>
+          {evidence && <div style={{ color: '#e2e8f0', fontSize: 11, marginBottom: 6 }}><span style={{ color: '#60a5fa', fontWeight: 600 }}>Evidence: </span>{evidence}</div>}
+          {law      && <div style={{ color: '#94a3b8', fontSize: 11, marginBottom: 6 }}><span style={{ color: '#a78bfa', fontWeight: 600 }}>Law: </span>{law}</div>}
+          {reasoning && <div style={{ color: c.color, fontSize: 11 }}><span style={{ fontWeight: 600 }}>Audit Review: </span>{reasoning}</div>}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function EmptyOk({ msg, detail, law }) {
   return (
     <div style={{ margin: 12, padding: '12px 16px', background: 'rgba(52,211,153,0.07)', border: '1px solid rgba(52,211,153,0.2)', borderRadius: 10 }}>
@@ -453,54 +483,89 @@ function CashSection({ violations, bankCleared, bankStatus, confirmedBank, onCon
 function LedgerSection({ findings }) {
   if (!findings.length) return <EmptyOk msg="All ledger groups are correct" detail="Every ledger checked against ICAI Chart of Accounts standards." law="ICAI Accounting Standards + Tally CoA conventions" />
   return (
-    <AuditTable
-      headers={['Ledger', 'Current Group', 'Should Be', 'Balance', 'Severity', 'Fix']}
-      rows={findings.map((f, i) => (
-        <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-          <td style={{ padding: '10px 16px', color: '#e2e8f0', fontWeight: 600 }}>{f.ledger}<div style={{ color: '#64748b', fontSize: 10 }}>{f.rule || ''}</div></td>
-          <td style={{ padding: '10px 16px', color: '#f87171' }}>{f.current_group || f.group || ''}</td>
-          <td style={{ padding: '10px 16px', color: '#34d399' }}>{f.correct_group || ''}</td>
-          <td style={{ padding: '10px 16px', color: '#94a3b8' }}>{fmt(f.balance || f.amount || 0)}</td>
-          <td style={{ padding: '10px 16px' }}>{f.severity === 'Critical' ? secTag('Critical', '#f87171', 'rgba(239,68,68,0.15)') : secTag('Review', '#fbbf24', 'rgba(245,158,11,0.15)')}</td>
-          <td style={{ padding: '10px 16px' }}><span style={{ fontSize: 11, padding: '3px 8px', background: 'rgba(245,158,11,0.15)', color: '#fbbf24', borderRadius: 6 }}>{(f.fix || '').split('→')[0] || 'Alter Ledger'}</span></td>
-        </tr>
+    <div>
+      {findings.map((f, i) => (
+        <div key={i} style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <div style={{ color: '#e2e8f0', fontWeight: 700, fontSize: 13 }}>{f.ledger}</div>
+              <div style={{ color: '#64748b', fontSize: 11, marginTop: 2 }}>{f.rule || f.issue || ''}</div>
+              <ConfidenceBadge confidence={f.confidence} reasoning={f.critic_reasoning} evidence={f.evidence} law={f.law} />
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 10, color: '#64748b', marginBottom: 2 }}>Current</div>
+                <span style={{ fontSize: 11, color: '#f87171', background: 'rgba(239,68,68,0.1)', padding: '2px 8px', borderRadius: 6 }}>{f.current_group || f.group || ''}</span>
+              </div>
+              <i className="fas fa-arrow-right" style={{ color: '#475569', fontSize: 10, marginTop: 14 }}></i>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 10, color: '#64748b', marginBottom: 2 }}>Should Be</div>
+                <span style={{ fontSize: 11, color: '#34d399', background: 'rgba(52,211,153,0.1)', padding: '2px 8px', borderRadius: 6 }}>{f.correct_group || ''}</span>
+              </div>
+              <div style={{ textAlign: 'center', marginLeft: 8 }}>
+                <div style={{ fontSize: 10, color: '#64748b', marginBottom: 2 }}>Balance</div>
+                <div style={{ color: '#94a3b8', fontWeight: 600, fontSize: 13 }}>{fmt(f.balance || f.amount || 0)}</div>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                {f.severity === 'Critical' ? secTag('Critical', '#f87171', 'rgba(239,68,68,0.15)') : secTag('Review', '#fbbf24', 'rgba(245,158,11,0.15)')}
+              </div>
+            </div>
+          </div>
+          {f.fix && <div style={{ marginTop: 8, fontSize: 11, color: '#64748b' }}><span style={{ color: '#fbbf24' }}>Fix: </span>{f.fix}</div>}
+        </div>
       ))}
-    />
+    </div>
   )
 }
 
 function TDSSection({ items }) {
   if (!items.length) return <EmptyOk msg="No TDS compliance issues detected" detail="Payments within TDS threshold limits — or TDS has been correctly deducted." law="Sec 194C / 194J / 194I / 194H — Income Tax Act 1961" />
   return (
-    <AuditTable
-      headers={['Party / Ledger', 'Section', 'Total Paid', 'TDS Due', 'Interest Est.']}
-      rows={items.map((t, i) => (
-        <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-          <td style={{ padding: '10px 16px', color: '#e2e8f0', fontWeight: 600 }}>{t.party}</td>
-          <td style={{ padding: '10px 16px' }}>{secTag('Sec ' + t.section, '#93c5fd', 'rgba(96,165,250,0.15)')}</td>
-          <td style={{ padding: '10px 16px', color: '#e2e8f0' }}>{fmt(t.total_paid || 0)}</td>
-          <td style={{ padding: '10px 16px' }}><span style={{ color: '#f87171', fontWeight: 700 }}>{fmt(t.tds_expected || 0)}</span> <span style={{ color: '#64748b', fontSize: 11 }}>@ {t.rate}%</span></td>
-          <td style={{ padding: '10px 16px', color: t.interest_est > 0 ? '#fbbf24' : '#64748b' }}>{t.interest_est > 0 ? fmt(t.interest_est) : '—'}</td>
-        </tr>
+    <div>
+      {items.map((t, i) => (
+        <div key={i} style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <div style={{ color: '#e2e8f0', fontWeight: 700, fontSize: 13 }}>{t.party}</div>
+              {secTag('Sec ' + t.section, '#93c5fd', 'rgba(96,165,250,0.15)')}
+            </div>
+            <div style={{ color: '#64748b', fontSize: 11 }}>{t.issue || ''}</div>
+            <ConfidenceBadge confidence={t.confidence} reasoning={t.critic_reasoning} evidence={t.evidence} law={t.law} />
+          </div>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 10, color: '#64748b' }}>Paid</div>
+              <div style={{ color: '#e2e8f0', fontWeight: 600 }}>{fmt(t.total_paid || 0)}</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 10, color: '#64748b' }}>TDS Due</div>
+              <div style={{ color: '#f87171', fontWeight: 700 }}>{fmt(t.tds_expected || 0)} <span style={{ color: '#64748b', fontSize: 10 }}>@{t.rate}%</span></div>
+            </div>
+          </div>
+        </div>
       ))}
-    />
+    </div>
   )
 }
 
 function OutstandingSection({ items }) {
   if (!items.length) return <EmptyOk msg="No abnormal balances found" detail="Suspense accounts are nil. No credit balance debtors or debit balance creditors detected." law="SA 500 + SA 505 — ICAI" />
   return (
-    <AuditTable
-      headers={['Ledger', 'Issue', 'Balance', 'Severity']}
-      rows={items.map((f, i) => (
-        <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-          <td style={{ padding: '10px 16px', color: '#e2e8f0', fontWeight: 600 }}>{f.ledger}</td>
-          <td style={{ padding: '10px 16px', color: '#94a3b8', fontSize: 11 }}>{f.question || f.issue || ''}</td>
-          <td style={{ padding: '10px 16px', color: '#f87171', fontWeight: 600 }}>{fmt(f.amount || f.balance || 0)}</td>
-          <td style={{ padding: '10px 16px' }}>{f.severity === 'Critical' ? secTag('Critical', '#f87171', 'rgba(239,68,68,0.15)') : secTag('Warning', '#fbbf24', 'rgba(245,158,11,0.15)')}</td>
-        </tr>
+    <div>
+      {items.map((f, i) => (
+        <div key={i} style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <div style={{ color: '#e2e8f0', fontWeight: 700, fontSize: 13 }}>{f.ledger}</div>
+            <div style={{ color: '#94a3b8', fontSize: 11, marginTop: 2 }}>{f.question || f.issue || ''}</div>
+            <ConfidenceBadge confidence={f.confidence} reasoning={f.critic_reasoning} evidence={f.evidence} law={f.law} />
+          </div>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <div style={{ color: '#f87171', fontWeight: 700, fontSize: 14 }}>{fmt(f.amount || f.balance || 0)}</div>
+            {f.severity === 'Critical' ? secTag('Critical', '#f87171', 'rgba(239,68,68,0.15)') : secTag('Warning', '#fbbf24', 'rgba(245,158,11,0.15)')}
+          </div>
+        </div>
       ))}
-    />
+    </div>
   )
 }
 
