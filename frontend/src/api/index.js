@@ -32,7 +32,7 @@ export const runAudit        = (form)  => API.post('/api/audit', form)
 export const runBankRec      = (form)  => API.post('/api/bankrec', form)
 export const runCompleteAudit= (form)  => API.post('/api/complete-audit', form)
 
-export const askCA           = (q, ctx) => API.post('/api/ask-ca', { question: q, context: ctx })
+export const askCA           = (q, ctx) => API.post('/api/ca-chat', { question: q, context: ctx })
 export const rerunCAQueries  = ()      => API.post('/api/rerun-ca-queries')
 export const getJournalEntry = (q)    => API.post('/api/journal-entry', { query: q })
 
