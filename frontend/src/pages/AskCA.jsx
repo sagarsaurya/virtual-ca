@@ -82,12 +82,27 @@ export default function AskCA() {
   const bottomRef = useRef(null)
 
   useEffect(() => {
+    // Try localStorage first (Quick Audit writes here immediately after running)
+    const cid = localStorage.getItem('company_id') || '1'
+    const cached = (() => { try { return JSON.parse(localStorage.getItem(`audit_result_${cid}`) || 'null') } catch { return null } })()
+    if (cached && cached.summary) {
+      setAuditData(cached)
+      const built = buildIssues(cached)
+      setIssues(built)
+      if (built.length > 0) selectIssue(built[0])
+      return
+    }
+    // Fallback: server
     axios.get(`${API_URL}/api/audit/result`, { headers: getHeaders() })
       .then(r => {
-        setAuditData(r.data)
-        const built = buildIssues(r.data)
-        setIssues(built)
-        if (built.length > 0) selectIssue(built[0])
+        if (r.data && r.data.summary) {
+          setAuditData(r.data)
+          const built = buildIssues(r.data)
+          setIssues(built)
+          if (built.length > 0) selectIssue(built[0])
+        } else {
+          setMessages([{ role: 'ai', text: "No audit data found. Please run a Quick Audit first, then come back here." }])
+        }
       })
       .catch(() => {
         setMessages([{ role: 'ai', text: "No audit data found. Please run a Quick Audit first, then come back here." }])
