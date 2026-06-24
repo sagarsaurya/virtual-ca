@@ -16,7 +16,10 @@ export default function DocChecker() {
   const token=localStorage.getItem('auth_token')
   const h={'X-Company-ID':cid,...(token?{Authorization:`Bearer ${token}`}:{})}
 
-  useEffect(()=>{axios.get(`${API}/api/doc-checker`,{headers:h}).then(r=>{if(r.data&&Object.keys(r.data).length>0)setData(r.data)}).catch(()=>{})},[])
+  useEffect(()=>{
+    if(!token){return}
+    axios.get(`${API}/api/doc-checker`,{headers:h}).then(r=>{if(r.data&&r.data.flagged)setData(r.data)}).catch(()=>{})
+  },[])
 
   const run=async()=>{
     setLoading(true);setError('')
