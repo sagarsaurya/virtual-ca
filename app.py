@@ -719,11 +719,15 @@ def ai_explain():
 @app.route('/api/ca-chat', methods=['POST'])
 def ca_chat():
     data        = request.json or {}
-    user_msg    = data.get('message', '').strip()
-    history     = data.get('history', [])   # [{role, content}, ...]
+    user_msg    = (data.get('message') or data.get('question') or '').strip()
+    context     = data.get('context', '')
+    history     = data.get('history', [])
 
     if not user_msg:
         return jsonify({'error': 'message required'}), 400
+
+    if context:
+        user_msg = f"{user_msg}\n\nContext: {context}"
 
     audit_data = sb.load_audit_result(get_cid() or 1) or None
 

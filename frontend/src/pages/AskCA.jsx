@@ -127,7 +127,7 @@ export default function AskCA() {
     try {
       const context = selected ? selected.context : ''
       const r = await askCA(question, context)
-      setMessages(prev => [...prev, { role: 'ai', text: r.data.answer || r.data.response || 'No answer received.' }])
+      setMessages(prev => [...prev, { role: 'ai', text: r.data.reply || r.data.answer || r.data.response || 'No answer received.' }])
     } catch {
       setMessages(prev => [...prev, { role: 'ai', text: 'Error connecting to AI. Please try again.' }])
     }
