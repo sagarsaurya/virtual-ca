@@ -372,6 +372,16 @@ export default function QuickAudit() {
             <SalarySection items={results.salary_compliance || []} />
           </Section>
 
+          {/* AI Insight */}
+          {results.ai_insight && (
+            <div style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 12, padding: '16px 20px', marginTop: 4 }}>
+              <div style={{ color: '#a78bfa', fontWeight: 700, fontSize: 12, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <i className="fas fa-robot"></i> CA AI INSIGHT
+              </div>
+              <div style={{ color: '#e2e8f0', fontSize: 13, lineHeight: 1.7, whiteSpace: 'pre-line' }}>{results.ai_insight}</div>
+            </div>
+          )}
+
           {/* Footer */}
           <div style={{ background: '#0D1B2E', border: '1px solid var(--navy-600)', borderRadius: 12, padding: 20, textAlign: 'center', marginTop: 4 }}>
             <div style={{ color: '#f1f5f9', fontWeight: 600, marginBottom: 4 }}>Audit Complete</div>
