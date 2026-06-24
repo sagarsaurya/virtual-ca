@@ -8,6 +8,9 @@ from openai import OpenAI
 OPENROUTER_API_KEY = os.environ.get('OPENROUTER_API_KEY', '')
 MODEL = 'google/gemini-flash-1.5'
 
+import sys
+print(f'[OpenRouter] key set={bool(OPENROUTER_API_KEY)} model={MODEL}', file=sys.stderr, flush=True)
+
 def get_client() -> OpenAI:
     return OpenAI(
         base_url='https://openrouter.ai/api/v1',
@@ -28,5 +31,6 @@ def call_model(system_prompt: str, user_content: str, max_tokens: int = 300) -> 
         )
         return resp.choices[0].message.content.strip()
     except Exception as e:
-        print(f'[OpenRouter] error: {e}')
+        import sys
+        print(f'[OpenRouter] error: {e}', file=sys.stderr, flush=True)
         return ''
