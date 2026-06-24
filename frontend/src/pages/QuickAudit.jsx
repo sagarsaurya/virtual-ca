@@ -103,7 +103,7 @@ export default function QuickAudit() {
   const [progress, setProgress] = useState(0)
   const _arKey = () => `audit_result_${localStorage.getItem('company_id')||'1'}`
   const [results, setResults] = useState(() => {
-    try { const r = JSON.parse(localStorage.getItem(`audit_result_${localStorage.getItem('company_id')||'1'}`) || 'null'); return r && r.findings ? r : null } catch { return null }
+    try { const r = JSON.parse(localStorage.getItem(`audit_result_${localStorage.getItem('company_id')||'1'}`) || 'null'); return r && r.summary ? r : null } catch { return null }
   })
   const [confirmedBank, setConfirmedBank] = useState(new Set())
   const [uploading, setUploading] = useState({})
@@ -133,7 +133,7 @@ export default function QuickAudit() {
     const token = localStorage.getItem('auth_token')
     axios.get(`${API_URL}/api/audit/result`, {
       headers: token ? { Authorization: `Bearer ${token}`, 'X-Company-ID': localStorage.getItem('company_id')||1 } : { 'X-Company-ID': localStorage.getItem('company_id') || 1 }
-    }).then(r => { if (r.data && r.data.findings) { setResults(r.data); try { localStorage.setItem(`audit_result_${localStorage.getItem('company_id')||'1'}`, JSON.stringify(r.data)) } catch {} } }).catch(() => {})
+    }).then(r => { if (r.data && r.data.summary) { setResults(r.data); try { localStorage.setItem(`audit_result_${localStorage.getItem('company_id')||'1'}`, JSON.stringify(r.data)) } catch {} } }).catch(() => {})
   }, [loadFilesStatus])
 
   const uploadFile = async (key, file) => {
