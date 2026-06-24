@@ -6,7 +6,7 @@ import os
 from openai import OpenAI
 
 OPENROUTER_API_KEY = os.environ.get('OPENROUTER_API_KEY', '')
-MODEL = 'openai/gpt-3.5-turbo'
+MODEL = 'meta-llama/llama-3.1-8b-instruct:free'
 
 import sys
 print(f'[OpenRouter] key set={bool(OPENROUTER_API_KEY)} model={MODEL}', file=sys.stderr, flush=True)

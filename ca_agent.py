@@ -176,10 +176,14 @@ def chat(user_message: str, audit_data: dict = None, history: list = None) -> st
 
     messages.append({'role': 'user', 'content': user_message})
 
-    response = client.chat.completions.create(
-        model=_OR_MODEL,
-        max_tokens=1024,
-        messages=messages,
-    )
-
-    return response.choices[0].message.content
+    try:
+        response = client.chat.completions.create(
+            model=_OR_MODEL,
+            max_tokens=1024,
+            messages=messages,
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        import sys
+        print(f'[AskCA] OpenRouter error: {e}', file=sys.stderr, flush=True)
+        raise
