@@ -3,17 +3,8 @@ ai_insights.py — Short AI insight for every VirtualCA feature.
 Takes feature name + Python result dict → returns 2-4 line CA commentary.
 Uses Claude Haiku 4.5 (fast + cheap for short insights).
 """
-import os
 import json
-import anthropic
-
-_client = None
-
-def _get_client():
-    global _client
-    if _client is None:
-        _client = anthropic.Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'))
-    return _client
+from openrouter_client import call_model
 
 
 FEATURE_PROMPTS = {
@@ -79,20 +70,10 @@ def generate_insight(feature: str, data: dict) -> str:
     except Exception:
         summary = json.dumps(data, default=str)[:2000]
 
-    try:
-        client = _get_client()
-        msg = client.messages.create(
-            model='claude-haiku-4-5-20251001',
-            max_tokens=300,
-            messages=[{
-                'role': 'user',
-                'content': f"{prompt}\n\nDATA:\n{summary}\n\nWrite your insight now (3 lines max, no headings):"
-            }]
-        )
-        return msg.content[0].text.strip()
-    except Exception as e:
-        print(f'[AI Insight] {feature} error: {e}')
-        return ''
+    result = call_model(prompt, f"DATA:\n{summary}\n\nWrite your insight now (3 lines max, no headings):", max_tokens=300)
+    if not result:
+        print(f'[AI Insight] {feature} returned empty')
+    return result
 
 
 def _summarise(feature: str, data: dict) -> str:

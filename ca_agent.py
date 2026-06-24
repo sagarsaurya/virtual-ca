@@ -3,7 +3,7 @@ ca_agent.py — VirtualCA's Ask Your CA powered by Claude Haiku 4.5
 Reads last audit result + full knowledge base as context.
 """
 import os
-import anthropic
+from openrouter_client import get_client as _or_client, MODEL as _OR_MODEL
 from knowledge_loader import load_knowledge
 
 SYSTEM_PROMPT = """You are a senior Chartered Accountant (CA) based in India with 20+ years of experience.
@@ -157,14 +157,7 @@ def chat(user_message: str, audit_data: dict = None, history: list = None) -> st
     audit_data   : dict from last audit result (or None)
     history      : list of {role, content} — prior turns (client manages state)
     """
-    api_key = os.environ.get('ANTHROPIC_API_KEY', '').strip()
-    if not api_key:
-        return (
-            "⚠️ ANTHROPIC_API_KEY is not set. "
-            "Add it to your Render environment variables, then restart the server."
-        )
-
-    client = anthropic.Anthropic(api_key=api_key)
+    client = _or_client()
 
     context = build_context(audit_data)
     system  = (
@@ -173,8 +166,7 @@ def chat(user_message: str, audit_data: dict = None, history: list = None) -> st
         + f"\n\n## CLIENT'S ACCOUNTING DATA (use this for specific answers):\n{context}"
     )
 
-    # Build message list — keep last 10 turns to save tokens
-    messages = []
+    messages = [{'role': 'system', 'content': system}]
     if history:
         for turn in history[-10:]:
             role    = turn.get('role', 'user')
@@ -184,11 +176,10 @@ def chat(user_message: str, audit_data: dict = None, history: list = None) -> st
 
     messages.append({'role': 'user', 'content': user_message})
 
-    response = client.messages.create(
-        model='claude-haiku-4-5',
+    response = client.chat.completions.create(
+        model=_OR_MODEL,
         max_tokens=1024,
-        system=system,
         messages=messages,
     )
 
-    return response.content[0].text
+    return response.choices[0].message.content

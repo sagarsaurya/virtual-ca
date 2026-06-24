@@ -1,0 +1,32 @@
+"""
+OpenRouter client — drop-in replacement for Anthropic API.
+Uses OpenAI-compatible endpoint at openrouter.ai.
+"""
+import os
+from openai import OpenAI
+
+OPENROUTER_API_KEY = os.environ.get('OPENROUTER_API_KEY', '')
+MODEL = 'google/gemini-flash-1.5'
+
+def get_client() -> OpenAI:
+    return OpenAI(
+        base_url='https://openrouter.ai/api/v1',
+        api_key=OPENROUTER_API_KEY,
+    )
+
+def call_model(system_prompt: str, user_content: str, max_tokens: int = 300) -> str:
+    """Call OpenRouter model. Returns text response or empty string on error."""
+    try:
+        client = get_client()
+        resp = client.chat.completions.create(
+            model=MODEL,
+            max_tokens=max_tokens,
+            messages=[
+                {'role': 'system', 'content': system_prompt},
+                {'role': 'user',   'content': user_content},
+            ]
+        )
+        return resp.choices[0].message.content.strip()
+    except Exception as e:
+        print(f'[OpenRouter] error: {e}')
+        return ''

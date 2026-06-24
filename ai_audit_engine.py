@@ -12,7 +12,7 @@ import os
 import json
 import re
 from datetime import datetime
-import anthropic
+from openrouter_client import call_model as _or_call
 import pandas as pd
 from audit_engine import (
     parse_trial_balance, parse_daybook,
@@ -20,7 +20,6 @@ from audit_engine import (
     audit_salary_compliance,
 )
 
-MODEL = 'claude-haiku-4-5-20251001'
 
 
 # ── BUILD INPUT TEXT FOR AUDITOR ──────────────────────────────────────────────
@@ -224,18 +223,10 @@ Do not invent new issues. Only review what the Auditor found."""
 # ── CALL CLAUDE ───────────────────────────────────────────────────────────────
 
 def _call_claude(system, user_message):
-    api_key = os.environ.get('ANTHROPIC_API_KEY', '').strip()
-    if not api_key:
-        raise ValueError("ANTHROPIC_API_KEY not set")
-
-    client = anthropic.Anthropic(api_key=api_key)
-    response = client.messages.create(
-        model=MODEL,
-        max_tokens=4096,
-        system=system,
-        messages=[{'role': 'user', 'content': user_message}]
-    )
-    return response.content[0].text
+    result = _or_call(system, user_message, max_tokens=4096)
+    if not result:
+        raise ValueError("OpenRouter returned empty response")
+    return result
 
 
 def _parse_json(raw):
