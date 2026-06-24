@@ -82,7 +82,7 @@ export default function AskCA() {
   const bottomRef = useRef(null)
 
   useEffect(() => {
-    axios.get(`${API_URL}/api/audit/last`, { headers: getHeaders() })
+    axios.get(`${API_URL}/api/audit/result`, { headers: getHeaders() })
       .then(r => {
         setAuditData(r.data)
         const built = buildIssues(r.data)

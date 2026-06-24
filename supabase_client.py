@@ -281,15 +281,18 @@ def delete_personal_mark(date: str, party: str, cid: int = 1):
 # ── DATABASE: audit_result (latest per company) ───────────────────────────────
 
 def save_audit_result(result: dict, cid: int = 1):
+    import sys
     try:
         sb = get_client()
         res = sb.table('audit_result').select('id').eq('company_id', cid).execute()
+        print(f'[save_audit_result] cid={cid} existing={bool(res.data)}', file=sys.stderr, flush=True)
         if res.data:
             sb.table('audit_result').update({'result': result}).eq('company_id', cid).execute()
         else:
             sb.table('audit_result').insert({'company_id': cid, 'result': result}).execute()
+        print(f'[save_audit_result] cid={cid} saved ok', file=sys.stderr, flush=True)
     except Exception as e:
-        print(f'[Supabase] save_audit_result error: {e}')
+        print(f'[save_audit_result] ERROR cid={cid}: {e}', file=sys.stderr, flush=True)
 
 
 def load_audit_result(cid: int = 1) -> dict:
