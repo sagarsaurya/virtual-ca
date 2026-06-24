@@ -309,6 +309,9 @@ export default function QuickAudit() {
               </div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
+              <button onClick={runAudit} style={{ fontSize: 12, padding: '7px 14px', background: 'rgba(251,191,36,0.15)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.3)', borderRadius: 10, cursor: 'pointer' }}>
+                <i className="fas fa-redo" style={{ marginRight: 6 }}></i>Re-run Audit
+              </button>
               <button onClick={() => { setResults(null); setProgress(0) }} style={{ fontSize: 12, padding: '7px 14px', background: 'var(--navy-700)', color: '#94a3b8', border: '1px solid var(--navy-600)', borderRadius: 10, cursor: 'pointer' }}>
                 <i className="fas fa-sync-alt" style={{ marginRight: 6 }}></i>Change Files
               </button>
